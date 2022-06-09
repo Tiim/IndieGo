@@ -1,0 +1,5 @@
+version: '3.7'
+services:
+  comment-api:
+    ports:
+      - "8080:8080"
