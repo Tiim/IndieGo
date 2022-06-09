@@ -30,7 +30,6 @@ RUN --mount=type=cache,target=/root/.cache/go-build \
     CGO_ENABLED=1 GOOS=linux \
     go build -o comment-api -a -ldflags '-linkmode external -extldflags "-static"' .
 
-USER appuser:appuser
 RUN mkdir -p /code/db
 
 FROM scratch
@@ -39,7 +38,6 @@ COPY --from=builder /usr/share/zoneinfo /usr/share/zoneinfo
 COPY --from=builder /etc/passwd /etc/passwd
 COPY --from=builder /etc/group /etc/group
 
-#USER appuser:appuser
 WORKDIR /app
 COPY --from=builder /code/comment-api /app/comment-api
 COPY --from=builder /code/db /app/db
