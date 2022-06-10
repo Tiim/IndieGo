@@ -17,6 +17,7 @@ type Comment struct {
 	Content   string `json:"content"`
 	Name      string `json:"name"`
 	Email     string `json:"email"`
+	Notify    bool   `json:"notify"`
 }
 
 type CommentStore struct {
@@ -111,6 +112,15 @@ func (cs *CommentStore) GetCommentsForPost(page string) ([]Comment, error) {
 	return comments, nil
 }
 
+func (cs *CommentStore) DeleteComment(id string) error {
+	stmt := "DELETE FROM comments WHERE id = ?;"
+	_, err := cs.db.Exec(stmt, id)
+	if err != nil {
+		return fmt.Errorf("error deleting comment: %w", err)
+	}
+	return nil
+}
+
 func initTable(db *sql.DB) error {
 	stmt := `CREATE TABLE IF NOT EXISTS comments (
 		id TEXT not null primary key, 
@@ -120,6 +130,7 @@ func initTable(db *sql.DB) error {
 		content TEXT not null,
 		name TEXT not null,
 		email TEXT,
+		notify INTEGER not null default FALSE,
 		FOREIGN KEY(reply_to) REFERENCES comments(id)
 	);`
 	_, err := db.Exec(stmt)
