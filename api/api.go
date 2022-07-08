@@ -69,7 +69,6 @@ func (cs *commentServer) handlePostComment(c *gin.Context) {
 
 func (cs *commentServer) handleGetAllComments(c *gin.Context) {
 	comments, err := cs.store.GetAllComments()
-	log.Println("Got all comments: ", comments)
 	if err != nil {
 		log.Println("Error getting comments: ", err)
 		c.AbortWithError(http.StatusInternalServerError, err)

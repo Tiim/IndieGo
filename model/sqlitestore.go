@@ -110,6 +110,44 @@ func (cs *SQLiteStore) DeleteComment(id string) error {
 	return nil
 }
 
+func (cs *SQLiteStore) GetComment(id string) (Comment, error) {
+	stmt := "SELECT id, reply_to, timestamp, page, content, name FROM comments WHERE id = ?;"
+	rows, err := cs.db.Query(stmt, id)
+	if err != nil {
+		return Comment{}, fmt.Errorf("error querying comment with id %s: %w", id, err)
+	}
+	defer rows.Close()
+
+	var comment Comment
+
+	for rows.Next() {
+		var id string
+		var reply_to string
+		var timestamp string
+		var page string
+		var content string
+		var name string
+		err := rows.Scan(&id, &reply_to, &timestamp, &page, &content, &name)
+		if err != nil {
+			return Comment{}, err
+		}
+		comment = Comment{
+			Id:        id,
+			ReplyTo:   reply_to,
+			Timestamp: timestamp,
+			Page:      page,
+			Content:   content,
+			Name:      name,
+			Email:     "",
+		}
+	}
+
+	if err := rows.Err(); err != nil {
+		return Comment{}, fmt.Errorf("error querying comment with id %s: %w", id, err)
+	}
+	return comment, nil
+}
+
 func initTable(db *sql.DB) error {
 	stmt := `CREATE TABLE IF NOT EXISTS comments (
 		id TEXT not null primary key, 
