@@ -17,15 +17,19 @@ type EmailNotify struct {
 }
 
 func (n *EmailNotify) OnNewComment(c *model.Comment) (bool, error) {
+	go n.doSendEmail(c)
+	return true, nil
+}
+
+func (n *EmailNotify) doSendEmail(c *model.Comment) {
 	auth := smtp.PlainAuth("", n.From, n.Password, n.SmtpHost)
 	text := fmt.Sprintf("New Comment\nid:\t%s\nfrom:\t%s <%s>\npage:\t%s\n\n%s", c.Id, c.Name, c.Email, c.Page, c.Content)
 	data := fmt.Sprintf("Content-Type: text/plain; charset=UTF-8\nSubject: %s\nFrom: Comment System <%s>\nReply-To: %s <%s>\n\n%s\n", n.Subject, n.From, c.Name, c.Email, text)
 	err := smtp.SendMail(n.SmtpHost+":"+n.SmtpPort, auth, n.From, []string{n.To}, []byte(data))
 	if err != nil {
-		return true, fmt.Errorf("error sending email: %w", err)
+		log.Printf("Error sending notification email: %s", err)
 	}
 	log.Printf("notification email sent to %s", n.To)
-	return true, nil
 }
 
 func (n *EmailNotify) OnDeleteComment(c *model.Comment) (bool, error) {
