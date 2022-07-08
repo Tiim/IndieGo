@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"tiim/go-comment-api/model"
+	"time"
 )
 
 type Store struct {
@@ -29,12 +30,12 @@ func (s *Store) NewComment(c *model.Comment) error {
 	return s.store.NewComment(c)
 }
 
-func (s *Store) GetAllComments() ([]model.Comment, error) {
-	return s.store.GetAllComments()
+func (s *Store) GetAllComments(since time.Time) ([]model.Comment, error) {
+	return s.store.GetAllComments(since)
 }
 
-func (s *Store) GetCommentsForPost(page string) ([]model.Comment, error) {
-	return s.store.GetCommentsForPost(page)
+func (s *Store) GetCommentsForPost(page string, since time.Time) ([]model.Comment, error) {
+	return s.store.GetCommentsForPost(page, since)
 }
 
 func (s *Store) DeleteComment(id string) error {

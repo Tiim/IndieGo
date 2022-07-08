@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"os"
 	"tiim/go-comment-api/model"
+	"time"
 
 	"github.com/gin-gonic/gin"
 )
@@ -45,7 +46,7 @@ func (ui *uiRoutes) start() {
 }
 
 func (ui *uiRoutes) adminDashboard(c *gin.Context) {
-	comments, err := ui.store.GetAllComments()
+	comments, err := ui.store.GetAllComments(time.Time{})
 
 	if err != nil {
 		c.AbortWithError(http.StatusInternalServerError, fmt.Errorf("unable to fetch comments: %w", err))

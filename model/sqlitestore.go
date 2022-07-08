@@ -15,7 +15,7 @@ type SQLiteStore struct {
 
 func (cs *SQLiteStore) NewComment(c *Comment) error {
 	c.Id = uuid.New().String()
-	c.Timestamp = time.Now().Format(time.RFC3339)
+	c.Timestamp = time.Now().UTC().Format(time.RFC3339)
 	stmt := "INSERT INTO comments (id, reply_to, timestamp, page, content, name, email) VALUES (?, ?, ?, ?, ?, ?, ?);"
 	res, err := cs.db.Exec(stmt, c.Id, c.ReplyTo, c.Timestamp, c.Page, c.Content, c.Name, c.Email)
 	if err != nil {
@@ -31,9 +31,9 @@ func (cs *SQLiteStore) NewComment(c *Comment) error {
 	return nil
 }
 
-func (cs *SQLiteStore) GetAllComments() ([]Comment, error) {
-	stmt := "SELECT id, reply_to, timestamp, page, content, name FROM comments;"
-	rows, err := cs.db.Query(stmt)
+func (cs *SQLiteStore) GetAllComments(since time.Time) ([]Comment, error) {
+	stmt := "SELECT id, reply_to, timestamp, page, content, name FROM comments WHERE timestamp > ? ORDER BY timestamp DESC;"
+	rows, err := cs.db.Query(stmt, since)
 	if err != nil {
 		return nil, fmt.Errorf("error querying comments: %w", err)
 	}
@@ -64,9 +64,9 @@ func (cs *SQLiteStore) GetAllComments() ([]Comment, error) {
 	return comments, nil
 }
 
-func (cs *SQLiteStore) GetCommentsForPost(page string) ([]Comment, error) {
-	stmt := "SELECT id, reply_to, timestamp, page, content, name FROM comments WHERE page = ?;"
-	rows, err := cs.db.Query(stmt, page)
+func (cs *SQLiteStore) GetCommentsForPost(page string, since time.Time) ([]Comment, error) {
+	stmt := "SELECT id, reply_to, timestamp, page, content, name FROM comments WHERE page = ? AND timestamp > ? ORDER BY timestamp DESC;"
+	rows, err := cs.db.Query(stmt, page, since)
 	if err != nil {
 		return nil, fmt.Errorf("error querying comments for page %s: %w", page, err)
 	}

@@ -40,7 +40,6 @@ COPY --from=builder /etc/group /etc/group
 
 WORKDIR /app
 COPY --from=builder /code/comment-api /app/comment-api
-COPY --from=builder /code/db /app/db
 COPY .env.prod .env
 
 EXPOSE 8080

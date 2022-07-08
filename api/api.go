@@ -5,6 +5,7 @@ import (
 	"log"
 	"net/http"
 	"tiim/go-comment-api/model"
+	"time"
 
 	"github.com/gin-gonic/gin"
 )
@@ -68,7 +69,21 @@ func (cs *commentServer) handlePostComment(c *gin.Context) {
 }
 
 func (cs *commentServer) handleGetAllComments(c *gin.Context) {
-	comments, err := cs.store.GetAllComments()
+	sinceStr := c.Query("since")
+	var since time.Time
+	if sinceStr == "" {
+		since = time.Time{}
+	} else {
+		var err error
+		since, err = time.Parse(time.RFC3339, sinceStr)
+		if err != nil {
+			fmt.Println("Error parsing since: ", err)
+			c.AbortWithError(http.StatusBadRequest, fmt.Errorf("invalid since query parameter: %w", err))
+			return
+		}
+	}
+
+	comments, err := cs.store.GetAllComments(since)
 	if err != nil {
 		log.Println("Error getting comments: ", err)
 		c.AbortWithError(http.StatusInternalServerError, err)
@@ -79,7 +94,22 @@ func (cs *commentServer) handleGetAllComments(c *gin.Context) {
 
 func (cs *commentServer) handleGetComments(c *gin.Context) {
 	uuidParam := c.Param("uuid")
-	comments, err := cs.store.GetCommentsForPost(uuidParam)
+
+	sinceStr := c.Query("since")
+	var since time.Time
+	if sinceStr == "" {
+		since = time.Time{}
+	} else {
+		var err error
+		since, err = time.Parse(time.RFC3339, sinceStr)
+		if err != nil {
+			fmt.Println("Error parsing since: ", err)
+			c.AbortWithError(http.StatusBadRequest, fmt.Errorf("invalid since query parameter: %w", err))
+			return
+		}
+	}
+
+	comments, err := cs.store.GetCommentsForPost(uuidParam, since)
 	if err != nil {
 		fmt.Println("Error getting comments for post ", uuidParam, err)
 		c.AbortWithError(http.StatusInternalServerError, err)
