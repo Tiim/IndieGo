@@ -93,7 +93,7 @@ func (cs *commentServer) handleGetAllComments(c *gin.Context) {
 }
 
 func (cs *commentServer) handleGetComments(c *gin.Context) {
-	uuidParam := c.Param("uuid")
+	uuidParam := c.Param("page")
 
 	sinceStr := c.Query("since")
 	var since time.Time

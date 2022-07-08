@@ -34,7 +34,7 @@ func (cs *SQLiteStore) NewComment(c *Comment) error {
 
 func (cs *SQLiteStore) GetAllComments(since time.Time) ([]Comment, error) {
 	stmt := "SELECT id, reply_to, timestamp, page, content, name FROM comments WHERE timestamp > ? ORDER BY timestamp DESC;"
-	rows, err := cs.db.Query(stmt, since)
+	rows, err := cs.db.Query(stmt, since.UTC().Format(time.RFC3339))
 	if err != nil {
 		return nil, fmt.Errorf("error querying comments: %w", err)
 	}
@@ -67,7 +67,7 @@ func (cs *SQLiteStore) GetAllComments(since time.Time) ([]Comment, error) {
 
 func (cs *SQLiteStore) GetCommentsForPost(page string, since time.Time) ([]Comment, error) {
 	stmt := "SELECT id, reply_to, timestamp, page, content, name FROM comments WHERE page = ? AND timestamp > ? ORDER BY timestamp DESC;"
-	rows, err := cs.db.Query(stmt, page, since)
+	rows, err := cs.db.Query(stmt, page, since.UTC().Format(time.RFC3339))
 	if err != nil {
 		return nil, fmt.Errorf("error querying comments for page %s: %w", page, err)
 	}
@@ -153,7 +153,7 @@ func initTable(db *sql.DB) error {
 	stmt := `CREATE TABLE IF NOT EXISTS comments (
 		id TEXT not null primary key, 
 		reply_to TEXT,
-		timestamp TEXT not null,
+		timestamp TIMESTAMP not null,
 		page TEXT not null,
 		content TEXT not null,
 		name TEXT not null,
