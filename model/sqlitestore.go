@@ -9,22 +9,11 @@ import (
 	_ "github.com/mattn/go-sqlite3"
 )
 
-type Comment struct {
-	Id        string `json:"id"`
-	ReplyTo   string `json:"reply_to"`
-	Timestamp string `json:"timestamp"`
-	Page      string `json:"page"`
-	Content   string `json:"content"`
-	Name      string `json:"name"`
-	Email     string `json:"email"`
-	Notify    bool   `json:"notify"`
-}
-
-type CommentStore struct {
+type SQLiteStore struct {
 	db *sql.DB
 }
 
-func (cs *CommentStore) NewComment(c *Comment) error {
+func (cs *SQLiteStore) NewComment(c *Comment) error {
 	c.Id = uuid.New().String()
 	c.Timestamp = time.Now().Format(time.RFC3339)
 	stmt := "INSERT INTO comments (id, reply_to, timestamp, page, content, name, email) VALUES (?, ?, ?, ?, ?, ?, ?);"
@@ -42,7 +31,7 @@ func (cs *CommentStore) NewComment(c *Comment) error {
 	return nil
 }
 
-func (cs *CommentStore) GetAllComments() ([]Comment, error) {
+func (cs *SQLiteStore) GetAllComments() ([]Comment, error) {
 	stmt := "SELECT id, reply_to, timestamp, page, content, name FROM comments;"
 	rows, err := cs.db.Query(stmt)
 	if err != nil {
@@ -75,7 +64,7 @@ func (cs *CommentStore) GetAllComments() ([]Comment, error) {
 	return comments, nil
 }
 
-func (cs *CommentStore) GetCommentsForPost(page string) ([]Comment, error) {
+func (cs *SQLiteStore) GetCommentsForPost(page string) ([]Comment, error) {
 	stmt := "SELECT id, reply_to, timestamp, page, content, name FROM comments WHERE page = ?;"
 	rows, err := cs.db.Query(stmt, page)
 	if err != nil {
@@ -112,7 +101,7 @@ func (cs *CommentStore) GetCommentsForPost(page string) ([]Comment, error) {
 	return comments, nil
 }
 
-func (cs *CommentStore) DeleteComment(id string) error {
+func (cs *SQLiteStore) DeleteComment(id string) error {
 	stmt := "DELETE FROM comments WHERE id = ?;"
 	_, err := cs.db.Exec(stmt, id)
 	if err != nil {
@@ -140,7 +129,7 @@ func initTable(db *sql.DB) error {
 	return nil
 }
 
-func NewCommentStore() (*CommentStore, error) {
+func NewSQLiteStore() (*SQLiteStore, error) {
 	db, err := sql.Open("sqlite3", "./db/comments.sqlite")
 	if err != nil {
 		return nil, fmt.Errorf("error opening comments database: %w", err)
@@ -149,5 +138,5 @@ func NewCommentStore() (*CommentStore, error) {
 	if err != nil {
 		return nil, err
 	}
-	return &CommentStore{db}, nil
+	return &SQLiteStore{db}, nil
 }
