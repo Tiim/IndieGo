@@ -3,6 +3,7 @@ package model
 import (
 	"database/sql"
 	"fmt"
+	"log"
 	"time"
 
 	"github.com/google/uuid"
@@ -27,7 +28,7 @@ func (cs *SQLiteStore) NewComment(c *Comment) error {
 		return fmt.Errorf("error inserting comment: %w", err)
 	}
 
-	fmt.Println("Inserted", ra, "rows")
+	log.Println("Inserted", ra, "comments")
 	return nil
 }
 
