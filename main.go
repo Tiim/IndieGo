@@ -23,6 +23,7 @@ func main() {
 	emailnotify := &event.EmailNotify{
 		From:     os.Getenv("EMAIL_FROM"),
 		To:       os.Getenv("EMAIL_NOTIFY_TO"),
+		Username: os.Getenv("EMAIL_USERNAME"),
 		Password: os.Getenv("EMAIL_PASSWORD"),
 		SmtpHost: os.Getenv("EMAIL_SMTP_HOST"),
 		SmtpPort: os.Getenv("EMAIL_SMTP_PORT"),
