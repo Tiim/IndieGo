@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	_ "github.com/mattn/go-sqlite3"
+	_ "modernc.org/sqlite"
 )
 
 type SQLiteStore struct {
@@ -169,7 +169,7 @@ func initTable(db *sql.DB) error {
 }
 
 func NewSQLiteStore() (*SQLiteStore, error) {
-	db, err := sql.Open("sqlite3", "./db/comments.sqlite")
+	db, err := sql.Open("sqlite", "./db/comments.sqlite")
 	if err != nil {
 		return nil, fmt.Errorf("error opening comments database: %w", err)
 	}

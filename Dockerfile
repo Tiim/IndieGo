@@ -1,7 +1,7 @@
 # Build Step
 FROM golang:alpine AS builder
 
-RUN apk update && apk add --no-cache git tzdata g++ make
+RUN apk update && apk add --no-cache git tzdata g++ make ca-certificates
 
 
 # Source https://chemidy.medium.com/create-the-smallest-and-secured-golang-docker-image-based-on-scratch-4752223b7324
@@ -27,12 +27,14 @@ ADD . /code/
 
 # https://awstip.com/containerize-go-sqlite-with-docker-6d7fbecd14f0
 RUN --mount=type=cache,target=/root/.cache/go-build \
-    CGO_ENABLED=1 GOOS=linux \
-    go build -o comment-api -a -ldflags '-linkmode external -extldflags "-static"' .
+    CGO_ENABLED=0 go build -o comment-api -a .
 
 RUN mkdir -p /code/db
 
 FROM scratch
+
+# https://stackoverflow.com/a/52979541
+COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
 
 COPY --from=builder /usr/share/zoneinfo /usr/share/zoneinfo
 COPY --from=builder /etc/passwd /etc/passwd
