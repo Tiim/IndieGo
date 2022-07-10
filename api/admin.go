@@ -1,9 +1,7 @@
 package api
 
 import (
-	"embed"
 	"fmt"
-	"html/template"
 	"log"
 	"net/http"
 	"os"
@@ -13,15 +11,12 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-//go:embed templates/*
-var templates embed.FS
-
-type uiRoutes struct {
+type adminRoutes struct {
 	store model.Store
 	group *gin.RouterGroup
 }
 
-func newAdminRoutes(r *gin.Engine, store model.Store) uiRoutes {
+func newAdminRoutes(r *gin.Engine, store model.Store) adminRoutes {
 
 	password, envExists := os.LookupEnv("ADMIN_PW")
 	if !envExists {
@@ -32,20 +27,17 @@ func newAdminRoutes(r *gin.Engine, store model.Store) uiRoutes {
 		"admin": password,
 	}))
 
-	uir := uiRoutes{store: store, group: admin}
-
-	tp := template.Must(template.New("").ParseFS(templates, "templates/*"))
-	r.SetHTMLTemplate(tp)
+	uir := adminRoutes{store: store, group: admin}
 
 	return uir
 }
 
-func (ui *uiRoutes) start() {
+func (ui *adminRoutes) start() {
 	ui.group.GET("", ui.adminDashboard)
 	ui.group.POST("delete", ui.deleteComment)
 }
 
-func (ui *uiRoutes) adminDashboard(c *gin.Context) {
+func (ui *adminRoutes) adminDashboard(c *gin.Context) {
 	comments, err := ui.store.GetAllComments(time.Time{})
 
 	if err != nil {
@@ -56,7 +48,7 @@ func (ui *uiRoutes) adminDashboard(c *gin.Context) {
 	c.HTML(http.StatusOK, "dashboard.tmpl", gin.H{"comments": comments})
 }
 
-func (ui *uiRoutes) deleteComment(c *gin.Context) {
+func (ui *adminRoutes) deleteComment(c *gin.Context) {
 	commentId := c.PostForm("commentId")
 
 	if commentId == "" {

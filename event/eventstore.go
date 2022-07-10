@@ -60,3 +60,19 @@ func (s *Store) DeleteComment(id string) error {
 func (s *Store) GetComment(id string) (model.Comment, error) {
 	return s.store.GetComment(id)
 }
+
+func (s *Store) Unsubscribe(secret string) (model.Comment, error) {
+	v, ok := s.store.(model.SubscribtionStore)
+	if ok {
+		return v.Unsubscribe(secret)
+	}
+	return model.Comment{}, fmt.Errorf("store is not a subscribtion store")
+}
+
+func (s *Store) UnsubscribeAll(email string) ([]model.Comment, error) {
+	v, ok := s.store.(model.SubscribtionStore)
+	if ok {
+		return v.UnsubscribeAll(email)
+	}
+	return nil, fmt.Errorf("store is not a subscribtion store")
+}

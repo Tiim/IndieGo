@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Unsubscribe</title>
+  </head>
+  <body>
+    <h1>Unsubscribe</h1>
+    <p>Sucessfully unsubscribed from these comments:</p>
+    {{range .comments }}
+      <blockquote>
+        <p>{{ .Content }}</p>
+        <p>{{ .Email }}</p>
+      </blockquote>
+    {{end}}
+  </body>
+</html>

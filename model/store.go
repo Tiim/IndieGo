@@ -9,3 +9,9 @@ type Store interface {
 	DeleteComment(id string) error
 	GetComment(id string) (Comment, error)
 }
+
+type SubscribtionStore interface {
+	Store
+	Unsubscribe(secret string) (Comment, error)
+	UnsubscribeAll(email string) ([]Comment, error)
+}

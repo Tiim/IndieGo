@@ -2,12 +2,15 @@ package model
 
 import (
 	"database/sql"
+	"embed"
 	"fmt"
 	"log"
 	"time"
 
 	"github.com/google/uuid"
 	_ "modernc.org/sqlite"
+
+	"github.com/pressly/goose/v3"
 )
 
 type SQLiteStore struct {
@@ -149,21 +152,103 @@ func (cs *SQLiteStore) GetComment(id string) (Comment, error) {
 	return comment, nil
 }
 
-func initTable(db *sql.DB) error {
-	stmt := `CREATE TABLE IF NOT EXISTS comments (
-		id TEXT not null primary key, 
-		reply_to TEXT,
-		timestamp TIMESTAMP not null,
-		page TEXT not null,
-		content TEXT not null,
-		name TEXT not null,
-		email TEXT,
-		notify INTEGER not null default FALSE,
-		FOREIGN KEY(reply_to) REFERENCES comments(id)
-	);`
-	_, err := db.Exec(stmt)
+func (c *SQLiteStore) Unsubscribe(secret string) (Comment, error) {
+	stmt := "UPDATE comments SET notify = FALSE WHERE unsubscribe_secret = ?;"
+	_, err := c.db.Exec(stmt, secret)
 	if err != nil {
-		return fmt.Errorf("error creating comments table: %w", err)
+		return Comment{}, fmt.Errorf("error unsubscribing: %w", err)
+	}
+
+	stmt = "SELECT id, reply_to, timestamp, page, content, name, email FROM comments WHERE unsubscribe_secret = ?;"
+	rows, err := c.db.Query(stmt, secret)
+	if err != nil {
+		return Comment{}, fmt.Errorf("error querying unsubscribed comment: %w", err)
+	}
+	defer rows.Close()
+	var comment Comment
+	for rows.Next() {
+		var id string
+		var reply_to string
+		var timestamp string
+		var page string
+		var content string
+		var name string
+		var email string
+		err := rows.Scan(&id, &reply_to, &timestamp, &page, &content, &name, &email)
+		if err != nil {
+			return Comment{}, err
+		}
+		comment = Comment{
+			Id:        id,
+			ReplyTo:   reply_to,
+			Timestamp: timestamp,
+			Page:      page,
+			Content:   content,
+			Name:      name,
+			Email:     email,
+		}
+	}
+	if err := rows.Err(); err != nil {
+		return Comment{}, fmt.Errorf("error querying unsubscribed comment: %w", err)
+	}
+	return comment, nil
+}
+
+func (c *SQLiteStore) UnsubscribeAll(email string) ([]Comment, error) {
+	stmt := "UPDATE comments SET notify = FALSE WHERE email = ?;"
+	_, err := c.db.Exec(stmt, email)
+	if err != nil {
+		return nil, fmt.Errorf("error unsubscribing: %w", err)
+	}
+
+	stmt = "SELECT id, reply_to, timestamp, page, content, name, email FROM comments WHERE email = ?;"
+	rows, err := c.db.Query(stmt, email)
+	if err != nil {
+		return nil, fmt.Errorf("error querying unsubscribed comments: %w", err)
+	}
+	defer rows.Close()
+	comments := make([]Comment, 0)
+	for rows.Next() {
+		var id string
+		var reply_to string
+		var timestamp string
+		var page string
+		var content string
+		var name string
+		var email string
+		err := rows.Scan(&id, &reply_to, &timestamp, &page, &content, &name, &email)
+		if err != nil {
+			return nil, err
+		}
+		comment := Comment{
+			Id:        id,
+			ReplyTo:   reply_to,
+			Timestamp: timestamp,
+			Page:      page,
+			Content:   content,
+			Name:      name,
+			Email:     email,
+		}
+		comments = append(comments, comment)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("error querying unsubscribed comments: %w", err)
+	}
+	return comments, nil
+}
+
+//go:embed sqlite-migrations/*.sql
+var migrationsFs embed.FS
+
+func runMigrations(db *sql.DB) error {
+	goose.SetBaseFS(migrationsFs)
+	err := goose.SetDialect("sqlite3")
+	if err != nil {
+		return fmt.Errorf("error setting goose dialect for migration: %w", err)
+	}
+	err = goose.Up(db, "sqlite-migrations")
+	if err != nil {
+		return fmt.Errorf("error running migrations: %w", err)
 	}
 	return nil
 }
@@ -173,7 +258,7 @@ func NewSQLiteStore() (*SQLiteStore, error) {
 	if err != nil {
 		return nil, fmt.Errorf("error opening comments database: %w", err)
 	}
-	err = initTable(db)
+	err = runMigrations(db)
 	if err != nil {
 		return nil, err
 	}
