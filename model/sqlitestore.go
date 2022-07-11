@@ -20,8 +20,14 @@ type SQLiteStore struct {
 func (cs *SQLiteStore) NewComment(c *Comment) error {
 	c.Id = uuid.New().String()
 	c.Timestamp = time.Now().UTC().Format(time.RFC3339)
-	stmt := "INSERT INTO comments (id, reply_to, timestamp, page, content, name, email) VALUES (?, ?, ?, ?, ?, ?, ?);"
-	res, err := cs.db.Exec(stmt, c.Id, c.ReplyTo, c.Timestamp, c.Page, c.Content, c.Name, c.Email)
+	stmt := "INSERT INTO comments (id, reply_to, timestamp, page, content, name, email, notify) VALUES (?, ?, ?, ?, ?, ?, ?, ?);"
+
+	replyTo := &c.ReplyTo
+	if *replyTo == "" {
+		replyTo = nil
+	}
+
+	res, err := cs.db.Exec(stmt, c.Id, replyTo, c.Timestamp, c.Page, c.Content, c.Name, c.Email, c.Notify)
 	if err != nil {
 		return fmt.Errorf("error inserting comment: %w", err)
 	}
@@ -36,7 +42,7 @@ func (cs *SQLiteStore) NewComment(c *Comment) error {
 }
 
 func (cs *SQLiteStore) GetAllComments(since time.Time) ([]Comment, error) {
-	stmt := "SELECT id, reply_to, timestamp, page, content, name FROM comments WHERE timestamp > ? ORDER BY timestamp DESC;"
+	stmt := "SELECT * FROM comments WHERE timestamp > ? ORDER BY timestamp DESC;"
 	rows, err := cs.db.Query(stmt, since.UTC().Format(time.RFC3339))
 	if err != nil {
 		return nil, fmt.Errorf("error querying comments: %w", err)
@@ -45,20 +51,12 @@ func (cs *SQLiteStore) GetAllComments(since time.Time) ([]Comment, error) {
 
 	comments := make([]Comment, 0)
 	for rows.Next() {
-
-		var id string
-		var reply_to string
-		var timestamp string
-		var page string
-		var content string
-		var name string
-
-		err := rows.Scan(&id, &reply_to, &timestamp, &page, &content, &name)
+		comment, err := readRow(rows)
 		if err != nil {
-			return nil, fmt.Errorf("error listing all comments: %w", err)
+			log.Printf("error reading all comments: %v", err)
+			return nil, fmt.Errorf("error reading all comments: %w", err)
 		}
-		comment := Comment{Id: id, ReplyTo: reply_to, Timestamp: timestamp, Page: page, Content: content, Name: name, Email: ""}
-		comments = append(comments, comment)
+		comments = append(comments, *comment)
 	}
 
 	if err := rows.Err(); err != nil {
@@ -69,7 +67,7 @@ func (cs *SQLiteStore) GetAllComments(since time.Time) ([]Comment, error) {
 }
 
 func (cs *SQLiteStore) GetCommentsForPost(page string, since time.Time) ([]Comment, error) {
-	stmt := "SELECT id, reply_to, timestamp, page, content, name FROM comments WHERE page = ? AND timestamp > ? ORDER BY timestamp DESC;"
+	stmt := "SELECT * FROM comments WHERE page = ? AND timestamp > ? ORDER BY timestamp DESC;"
 	rows, err := cs.db.Query(stmt, page, since.UTC().Format(time.RFC3339))
 	if err != nil {
 		return nil, fmt.Errorf("error querying comments for page %s: %w", page, err)
@@ -78,26 +76,12 @@ func (cs *SQLiteStore) GetCommentsForPost(page string, since time.Time) ([]Comme
 
 	comments := make([]Comment, 0)
 	for rows.Next() {
-		var id string
-		var reply_to string
-		var timestamp string
-		var page string
-		var content string
-		var name string
-		err := rows.Scan(&id, &reply_to, &timestamp, &page, &content, &name)
+		comment, err := readRow(rows)
 		if err != nil {
-			return nil, err
+			log.Printf("error reading comments: %v", err)
+			return nil, fmt.Errorf("error reading comments for page %s: %w", page, err)
 		}
-		comment := Comment{
-			Id:        id,
-			ReplyTo:   reply_to,
-			Timestamp: timestamp,
-			Page:      page,
-			Content:   content,
-			Name:      name,
-			Email:     "",
-		}
-		comments = append(comments, comment)
+		comments = append(comments, *comment)
 	}
 	if err := rows.Err(); err != nil {
 		return nil, fmt.Errorf("error querying comments for page %s: %w", page, err)
@@ -115,41 +99,27 @@ func (cs *SQLiteStore) DeleteComment(id string) error {
 }
 
 func (cs *SQLiteStore) GetComment(id string) (Comment, error) {
-	stmt := "SELECT id, reply_to, timestamp, page, content, name FROM comments WHERE id = ?;"
+	stmt := "SELECT * FROM comments WHERE id = ?;"
 	rows, err := cs.db.Query(stmt, id)
 	if err != nil {
 		return Comment{}, fmt.Errorf("error querying comment with id %s: %w", id, err)
 	}
 	defer rows.Close()
 
-	var comment Comment
+	var comment *Comment
 
 	for rows.Next() {
-		var id string
-		var reply_to string
-		var timestamp string
-		var page string
-		var content string
-		var name string
-		err := rows.Scan(&id, &reply_to, &timestamp, &page, &content, &name)
+		comment, err = readRow(rows)
 		if err != nil {
-			return Comment{}, err
-		}
-		comment = Comment{
-			Id:        id,
-			ReplyTo:   reply_to,
-			Timestamp: timestamp,
-			Page:      page,
-			Content:   content,
-			Name:      name,
-			Email:     "",
+			log.Printf("error reading comment: %v", err)
+			return Comment{}, fmt.Errorf("error reading comment: %w", err)
 		}
 	}
 
 	if err := rows.Err(); err != nil {
 		return Comment{}, fmt.Errorf("error querying comment with id %s: %w", id, err)
 	}
-	return comment, nil
+	return *comment, nil
 }
 
 func (c *SQLiteStore) Unsubscribe(secret string) (Comment, error) {
@@ -159,39 +129,24 @@ func (c *SQLiteStore) Unsubscribe(secret string) (Comment, error) {
 		return Comment{}, fmt.Errorf("error unsubscribing: %w", err)
 	}
 
-	stmt = "SELECT id, reply_to, timestamp, page, content, name, email FROM comments WHERE unsubscribe_secret = ?;"
+	stmt = "SELECT * FROM comments WHERE unsubscribe_secret = ?;"
 	rows, err := c.db.Query(stmt, secret)
 	if err != nil {
 		return Comment{}, fmt.Errorf("error querying unsubscribed comment: %w", err)
 	}
 	defer rows.Close()
-	var comment Comment
+	var comment *Comment
 	for rows.Next() {
-		var id string
-		var reply_to string
-		var timestamp string
-		var page string
-		var content string
-		var name string
-		var email string
-		err := rows.Scan(&id, &reply_to, &timestamp, &page, &content, &name, &email)
+		comment, err = readRow(rows)
 		if err != nil {
-			return Comment{}, err
-		}
-		comment = Comment{
-			Id:        id,
-			ReplyTo:   reply_to,
-			Timestamp: timestamp,
-			Page:      page,
-			Content:   content,
-			Name:      name,
-			Email:     email,
+			log.Printf("error reading row while unsubscribing: %v", err)
+			return Comment{}, fmt.Errorf("error reading row while unsubscribing: %w", err)
 		}
 	}
 	if err := rows.Err(); err != nil {
 		return Comment{}, fmt.Errorf("error querying unsubscribed comment: %w", err)
 	}
-	return comment, nil
+	return *comment, nil
 }
 
 func (c *SQLiteStore) UnsubscribeAll(email string) ([]Comment, error) {
@@ -201,7 +156,7 @@ func (c *SQLiteStore) UnsubscribeAll(email string) ([]Comment, error) {
 		return nil, fmt.Errorf("error unsubscribing: %w", err)
 	}
 
-	stmt = "SELECT id, reply_to, timestamp, page, content, name, email FROM comments WHERE email = ?;"
+	stmt = "SELECT * FROM comments WHERE email = ?;"
 	rows, err := c.db.Query(stmt, email)
 	if err != nil {
 		return nil, fmt.Errorf("error querying unsubscribed comments: %w", err)
@@ -209,27 +164,13 @@ func (c *SQLiteStore) UnsubscribeAll(email string) ([]Comment, error) {
 	defer rows.Close()
 	comments := make([]Comment, 0)
 	for rows.Next() {
-		var id string
-		var reply_to string
-		var timestamp string
-		var page string
-		var content string
-		var name string
-		var email string
-		err := rows.Scan(&id, &reply_to, &timestamp, &page, &content, &name, &email)
+		comment, err := readRow(rows)
 		if err != nil {
-			return nil, err
+			log.Printf("error reading row while unsubscribing: %s", err)
+			return nil, fmt.Errorf("error reading row while unsubscribing: %w", err)
+		} else {
+			comments = append(comments, *comment)
 		}
-		comment := Comment{
-			Id:        id,
-			ReplyTo:   reply_to,
-			Timestamp: timestamp,
-			Page:      page,
-			Content:   content,
-			Name:      name,
-			Email:     email,
-		}
-		comments = append(comments, comment)
 	}
 	if err := rows.Err(); err != nil {
 		return nil, fmt.Errorf("error querying unsubscribed comments: %w", err)
@@ -240,13 +181,13 @@ func (c *SQLiteStore) UnsubscribeAll(email string) ([]Comment, error) {
 //go:embed sqlite-migrations/*.sql
 var migrationsFs embed.FS
 
-func runMigrations(db *sql.DB) error {
+func (c *SQLiteStore) RunMigrations() error {
 	goose.SetBaseFS(migrationsFs)
 	err := goose.SetDialect("sqlite3")
 	if err != nil {
 		return fmt.Errorf("error setting goose dialect for migration: %w", err)
 	}
-	err = goose.Up(db, "sqlite-migrations")
+	err = goose.Up(c.db, "sqlite-migrations")
 	if err != nil {
 		return fmt.Errorf("error running migrations: %w", err)
 	}
@@ -254,13 +195,40 @@ func runMigrations(db *sql.DB) error {
 }
 
 func NewSQLiteStore() (*SQLiteStore, error) {
-	db, err := sql.Open("sqlite", "./db/comments.sqlite")
+	path := "./db/comments.sqlite"
+	pragma := "_pragma=foreign_keys(1)&_pragma=journal_mode(WAL)&_pragma=synchronous(NORMAL)&_pragma=busy_timeout(8000)&_pragma=journal_size_limit(100000000)"
+	db, err := sql.Open("sqlite", fmt.Sprintf("%s?%s", path, pragma))
 	if err != nil {
 		return nil, fmt.Errorf("error opening comments database: %w", err)
 	}
-	err = runMigrations(db)
+	return &SQLiteStore{db}, nil
+}
+
+func readRow(rows *sql.Rows) (*Comment, error) {
+	c := Comment{}
+	var replyTo sql.NullString
+	var notify bool
+	var email string
+	err := rows.Scan(
+		&c.Id,
+		&replyTo,
+		&c.Timestamp,
+		&c.Page,
+		&c.Content,
+		&c.Name,
+		&email,
+		&notify,
+		&c.UnsubscribeSecret,
+	)
 	if err != nil {
 		return nil, err
 	}
-	return &SQLiteStore{db}, nil
+
+	c.Email = Email(email)
+	c.Notify = Notify(notify)
+	if replyTo.Valid {
+		c.ReplyTo = replyTo.String
+	}
+
+	return &c, nil
 }

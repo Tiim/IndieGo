@@ -38,7 +38,7 @@ func (cs *commentServer) Start() {
 	r.Use(trailingSlash(r))
 	r.Use(cors())
 	r.GET("/comment", cs.handleGetAllComments)
-	r.GET("/comment/:page", cs.handleGetComments)
+	r.GET("/comment/*page", cs.handleGetComments)
 	r.POST("/comment", cs.handlePostComment)
 
 	if _, ok := cs.store.(model.SubscribtionStore); ok {
@@ -108,7 +108,11 @@ func (cs *commentServer) handleGetAllComments(c *gin.Context) {
 }
 
 func (cs *commentServer) handleGetComments(c *gin.Context) {
-	uuidParam := c.Param("page")
+	page := c.Param("page")
+	if page[0] == '/' {
+		page = page[1:]
+	}
+	fmt.Println("uuidParam: ", page)
 
 	sinceStr := c.Query("since")
 	var since time.Time
@@ -124,9 +128,9 @@ func (cs *commentServer) handleGetComments(c *gin.Context) {
 		}
 	}
 
-	comments, err := cs.store.GetCommentsForPost(uuidParam, since)
+	comments, err := cs.store.GetCommentsForPost(page, since)
 	if err != nil {
-		fmt.Println("Error getting comments for post ", uuidParam, err)
+		fmt.Println("Error getting comments for post ", page, err)
 		c.AbortWithError(http.StatusInternalServerError, err)
 		return
 	}
