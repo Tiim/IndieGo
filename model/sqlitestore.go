@@ -4,7 +4,9 @@ import (
 	"database/sql"
 	"embed"
 	"fmt"
+	"io"
 	"log"
+	"os"
 	"time"
 
 	"github.com/google/uuid"
@@ -192,6 +194,50 @@ func (c *SQLiteStore) RunMigrations() error {
 		return fmt.Errorf("error running migrations: %w", err)
 	}
 	return nil
+}
+
+func (c *SQLiteStore) CleanUp() error {
+	log.Println("Vacuuming database")
+	stmt := "VACUUM;"
+	_, err := c.db.Exec(stmt)
+	if err != nil {
+		return fmt.Errorf("error performing db vaccum (sqlite clean up): %w", err)
+	}
+	return nil
+}
+
+func (c *SQLiteStore) Backup() (io.Reader, error) {
+	stmt := "VACUUM INTO 'backup.sqlite'"
+	_, err := c.db.Exec(stmt)
+	if err != nil {
+		return nil, fmt.Errorf("error creating backup: %w", err)
+	}
+	f, err := os.Open("backup.sqlite")
+	if err != nil {
+		return nil, fmt.Errorf("error opening backup: %w", err)
+	}
+
+	backupReader := BackupReader{*f}
+	return backupReader, nil
+}
+
+type BackupReader struct {
+	f os.File
+}
+
+func (b BackupReader) Read(p []byte) (int, error) {
+	n, err := b.f.Read(p)
+	if err == io.EOF {
+		err := b.f.Close()
+		if err != nil {
+			return n, fmt.Errorf("error closing backup after EOF when reading: %w", err)
+		}
+		err = os.Remove("backup.sqlite")
+		if err != nil {
+			return n, fmt.Errorf("error deleting backup file after EOF when reading: %w", err)
+		}
+	}
+	return n, err
 }
 
 func NewSQLiteStore() (*SQLiteStore, error) {

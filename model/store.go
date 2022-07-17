@@ -1,6 +1,9 @@
 package model
 
-import "time"
+import (
+	"io"
+	"time"
+)
 
 type Store interface {
 	NewComment(c *Comment) error
@@ -14,4 +17,12 @@ type SubscribtionStore interface {
 	Store
 	Unsubscribe(secret string) (Comment, error)
 	UnsubscribeAll(email string) ([]Comment, error)
+}
+
+type CleanupStore interface {
+	CleanUp() error
+}
+
+type BackupStore interface {
+	Backup() (io.Reader, error)
 }

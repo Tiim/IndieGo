@@ -54,9 +54,12 @@ func main() {
 		commentToUrl,
 	)
 
+	cleanup := &event.CleanUp{Store: store}
+
 	eventStore := event.NewEventStore(store, []event.Handler{
 		emailnotify,
 		replyEmailNotify,
+		cleanup,
 	})
 
 	server := api.NewCommentServer(eventStore)

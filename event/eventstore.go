@@ -2,6 +2,7 @@ package event
 
 import (
 	"fmt"
+	"io"
 	"os"
 	"tiim/go-comment-api/model"
 	"time"
@@ -75,4 +76,20 @@ func (s *Store) UnsubscribeAll(email string) ([]model.Comment, error) {
 		return v.UnsubscribeAll(email)
 	}
 	return nil, fmt.Errorf("store is not a subscribtion store")
+}
+
+func (s *Store) CleanUp() error {
+	v, ok := s.store.(model.CleanupStore)
+	if ok {
+		return v.CleanUp()
+	}
+	return fmt.Errorf("store is not a cleanup store")
+}
+
+func (s *Store) Backup() (io.Reader, error) {
+	v, ok := s.store.(model.BackupStore)
+	if ok {
+		return v.Backup()
+	}
+	return nil, fmt.Errorf("store is not a backup store")
 }
