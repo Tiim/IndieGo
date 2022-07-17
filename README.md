@@ -4,8 +4,9 @@ This project is a simple but extendable api to store comments for a jamstack web
 
 It supports prerendered apps by returning all comments on build time, and only returning comments since the last build when dynamically queried.
 
-![Image of the Go gopher with a speech bubble](/go-comment-api-image.svg)
+> [Blogpost why I built this project](https://tiim.ch/blog/2022-07-12-first-go-project-commenting-api)
 
+![Image of the Go gopher with a speech bubble](/go-comment-api-image.svg)
 
 ## API
 
