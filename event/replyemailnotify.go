@@ -11,18 +11,21 @@ import (
 )
 
 type replyEmail struct {
-	store    model.Store
-	from     string
-	subject  string
-	username string
-	password string
-	smtpHost string
-	smtpPort string
-	baseUrl  string
-	template *template.Template
+	store              model.Store
+	from               string
+	subject            string
+	username           string
+	password           string
+	smtpHost           string
+	smtpPort           string
+	baseUrl            string
+	template           *template.Template
+	commentToUrlMapper func(model.Comment) string
 }
 
-func NewReplyEmail(store model.Store, from, subject, username, password, smtpHost, smtpPort, baseUrl string) *replyEmail {
+func NewReplyEmail(store model.Store, from, subject, username, password,
+	smtpHost, smtpPort, baseUrl string,
+	urlFormat func(model.Comment) string) *replyEmail {
 
 	html := `
 	<html>
@@ -31,11 +34,11 @@ func NewReplyEmail(store model.Store, from, subject, username, password, smtpHos
 				<b> {{ .NewComment.Name }} </b> replied to your comment:
 			</p>
 			<blockquote>
-				<p>From: <b>{{ .YourComment.Name }}</b> (You)</p>
+				<p>From: <a href="{{ .YourCommentUrl }}"><b>{{ .YourComment.Name }}</b> (You)</a></p>
 				<p>{{ .YourComment.Content }}</p>
 			</blockquote>
 			<blockquote>
-				<p>From: <b>{{ .NewComment.Name }}</b></p>
+				<p>From: <a href="{{ .NewCommentUrl }}"><b>{{ .NewComment.Name }}</b></a></p>
 				<p>{{ .NewComment.Content }}</p>
 			</blockquote>
 			<p>
@@ -48,15 +51,16 @@ func NewReplyEmail(store model.Store, from, subject, username, password, smtpHos
 	template := template.Must(template.New("replyEmail").Parse(html))
 
 	return &replyEmail{
-		store:    store,
-		from:     from,
-		subject:  subject,
-		username: username,
-		password: password,
-		smtpHost: smtpHost,
-		smtpPort: smtpPort,
-		baseUrl:  baseUrl,
-		template: template,
+		store:              store,
+		from:               from,
+		subject:            subject,
+		username:           username,
+		password:           password,
+		smtpHost:           smtpHost,
+		smtpPort:           smtpPort,
+		baseUrl:            baseUrl,
+		template:           template,
+		commentToUrlMapper: urlFormat,
 	}
 }
 
@@ -75,13 +79,17 @@ func (n *replyEmail) doSendEmail(c model.Comment) {
 
 		var buf bytes.Buffer
 		err := n.template.Execute(&buf, struct {
-			NewComment  model.Comment
-			YourComment model.Comment
-			BaseUrl     string
+			NewComment     model.Comment
+			YourComment    model.Comment
+			BaseUrl        string
+			YourCommentUrl string
+			NewCommentUrl  string
 		}{
-			NewComment:  c,
-			YourComment: comment,
-			BaseUrl:     n.baseUrl,
+			NewComment:     c,
+			YourComment:    comment,
+			BaseUrl:        n.baseUrl,
+			YourCommentUrl: n.commentToUrlMapper(comment),
+			NewCommentUrl:  n.commentToUrlMapper(c),
 		})
 
 		if err != nil {

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"os"
 	"tiim/go-comment-api/api"
@@ -25,14 +26,19 @@ func main() {
 		log.Fatal(err)
 	}
 
+	commentToUrl := func(c model.Comment) string {
+		return fmt.Sprintf("https://tiim.ch/%s#%s", c.Page, c.Id)
+	}
+
 	emailnotify := &event.EmailNotify{
-		From:     os.Getenv("EMAIL_FROM"),
-		To:       os.Getenv("EMAIL_NOTIFY_TO"),
-		Username: os.Getenv("EMAIL_USERNAME"),
-		Password: os.Getenv("EMAIL_PASSWORD"),
-		SmtpHost: os.Getenv("EMAIL_SMTP_HOST"),
-		SmtpPort: os.Getenv("EMAIL_SMTP_PORT"),
-		Subject:  os.Getenv("EMAIL_NOTIFY_SUBJECT"),
+		From:               os.Getenv("EMAIL_FROM"),
+		To:                 os.Getenv("EMAIL_NOTIFY_TO"),
+		Username:           os.Getenv("EMAIL_USERNAME"),
+		Password:           os.Getenv("EMAIL_PASSWORD"),
+		SmtpHost:           os.Getenv("EMAIL_SMTP_HOST"),
+		SmtpPort:           os.Getenv("EMAIL_SMTP_PORT"),
+		Subject:            os.Getenv("EMAIL_NOTIFY_SUBJECT"),
+		CommentToUrlMapper: commentToUrl,
 	}
 
 	// TODO: database is locker (SQLITE_BUSY)
@@ -45,6 +51,7 @@ func main() {
 		os.Getenv("EMAIL_SMTP_HOST"),
 		os.Getenv("EMAIL_SMTP_PORT"),
 		os.Getenv("BASE_URL"),
+		commentToUrl,
 	)
 
 	eventStore := event.NewEventStore(store, []event.Handler{
