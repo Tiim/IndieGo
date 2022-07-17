@@ -8,6 +8,10 @@ It supports prerendered apps by returning all comments on build time, and only r
 
 ![Image of the Go gopher with a speech bubble](/go-comment-api-image.svg)
 
+## Demo
+
+You can try out this project on my [Blogpost about this project](https://tiim.ch/blog/2022-07-12-first-go-project-commenting-api).
+
 ## API
 
 The website can interact with the comment api via a rest(-ish) API. All routes are described here.
