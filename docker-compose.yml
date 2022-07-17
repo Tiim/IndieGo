@@ -6,6 +6,7 @@ services:
       - 'comments-db:/app/db/'
     networks:
       - traefik
+    restart: unless-stopped
     
     labels:
       traefik.http.routers.commentapi.rule: 'HOST(`comments.tiim.ch`)'
