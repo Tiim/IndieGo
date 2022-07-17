@@ -40,8 +40,7 @@ func (cs *commentServer) Start() {
 	r.Use(trailingSlash(r))
 	r.Use(cors())
 	r.GET("/", func(c *gin.Context) {
-		c.Header("Content-Type", "text/markdown; charset=utf-8")
-		c.String(http.StatusOK, "# Go Commenting API.\n\nSee [Tiim/go-comment-api](https://github.com/Tiim/go-comment-api) for more information.")
+		c.HTML(http.StatusOK, "index.tmpl", gin.H{})
 	})
 	r.GET("/comment", cs.handleGetAllComments)
 	r.GET("/comment/*page", cs.handleGetComments)
