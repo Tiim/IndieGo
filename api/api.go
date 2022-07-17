@@ -28,6 +28,8 @@ func (cs *commentServer) Start() {
 	r.RemoveExtraSlash = true
 	r.RedirectTrailingSlash = false
 
+	r.Use(ErrorMiddleware())
+
 	tp := template.Must(template.New("").ParseFS(templates, "templates/*"))
 	r.SetHTMLTemplate(tp)
 
@@ -56,6 +58,21 @@ func (cs *commentServer) Start() {
 
 	r.Run(":8080")
 
+}
+
+func ErrorMiddleware() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		c.Next()
+
+		if len(c.Errors) > 0 {
+			log.Printf("Error: %v", c.Errors)
+			status := c.Writer.Status()
+			if status == 0 || status < 400 {
+				status = http.StatusInternalServerError
+			}
+			c.JSON(status, gin.H{"status": status, "error": c.Errors})
+		}
+	}
 }
 
 func (cs *commentServer) handlePostComment(c *gin.Context) {
