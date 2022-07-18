@@ -12,6 +12,25 @@ It supports prerendered apps by returning all comments on build time, and only r
 
 You can try out this project on my [Blogpost about this project](https://tiim.ch/blog/2022-07-12-first-go-project-commenting-api).
 
+## Installation
+
+### Using docker compose
+
+The easiest way to run the go-comment-api is via docker compose. There is a [sample docker-compose.yml](/docker-compose.yml) that I use to host the comments for my website. To see how I deploy it on my webserver see [deploy.sh](/deploy.sh).
+
+### Compile it to a static binary
+You need a recent go version installed. Run the following command to compile:
+
+```sh
+go mod download
+CGO_ENABLED=0 go build -o comment-api -a .
+```
+
+This binary contains all needed data and templates. Run it with 
+```sh
+./comment-api
+```
+
 ## API
 
 The website can interact with the comment api via a rest(-ish) API. All routes are described here.
