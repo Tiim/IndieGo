@@ -12,34 +12,39 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-type adminRoutes struct {
-	store model.Store
-	group *gin.RouterGroup
+type adminModule struct {
+	password string
+	store    model.Store
+	group    *gin.RouterGroup
 }
 
-func newAdminRoutes(r *gin.Engine, store model.Store) adminRoutes {
-
+func NewAdminModule(store model.Store) *adminModule {
 	password, envExists := os.LookupEnv("ADMIN_PW")
 	if !envExists {
 		log.Fatal("env variable ADMIN_PW not found, check .env file")
 	}
 
-	admin := r.Group("/admin", gin.BasicAuth(gin.Accounts{
-		"admin": password,
-	}))
-
-	uir := adminRoutes{store: store, group: admin}
-
-	return uir
+	uir := adminModule{password: password, store: store}
+	return &uir
 }
 
-func (ui *adminRoutes) start() {
+func (ui *adminModule) Name() string {
+	return "Admin"
+}
+
+func (ui *adminModule) Init(r *gin.Engine) error {
+	ui.group = r.Group("/admin", gin.BasicAuth(gin.Accounts{"admin": ui.password}))
+	return nil
+}
+
+func (ui *adminModule) RegisterRoutes(r *gin.Engine) error {
 	ui.group.GET("", ui.adminDashboard)
 	ui.group.POST("delete", ui.deleteComment)
 	ui.group.GET("backup", ui.backup)
+	return nil
 }
 
-func (ui *adminRoutes) adminDashboard(c *gin.Context) {
+func (ui *adminModule) adminDashboard(c *gin.Context) {
 	comments, err := ui.store.GetAllComments(time.Time{})
 
 	if err != nil {
@@ -50,7 +55,7 @@ func (ui *adminRoutes) adminDashboard(c *gin.Context) {
 	c.HTML(http.StatusOK, "dashboard.tmpl", gin.H{"comments": comments})
 }
 
-func (ui *adminRoutes) deleteComment(c *gin.Context) {
+func (ui *adminModule) deleteComment(c *gin.Context) {
 	commentId := c.PostForm("commentId")
 
 	if commentId == "" {
@@ -66,7 +71,7 @@ func (ui *adminRoutes) deleteComment(c *gin.Context) {
 	c.Redirect(http.StatusFound, "/admin")
 }
 
-func (ui *adminRoutes) backup(c *gin.Context) {
+func (ui *adminModule) backup(c *gin.Context) {
 	backupStore, ok := (ui.store).(model.BackupStore)
 	if !ok {
 		log.Printf("Store is not a BackupStore")

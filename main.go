@@ -41,7 +41,6 @@ func main() {
 		CommentToUrlMapper: commentToUrl,
 	}
 
-	// TODO: database is locker (SQLITE_BUSY)
 	replyEmailNotify := event.NewReplyEmail(
 		store,
 		os.Getenv("EMAIL_FROM"),
@@ -62,6 +61,16 @@ func main() {
 		cleanup,
 	})
 
-	server := api.NewCommentServer(eventStore)
-	server.Start()
+	apiModules := []api.ApiModule{
+		api.NewIndexModule(),
+		api.NewCommentModule(eventStore),
+		api.NewAdminModule(eventStore),
+		api.NewSubscriptionModule(eventStore),
+	}
+
+	server := api.NewCommentServer(eventStore, apiModules)
+	err = server.Start()
+	if err != nil {
+		log.Fatal(err)
+	}
 }
