@@ -7,6 +7,7 @@ import (
 	"tiim/go-comment-api/api"
 	"tiim/go-comment-api/event"
 	"tiim/go-comment-api/model"
+	"tiim/go-comment-api/webmentions"
 
 	"github.com/joho/godotenv"
 )
@@ -17,11 +18,6 @@ func main() {
 	}
 
 	store, err := model.NewSQLiteStore()
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	err = store.RunMigrations()
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -55,6 +51,9 @@ func main() {
 
 	cleanup := &event.CleanUp{Store: store}
 
+	wmStore := webmentions.NewStore(store)
+	wmApi := webmentions.NewApi(wmStore, webmentions.NewMentionsQueueWorker(wmStore))
+
 	eventStore := event.NewEventStore(store, []event.Handler{
 		emailnotify,
 		replyEmailNotify,
@@ -66,6 +65,7 @@ func main() {
 		api.NewCommentModule(eventStore),
 		api.NewAdminModule(eventStore),
 		api.NewSubscriptionModule(eventStore),
+		wmApi,
 	}
 
 	server := api.NewCommentServer(eventStore, apiModules)

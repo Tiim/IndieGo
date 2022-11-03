@@ -92,7 +92,6 @@ func (cm *commentModule) handleGetComments(c *gin.Context) {
 	if page[0] == '/' {
 		page = page[1:]
 	}
-	fmt.Println("uuidParam: ", page)
 
 	sinceStr := c.Query("since")
 	var since time.Time

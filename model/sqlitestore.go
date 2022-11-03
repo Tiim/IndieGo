@@ -183,7 +183,7 @@ func (c *SQLiteStore) UnsubscribeAll(email string) ([]Comment, error) {
 //go:embed sqlite-migrations/*.sql
 var migrationsFs embed.FS
 
-func (c *SQLiteStore) RunMigrations() error {
+func (c *SQLiteStore) runMigrations() error {
 	goose.SetBaseFS(migrationsFs)
 	err := goose.SetDialect("sqlite3")
 	if err != nil {
@@ -240,6 +240,10 @@ func (b BackupReader) Read(p []byte) (int, error) {
 	return n, err
 }
 
+func (ss *SQLiteStore) GetDBConnection() *sql.DB {
+	return ss.db
+}
+
 func NewSQLiteStore() (*SQLiteStore, error) {
 	path := "./db/comments.sqlite"
 	pragma := "_pragma=foreign_keys(1)&_pragma=journal_mode(WAL)&_pragma=synchronous(NORMAL)&_pragma=busy_timeout(8000)&_pragma=journal_size_limit(100000000)"
@@ -247,7 +251,14 @@ func NewSQLiteStore() (*SQLiteStore, error) {
 	if err != nil {
 		return nil, fmt.Errorf("error opening comments database: %w", err)
 	}
-	return &SQLiteStore{db}, nil
+
+	store := &SQLiteStore{db}
+
+	if err := store.runMigrations(); err != nil {
+		return nil, fmt.Errorf("error running migrations: %w", err)
+	}
+
+	return store, nil
 }
 
 func readRow(rows *sql.Rows) (*Comment, error) {
