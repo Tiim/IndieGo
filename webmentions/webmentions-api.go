@@ -43,17 +43,16 @@ func (ui *webmentionsModule) handlePostWebmention(c *gin.Context) {
 	source := c.Request.Form.Get("source")
 	target := c.Request.Form.Get("target")
 
-	wm, err := newWebmention(source, target)
+	wm, err := NewWebmention(source, target)
 	if err != nil {
 		c.AbortWithError(http.StatusBadRequest, err)
 		return
 	}
 
-	if err := ui.store.scheduleForProcessing(wm); err != nil {
+	if err := ui.store.ScheduleForProcessing(wm); err != nil {
 		c.AbortWithError(http.StatusInternalServerError, err)
 		return
 	}
-	ui.worker.Ping()
 
 	c.Status(http.StatusAccepted)
 }

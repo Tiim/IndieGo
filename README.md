@@ -138,3 +138,8 @@ The model component handles the storage of the comments. Currently the implement
 
 The event component is an easy way to hook into what happens when a new comment gets submitted and when a comment gets deleted.
 By default there are two event components: the [EmailNotify](/event/emailnotify.go) and the [ReplyEmailNotify](/event/replyemailnotify.go) components. You can add as many event handlers as you like.
+
+
+## Tools for Testing and Development
+- [Node Webmention Testpinger](https://github.com/voxpelli/node-webmention-testpinger)
+  - `npx webmention-testpinger --endpoint=http://localhost:8080/wm/webmentions --target https://tiim.ch/target -p 8081`

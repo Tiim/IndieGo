@@ -246,7 +246,7 @@ func (ss *SQLiteStore) GetDBConnection() *sql.DB {
 
 func NewSQLiteStore() (*SQLiteStore, error) {
 	path := "./db/comments.sqlite"
-	pragma := "_pragma=foreign_keys(1)&_pragma=journal_mode(WAL)&_pragma=synchronous(NORMAL)&_pragma=busy_timeout(8000)&_pragma=journal_size_limit(100000000)"
+	pragma := "_pragma=busy_timeout(10000)&_pragma=journal_mode(WAL)&_pragma=foreign_keys(1)&_pragma=synchronous(NORMAL)&_pragma=journal_size_limit(100000000)"
 	db, err := sql.Open("sqlite", fmt.Sprintf("%s?%s", path, pragma))
 	if err != nil {
 		return nil, fmt.Errorf("error opening comments database: %w", err)
