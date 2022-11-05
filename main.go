@@ -60,10 +60,15 @@ func main() {
 		cleanup,
 	})
 
+	adminSections := []api.AdminSection{
+		api.NewAdminCommentSection(store),
+		api.NewAdminBackupSection(store),
+	}
+
 	apiModules := []api.ApiModule{
 		api.NewIndexModule(),
 		api.NewCommentModule(eventStore),
-		api.NewAdminModule(eventStore),
+		api.NewAdminModule(eventStore, adminSections),
 		api.NewSubscriptionModule(eventStore),
 		wmApi,
 	}

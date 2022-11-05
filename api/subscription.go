@@ -3,6 +3,7 @@ package api
 import (
 	"fmt"
 	"html/template"
+	"io/fs"
 	"net/http"
 	"tiim/go-comment-api/model"
 
@@ -22,7 +23,7 @@ func (sm *subscriptionModule) Name() string {
 	return "Subscription"
 }
 
-func (sm *subscriptionModule) Init(r *gin.Engine) error {
+func (sm *subscriptionModule) Init(r *gin.Engine, templates fs.FS) error {
 	return nil
 }
 

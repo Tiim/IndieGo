@@ -34,7 +34,7 @@ func (cs *commentServer) Start() error {
 	r.SetHTMLTemplate(tp)
 
 	for _, module := range cs.modules {
-		if err := module.Init(r); err != nil {
+		if err := module.Init(r, &templates); err != nil {
 			return fmt.Errorf("initialising module %s failed: %w", module.Name(), err)
 		}
 	}

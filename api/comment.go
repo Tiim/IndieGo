@@ -2,6 +2,7 @@ package api
 
 import (
 	"fmt"
+	"io/fs"
 	"log"
 	"net/http"
 	"tiim/go-comment-api/model"
@@ -23,7 +24,7 @@ func (cm *commentModule) Name() string {
 	return "Comment"
 }
 
-func (cm *commentModule) Init(r *gin.Engine) error {
+func (cm *commentModule) Init(r *gin.Engine, templates fs.FS) error {
 	return nil
 }
 

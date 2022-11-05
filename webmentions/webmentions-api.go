@@ -2,6 +2,7 @@ package webmentions
 
 import (
 	"fmt"
+	"io/fs"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -21,7 +22,7 @@ func (ui *webmentionsModule) Name() string {
 	return "Webmentions"
 }
 
-func (ui *webmentionsModule) Init(r *gin.Engine) error {
+func (ui *webmentionsModule) Init(r *gin.Engine, templates fs.FS) error {
 	return nil
 }
 

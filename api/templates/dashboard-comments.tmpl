@@ -1,0 +1,33 @@
+<table>
+  <thead>
+    <tr>
+      <th>Id</th>
+      <th>Timestamp</th>
+      <th>Name</th>
+      <th>Email</th>
+      <th>Notify</th>
+      <th>Page</th>
+      <th>Content</th>
+      <th></th>
+    </tr>
+  </thead>
+  <tbody>
+  {{range . }}
+    <tr>
+      <td>{{.Id}}</td>
+      <td>{{.Timestamp}}</td>
+      <td>{{.Name}}</td>
+      <td>{{.Email}}</td>
+      <td>{{.Notify}}</td>
+      <td>{{.Page}}</td>
+      <td><p class="content">{{.Content}}</p></td>
+      <td>
+        <form name="delete-{{.Id}}" action="admin/delete" method="post">
+          <input type="hidden" name="commentId" value="{{.Id}}" />
+          <input type="submit" value="Delete"/>
+        </form>
+      </td>
+    </tr>
+  {{end}}
+  </tbody>
+</table>
