@@ -20,7 +20,12 @@ CREATE TABLE IF NOT EXISTS webmentions (
   ts_created TIMESTAMP not null,
   ts_updated TIMESTAMP not null DEFAULT CURRENT_TIMESTAMP,
   source TEXT not null,
-  target TEXT not null
+  target TEXT not null,
+  deleted BOOLEAN not null DEFAULT false
+);
+
+CREATE TABLE IF NOT EXISTS domain_deny_list (
+  domain TEXT not null primary key
 );
 
 -- +goose Down

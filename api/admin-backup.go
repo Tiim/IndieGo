@@ -15,11 +15,11 @@ import (
 )
 
 type adminBackupSection struct {
-	store    model.Store
+	store    model.BackupStore
 	template *template.Template
 }
 
-func NewAdminBackupSection(store model.Store) *adminBackupSection {
+func NewAdminBackupSection(store model.BackupStore) *adminBackupSection {
 	return &adminBackupSection{
 		store: store,
 	}
@@ -50,13 +50,7 @@ func (ui *adminBackupSection) RegisterRoutes(group *gin.RouterGroup) error {
 }
 
 func (ui *adminBackupSection) backup(c *gin.Context) {
-	backupStore, ok := (ui.store).(model.BackupStore)
-	if !ok {
-		log.Printf("Store is not a BackupStore")
-		c.AbortWithError(http.StatusInternalServerError, fmt.Errorf("store is not a backup store"))
-		return
-	}
-	reader, err := backupStore.Backup()
+	reader, err := ui.store.Backup()
 	if err != nil {
 		log.Printf("Error backing up: %v", err)
 		c.AbortWithError(http.StatusInternalServerError, fmt.Errorf("unable to backup: %w", err))

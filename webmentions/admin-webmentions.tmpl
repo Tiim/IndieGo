@@ -1,0 +1,63 @@
+<table>
+  <thead>
+    <tr>
+      <th>Id</th>
+      <th>TS</th>
+      <th>Source</th>
+      <th>Target</th>
+      <th>Content</th>
+      <th></th>
+    </tr>
+  </thead>
+  <tbody>
+  {{range .Webmentions }}
+    <tr>
+      <td>{{.Id}}</td>
+      <td>{{.TsCreated}}</td>
+      <td><a href="{{.Source}}">Source</a></td>
+      <td><a href="{{.Target}}">Target</a></td>
+      <td></td>
+      <td>
+        <form 
+          onsubmit="return confirm('Do you really want to deny this domain?\n{{.Source}}');"
+          name="wm-blacklist-{{.Id}}" 
+          action="/admin/wm/denylist" 
+          method="post">
+          <input type="hidden" name="id" value="{{.Id}}">
+          <input type="submit" value="Blacklist">
+        </form>
+        <form 
+          onsubmit="return confirm('Do you really want to delete this webmention?\n{{.Source}}');" 
+          name="wm-delete-{{.Id}}" 
+          action="/admin/wm/delete" 
+          method="post">
+          <input type="hidden" name="id" value="{{.Id}}" />
+          <input type="submit" value="Delete"/>
+        </form>
+      </td>
+    </tr>
+  {{end}}
+  </tbody>
+</table>
+<h3>DenyList</h3>
+<table>
+  <thead>
+    <tr>
+      <th>Domain</th>
+      <th></th>
+    </tr>
+  </thead>
+  <tbody>
+  {{range .DenyList}}
+    <tr>
+      <td>{{.}}</td>
+      <td>
+        <form name="wm-denylist-delete" action="/admin/wm/denylist-remove" method="post">
+          <input type="hidden" name="domain" value="{{.}}">
+          <input type="submit" value="Remove">
+        </form>
+      </td>
+    </tr>
+  {{end}}
+  </tbody>
+</table>

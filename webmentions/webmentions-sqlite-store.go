@@ -66,6 +66,89 @@ func NewStore(store *model.SQLiteStore) *webmentionsStore {
 	return s
 }
 
+func (s *webmentionsStore) GetWebmentions() ([]*Webmention, error) {
+	rows, err := s.db.Query("SELECT id, source, target, ts_created, ts_updated FROM webmentions WHERE NOT deleted ORDER BY ts_created DESC")
+	if err != nil {
+		return nil, fmt.Errorf("unable to query webmentions: %w", err)
+	}
+	defer rows.Close()
+
+	var webmentions []*Webmention
+
+	for rows.Next() {
+		var webmention Webmention
+		err := rows.Scan(&webmention.Id, &webmention.Source, &webmention.Target, &webmention.TsCreated, &webmention.TsUpdated)
+		if err != nil {
+			return nil, fmt.Errorf("unable to scan webmention: %w", err)
+		}
+		webmentions = append(webmentions, &webmention)
+	}
+
+	return webmentions, nil
+}
+
+func (s *webmentionsStore) GetWebmention(id string) (*Webmention, error) {
+	var webmention Webmention
+	row := s.db.QueryRow("SELECT id, source, target, ts_created, ts_updated FROM webmentions WHERE id = ? AND NOT deleted", id)
+	err := row.Scan(&webmention.Id, &webmention.Source, &webmention.Target, &webmention.TsCreated, &webmention.TsUpdated)
+	if err != nil {
+		return nil, fmt.Errorf("unable to query webmention: %w", err)
+	}
+	return &webmention, nil
+}
+
+func (s *webmentionsStore) DeleteWebmention(id string) error {
+	_, err := s.db.Exec("UPDATE webmentions SET deleted = true WHERE id = ?", id)
+	return err
+}
+
+func (s *webmentionsStore) DenyListDomain(domain string) error {
+	_, err := s.db.Exec("INSERT INTO domain_deny_list (domain) VALUES (?)", domain)
+	if err != nil {
+		return fmt.Errorf("could not insert domain to deny list: %w", err)
+	}
+	wm, err := s.GetWebmentions()
+	if err != nil {
+		return fmt.Errorf("could not get webmentions: %w", err)
+	}
+	for _, w := range wm {
+		if w.SourceUrl().Hostname() == domain {
+			err := s.DeleteWebmention(w.Id)
+			if err != nil {
+				return fmt.Errorf("could not delete webmention: %w", err)
+			}
+		}
+	}
+
+	return nil
+}
+
+func (s *webmentionsStore) GetDomainDenyList() ([]string, error) {
+	rows, err := s.db.Query("SELECT domain FROM domain_deny_list")
+	if err != nil {
+		return nil, fmt.Errorf("unable to query domain deny list: %w", err)
+	}
+	defer rows.Close()
+
+	var domains []string
+
+	for rows.Next() {
+		var domain string
+		err := rows.Scan(&domain)
+		if err != nil {
+			return nil, fmt.Errorf("unable to scan domain: %w", err)
+		}
+		domains = append(domains, domain)
+	}
+
+	return domains, nil
+}
+
+func (s *webmentionsStore) DeleteDomainFromDenyList(domain string) error {
+	_, err := s.db.Exec("DELETE FROM domain_deny_list WHERE domain = ?", domain)
+	return err
+}
+
 func (s *webmentionsStore) ScheduleForProcessing(w *Webmention) error {
 	_, err := s.db.Exec("INSERT INTO webmentions_queue (id, source, target, timestamp) VALUES (?, ?, ?, ?)", w.Id, w.Source, w.Target, w.TsCreated)
 

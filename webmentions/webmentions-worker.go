@@ -6,11 +6,12 @@ import (
 )
 
 type mentionsQueueWorker struct {
-	store *webmentionsStore
+	store   *webmentionsStore
+	checker *WebmentionChecker
 }
 
-func NewMentionsQueueWorker(store *webmentionsStore) *mentionsQueueWorker {
-	worker := &mentionsQueueWorker{store: store}
+func NewMentionsQueueWorker(store *webmentionsStore, checker *WebmentionChecker) *mentionsQueueWorker {
+	worker := &mentionsQueueWorker{store: store, checker: checker}
 	go worker.run()
 	return worker
 }
@@ -28,10 +29,12 @@ func (w *mentionsQueueWorker) run() {
 }
 
 func (w *mentionsQueueWorker) processNextWebmention(wm *QueuedWebmention) error {
-	err := checkWebmentionValid(wm.webmention)
+	err := w.checker.CheckWebmentionValid(wm.webmention)
 	if err != nil {
+		log.Printf("Webmention %s failed checks: %v", wm.webmention.Source, err)
 		return w.store.MarkInvalid(wm, err.Error())
 	} else {
+		log.Printf("Webmention %s passed checks", wm.webmention.Source)
 		return w.store.MarkSuccess(wm)
 	}
 

@@ -52,7 +52,15 @@ func main() {
 	cleanup := &event.CleanUp{Store: store}
 
 	wmStore := webmentions.NewStore(store)
-	wmApi := webmentions.NewApi(wmStore, webmentions.NewMentionsQueueWorker(wmStore))
+
+	wmChecker := webmentions.NewWebmentionChecker(
+		[]webmentions.Checker{
+			webmentions.NewDomainChecker(wmStore),
+			webmentions.NewLinkToTargetChecker(),
+		},
+	)
+
+	wmApi := webmentions.NewApi(wmStore, webmentions.NewMentionsQueueWorker(wmStore, wmChecker))
 
 	eventStore := event.NewEventStore(store, []event.Handler{
 		emailnotify,
@@ -63,6 +71,7 @@ func main() {
 	adminSections := []api.AdminSection{
 		api.NewAdminCommentSection(store),
 		api.NewAdminBackupSection(store),
+		webmentions.NewAdminWebmentionsSection((wmStore)),
 	}
 
 	apiModules := []api.ApiModule{
