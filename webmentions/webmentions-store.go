@@ -3,67 +3,33 @@ package webmentions
 import (
 	"database/sql"
 	"fmt"
-	"net/url"
-	"strings"
+	"log"
+	"tiim/go-comment-api/event"
 	"tiim/go-comment-api/model"
 	"time"
-
-	"github.com/google/uuid"
 )
 
 type webmentionsStore struct {
-	db    *sql.DB
-	queue chan *QueuedWebmention
+	db           *sql.DB
+	queue        chan *QueuedWebmention
+	eventHandler event.Handler
 }
 
 type QueuedWebmention struct {
 	webmention *Webmention
 }
 
-type Webmention struct {
-	Id        string
-	Source    string
-	Target    string
-	TsCreated time.Time
-	TsUpdated time.Time
-}
-
-func NewWebmention(source, target string) (*Webmention, error) {
-
-	sourceUrl, err := url.ParseRequestURI(source)
-
-	if err != nil || !strings.HasPrefix(sourceUrl.Scheme, "http") {
-		return nil, fmt.Errorf("invalid source url: %w", err)
-	}
-
-	targetUrl, err := url.ParseRequestURI(target)
-
-	if err != nil || !strings.HasPrefix(targetUrl.Scheme, "http") {
-		return nil, fmt.Errorf("invalid target url: %w", err)
-	}
-
-	if *sourceUrl == *targetUrl {
-		return nil, fmt.Errorf("source and target are the same")
-	}
-
-	return &Webmention{
-		Id:        uuid.New().String(),
-		Source:    source,
-		Target:    target,
-		TsCreated: time.Now(),
-		TsUpdated: time.Now(),
-	}, nil
-}
-
-func (w *Webmention) SourceUrl() *url.URL {
-	u, _ := url.Parse(w.Source)
-	return u
-}
-
 func NewStore(store *model.SQLiteStore) *webmentionsStore {
-	s := &webmentionsStore{db: store.GetDBConnection(), queue: make(chan *QueuedWebmention, 20)}
+	s := &webmentionsStore{
+		db:    store.GetDBConnection(),
+		queue: make(chan *QueuedWebmention, 20),
+	}
 	s.populateQueue()
 	return s
+}
+
+func (s *webmentionsStore) SetEventHandler(handler event.Handler) {
+	s.eventHandler = handler
 }
 
 func (s *webmentionsStore) GetWebmentions() ([]*Webmention, error) {
@@ -87,9 +53,16 @@ func (s *webmentionsStore) GetWebmentions() ([]*Webmention, error) {
 	return webmentions, nil
 }
 
-func (s *webmentionsStore) GetWebmention(id string) (*Webmention, error) {
+func (s *webmentionsStore) GetWebmention(id string, tx *sql.Tx) (*Webmention, error) {
+
 	var webmention Webmention
-	row := s.db.QueryRow("SELECT id, source, target, ts_created, ts_updated FROM webmentions WHERE id = ? AND NOT deleted", id)
+	query := "SELECT id, source, target, ts_created, ts_updated FROM webmentions WHERE id = ? AND NOT deleted"
+	var row *sql.Row
+	if tx != nil {
+		row = s.db.QueryRow(query, id)
+	} else {
+		row = tx.QueryRow(query, id)
+	}
 	err := row.Scan(&webmention.Id, &webmention.Source, &webmention.Target, &webmention.TsCreated, &webmention.TsUpdated)
 	if err != nil {
 		return nil, fmt.Errorf("unable to query webmention: %w", err)
@@ -98,8 +71,34 @@ func (s *webmentionsStore) GetWebmention(id string) (*Webmention, error) {
 }
 
 func (s *webmentionsStore) DeleteWebmention(id string) error {
-	_, err := s.db.Exec("UPDATE webmentions SET deleted = true WHERE id = ?", id)
-	return err
+	tx, err := s.db.Begin()
+	if err != nil {
+		return fmt.Errorf("could not begin transaction: %w", err)
+	}
+	defer tx.Rollback()
+
+	mention, err := s.GetWebmention(id, tx)
+	if err != nil {
+		return err
+	}
+
+	_, err = tx.Exec("UPDATE webmentions SET deleted = true WHERE id = ?", id)
+
+	if err != nil {
+		return fmt.Errorf("could not delete webmention: %w", err)
+	}
+
+	genericComment := mention.ToGenericComment()
+	ok, err := s.eventHandler.OnDeleteComment(&genericComment)
+
+	if err != nil {
+		return fmt.Errorf("could not handle delete event: %w", err)
+	} else if !ok {
+		log.Printf("Delete rejected by event handler")
+		return nil
+	}
+
+	return tx.Commit()
 }
 
 func (s *webmentionsStore) DenyListDomain(domain string) error {
@@ -190,10 +189,10 @@ func (s *webmentionsStore) MarkInvalid(w *QueuedWebmention, reason string) error
 func (s *webmentionsStore) MarkSuccess(w *QueuedWebmention) error {
 	tx, err := s.db.Begin()
 	defer tx.Rollback()
-
 	if err != nil {
 		return fmt.Errorf("could not begin transaction: %w", err)
 	}
+
 	_, err = tx.Exec("INSERT INTO webmentions (id, source, target, ts_created) VALUES (?, ?, ?, ?)",
 		w.webmention.Id, w.webmention.Source, w.webmention.Target, w.webmention.TsCreated)
 	if err != nil {
@@ -204,7 +203,60 @@ func (s *webmentionsStore) MarkSuccess(w *QueuedWebmention) error {
 		return fmt.Errorf("could not delete webmention from queue: %w", err)
 	}
 
+	genericComment := w.webmention.ToGenericComment()
+	ok, err := s.eventHandler.OnNewComment(&genericComment)
+	if err != nil {
+		return fmt.Errorf("error handling event: %w", err)
+	} else if !ok {
+		log.Println("Webmention rejected by event handler")
+		return nil
+	}
+
 	return tx.Commit()
+}
+
+func (s *webmentionsStore) GetAllGenericComments(since time.Time) ([]*model.GenericComment, error) {
+	rows, err := s.db.Query("SELECT id, source, target, ts_created, ts_updated FROM webmentions WHERE deleted = false AND ts_updated > ?", since)
+	if err != nil {
+		return nil, fmt.Errorf("unable to query webmentions: %w", err)
+	}
+	defer rows.Close()
+
+	var comments []*model.GenericComment
+
+	for rows.Next() {
+		var comment Webmention
+		err := rows.Scan(&comment.Id, &comment.Source, &comment.Target, &comment.TsCreated, &comment.TsUpdated)
+		if err != nil {
+			return nil, fmt.Errorf("unable to scan webmention: %w", err)
+		}
+		genericComment := comment.ToGenericComment()
+		comments = append(comments, &genericComment)
+	}
+
+	return comments, nil
+}
+
+func (s *webmentionsStore) GetGenericCommentsForPage(page string, since time.Time) ([]*model.GenericComment, error) {
+	rows, err := s.db.Query("SELECT id, source, target, ts_created, ts_updated FROM webmentions WHERE deleted = false AND target = ? AND ts_updated > ?", page, since)
+	if err != nil {
+		return nil, fmt.Errorf("unable to query webmentions: %w", err)
+	}
+	defer rows.Close()
+
+	var comments []*model.GenericComment
+
+	for rows.Next() {
+		var comment Webmention
+		err := rows.Scan(&comment.Id, &comment.Source, &comment.Target, &comment.TsCreated, &comment.TsUpdated)
+		if err != nil {
+			return nil, fmt.Errorf("unable to scan webmention: %w", err)
+		}
+		genericComment := comment.ToGenericComment()
+		comments = append(comments, &genericComment)
+	}
+
+	return comments, nil
 }
 
 func (s *webmentionsStore) populateQueue() error {

@@ -5,6 +5,7 @@ import (
 	"log"
 	"os"
 	"tiim/go-comment-api/api"
+	"tiim/go-comment-api/comments"
 	"tiim/go-comment-api/event"
 	"tiim/go-comment-api/model"
 	"tiim/go-comment-api/webmentions"
@@ -22,23 +23,53 @@ func main() {
 		log.Fatal(err)
 	}
 
-	commentToUrl := func(c model.Comment) string {
-		return fmt.Sprintf("https://tiim.ch/%s#%s", c.Page, c.Id)
+	commentToUrl := func(page string, id string) string {
+		return fmt.Sprintf("https://tiim.ch/%s#%s", page, id)
 	}
+
+	//
+	// Comments
+	//
+
+	commentStore := comments.NewCommentStore(store.GetDBConnection(), commentToUrl)
+
+	//
+	// Webmentions
+	//
+	wmStore := webmentions.NewStore(store)
+	wmChecker := webmentions.NewWebmentionChecker(
+		[]webmentions.Checker{
+			webmentions.NewDomainChecker(wmStore),
+			webmentions.NewLinkToTargetChecker(),
+		},
+	)
+	wmApi := webmentions.NewApi(wmStore, webmentions.NewMentionsQueueWorker(wmStore, wmChecker))
+
+	//
+	// Generic Comments
+	//
+
+	commentProvider := []api.CommentProvider{
+		commentStore,
+		wmStore,
+	}
+
+	//
+	// Event handlers
+	//
 
 	emailnotify := &event.EmailNotify{
-		From:               os.Getenv("EMAIL_FROM"),
-		To:                 os.Getenv("EMAIL_NOTIFY_TO"),
-		Username:           os.Getenv("EMAIL_USERNAME"),
-		Password:           os.Getenv("EMAIL_PASSWORD"),
-		SmtpHost:           os.Getenv("EMAIL_SMTP_HOST"),
-		SmtpPort:           os.Getenv("EMAIL_SMTP_PORT"),
-		Subject:            os.Getenv("EMAIL_NOTIFY_SUBJECT"),
-		CommentToUrlMapper: commentToUrl,
+		From:     os.Getenv("EMAIL_FROM"),
+		To:       os.Getenv("EMAIL_NOTIFY_TO"),
+		Username: os.Getenv("EMAIL_USERNAME"),
+		Password: os.Getenv("EMAIL_PASSWORD"),
+		SmtpHost: os.Getenv("EMAIL_SMTP_HOST"),
+		SmtpPort: os.Getenv("EMAIL_SMTP_PORT"),
+		Subject:  os.Getenv("EMAIL_NOTIFY_SUBJECT"),
 	}
 
-	replyEmailNotify := event.NewReplyEmail(
-		store,
+	replyEmailNotify := comments.NewReplyEmail(
+		commentStore,
 		os.Getenv("EMAIL_FROM"),
 		os.Getenv("EMAIL_REPLY_SUBJECT"),
 		os.Getenv("EMAIL_USERNAME"),
@@ -46,43 +77,35 @@ func main() {
 		os.Getenv("EMAIL_SMTP_HOST"),
 		os.Getenv("EMAIL_SMTP_PORT"),
 		os.Getenv("BASE_URL"),
-		commentToUrl,
 	)
 
 	cleanup := &event.CleanUp{Store: store}
 
-	wmStore := webmentions.NewStore(store)
-
-	wmChecker := webmentions.NewWebmentionChecker(
-		[]webmentions.Checker{
-			webmentions.NewDomainChecker(wmStore),
-			webmentions.NewLinkToTargetChecker(),
-		},
-	)
-
-	wmApi := webmentions.NewApi(wmStore, webmentions.NewMentionsQueueWorker(wmStore, wmChecker))
-
-	eventStore := event.NewEventStore(store, []event.Handler{
+	eventHandler := event.NewHandlerList([]event.Handler{
 		emailnotify,
 		replyEmailNotify,
 		cleanup,
 	})
 
+	commentStore.SetEventHandler(eventHandler)
+	wmStore.SetEventHandler(eventHandler)
+
 	adminSections := []api.AdminSection{
-		api.NewAdminCommentSection(store),
+		comments.NewAdminCommentSection(commentStore),
 		api.NewAdminBackupSection(store),
 		webmentions.NewAdminWebmentionsSection((wmStore)),
 	}
 
 	apiModules := []api.ApiModule{
 		api.NewIndexModule(),
-		api.NewCommentModule(eventStore),
-		api.NewAdminModule(eventStore, adminSections),
-		api.NewSubscriptionModule(eventStore),
+		api.NewCommentModule(commentProvider),
+		api.NewAdminModule(adminSections),
+		comments.NewCommentModule(commentStore),
+		comments.NewSubscriptionModule(commentStore),
 		wmApi,
 	}
 
-	server := api.NewCommentServer(eventStore, apiModules)
+	server := api.NewCommentServer(apiModules)
 	err = server.Start()
 	if err != nil {
 		log.Fatal(err)

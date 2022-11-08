@@ -12,7 +12,7 @@ import (
 	_ "embed"
 )
 
-//go:embed admin-webmentions.tmpl
+//go:embed admin-webmentions-section.tmpl
 var webmentionsTemplate string
 
 type adminWebmentionsSection struct {
@@ -85,7 +85,7 @@ func (ui *adminWebmentionsSection) handleDenyListWebmention(c *gin.Context) {
 		return
 	}
 
-	wm, err := ui.store.GetWebmention(id)
+	wm, err := ui.store.GetWebmention(id, nil)
 	if err != nil {
 		c.JSON(500, gin.H{"error": err.Error()})
 		return

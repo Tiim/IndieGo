@@ -1,20 +1,19 @@
-package api
+package comments
 
 import (
 	"fmt"
 	"html/template"
 	"io/fs"
 	"net/http"
-	"tiim/go-comment-api/model"
 
 	"github.com/gin-gonic/gin"
 )
 
 type subscriptionModule struct {
-	store model.SubscribtionStore
+	store *commentStore
 }
 
-func NewSubscriptionModule(store model.SubscribtionStore) *subscriptionModule {
+func NewSubscriptionModule(store *commentStore) *subscriptionModule {
 	sm := subscriptionModule{store: store}
 	return &sm
 }

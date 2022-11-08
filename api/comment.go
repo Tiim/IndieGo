@@ -11,60 +11,34 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-type commentModule struct {
-	store model.Store
+type CommentProvider interface {
+	GetGenericCommentsForPage(page string, since time.Time) ([]*model.GenericComment, error)
+	GetAllGenericComments(since time.Time) ([]*model.GenericComment, error)
 }
 
-func NewCommentModule(store model.Store) *commentModule {
-	im := commentModule{store: store}
-	return &im
+type genericCommentApiModule struct {
+	CommentProviders []CommentProvider
 }
 
-func (cm *commentModule) Name() string {
+func NewCommentModule(CommentProviders []CommentProvider) *genericCommentApiModule {
+	return &genericCommentApiModule{CommentProviders: CommentProviders}
+}
+
+func (cm *genericCommentApiModule) Name() string {
 	return "Comment"
 }
 
-func (cm *commentModule) Init(r *gin.Engine, templates fs.FS) error {
+func (cm *genericCommentApiModule) Init(r *gin.Engine, templates fs.FS) error {
 	return nil
 }
 
-func (cm *commentModule) RegisterRoutes(r *gin.Engine) error {
+func (cm *genericCommentApiModule) RegisterRoutes(r *gin.Engine) error {
 	r.GET("/comment", cm.handleGetAllComments)
 	r.GET("/comment/*page", cm.handleGetComments)
-	r.POST("/comment", cm.handlePostComment)
 	return nil
 }
 
-func (cm *commentModule) handlePostComment(c *gin.Context) {
-	var comment model.Comment
-
-	if err := c.BindJSON(&comment); err != nil {
-		log.Println("Error binding comment: ", err)
-		c.AbortWithError(http.StatusBadRequest, fmt.Errorf("deserialising json failed: %w", err))
-		return
-	}
-
-	if comment.Content == "" || comment.Page == "" {
-		fmt.Println("Content or Page is empty")
-		c.AbortWithError(http.StatusBadRequest, fmt.Errorf("content or page is empty"))
-		return
-	}
-
-	if len(comment.Content) > 1024 || len(comment.Page) > 50 || len(comment.Name) > 70 || len(comment.Email) > 60 || len(comment.ReplyTo) > 40 {
-		fmt.Println("Content, Page, Name or Email is too long")
-		c.AbortWithError(http.StatusBadRequest, fmt.Errorf("content, page, name or email is too long"))
-		return
-	}
-	err := cm.store.NewComment(&comment)
-	if err != nil {
-		fmt.Println("Error inserting comment: ", err)
-		c.AbortWithError(http.StatusInternalServerError, err)
-		return
-	}
-	c.JSON(http.StatusOK, comment)
-}
-
-func (cm *commentModule) handleGetAllComments(c *gin.Context) {
+func (cm *genericCommentApiModule) handleGetAllComments(c *gin.Context) {
 	sinceStr := c.Query("since")
 	var since time.Time
 	if sinceStr == "" {
@@ -79,21 +53,25 @@ func (cm *commentModule) handleGetAllComments(c *gin.Context) {
 		}
 	}
 
-	comments, err := cm.store.GetAllComments(since)
-	if err != nil {
-		log.Println("Error getting comments: ", err)
-		c.AbortWithError(http.StatusInternalServerError, err)
-		return
+	allComments := make([]*model.GenericComment, 0)
+
+	for _, CommentProvider := range cm.CommentProviders {
+		comments, err := CommentProvider.GetAllGenericComments(since)
+		if err != nil {
+			log.Println("Error getting comments: ", err)
+			c.AbortWithError(http.StatusInternalServerError, err)
+			return
+		}
+		allComments = append(allComments, comments...)
 	}
-	c.JSON(http.StatusOK, comments)
+	c.JSON(http.StatusOK, allComments)
 }
 
-func (cm *commentModule) handleGetComments(c *gin.Context) {
+func (cm *genericCommentApiModule) handleGetComments(c *gin.Context) {
 	page := c.Param("page")
 	if page[0] == '/' {
 		page = page[1:]
 	}
-
 	sinceStr := c.Query("since")
 	var since time.Time
 	if sinceStr == "" {
@@ -108,11 +86,16 @@ func (cm *commentModule) handleGetComments(c *gin.Context) {
 		}
 	}
 
-	comments, err := cm.store.GetCommentsForPost(page, since)
-	if err != nil {
-		fmt.Println("Error getting comments for post ", page, err)
-		c.AbortWithError(http.StatusInternalServerError, err)
-		return
+	allComments := make([]*model.GenericComment, 0)
+
+	for _, CommentProvider := range cm.CommentProviders {
+		comments, err := CommentProvider.GetGenericCommentsForPage(page, since)
+		if err != nil {
+			log.Println("Error getting comments: ", err)
+			c.AbortWithError(http.StatusInternalServerError, err)
+			return
+		}
+		allComments = append(allComments, comments...)
 	}
-	c.JSON(http.StatusOK, comments)
+	c.JSON(http.StatusOK, allComments)
 }

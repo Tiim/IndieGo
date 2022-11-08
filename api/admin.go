@@ -7,7 +7,6 @@ import (
 	"log"
 	"net/http"
 	"os"
-	"tiim/go-comment-api/model"
 
 	"github.com/gin-gonic/gin"
 )
@@ -26,18 +25,17 @@ type sectionData struct {
 
 type adminModule struct {
 	password string
-	store    model.Store
 	group    *gin.RouterGroup
 	sections []AdminSection
 }
 
-func NewAdminModule(store model.Store, sections []AdminSection) *adminModule {
+func NewAdminModule(sections []AdminSection) *adminModule {
 	password, envExists := os.LookupEnv("ADMIN_PW")
 	if !envExists {
 		log.Fatal("env variable ADMIN_PW not found, check .env file")
 	}
 
-	uir := adminModule{password: password, store: store, sections: sections}
+	uir := adminModule{password: password, sections: sections}
 	return &uir
 }
 

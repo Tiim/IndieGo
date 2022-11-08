@@ -6,24 +6,22 @@ import (
 	"html/template"
 	"log"
 	"net/http"
-	"tiim/go-comment-api/model"
 
 	"github.com/gin-gonic/gin"
 )
 
-type commentServer struct {
-	store   model.Store
+type apiServer struct {
 	modules []ApiModule
 }
 
-func NewCommentServer(store model.Store, modules []ApiModule) *commentServer {
-	return &commentServer{store: store, modules: modules}
+func NewCommentServer(modules []ApiModule) *apiServer {
+	return &apiServer{modules: modules}
 }
 
 //go:embed templates/*
 var templates embed.FS
 
-func (cs *commentServer) Start() error {
+func (cs *apiServer) Start() error {
 	r := gin.New()
 	r.RemoveExtraSlash = true
 	r.RedirectTrailingSlash = false

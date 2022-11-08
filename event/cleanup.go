@@ -10,7 +10,7 @@ type CleanUp struct {
 	lastCleanup *time.Time
 }
 
-func (s *CleanUp) OnNewComment(c *model.Comment) (bool, error) {
+func (s *CleanUp) OnNewComment(c *model.GenericComment) (bool, error) {
 	t := time.Now()
 	if s.lastCleanup == nil || t.Sub(*s.lastCleanup) > time.Hour*24 {
 		s.lastCleanup = &t
@@ -18,7 +18,7 @@ func (s *CleanUp) OnNewComment(c *model.Comment) (bool, error) {
 	}
 	return true, nil
 }
-func (s *CleanUp) OnDeleteComment(c *model.Comment) (bool, error) {
+func (s *CleanUp) OnDeleteComment(c *model.GenericComment) (bool, error) {
 	t := time.Now()
 	if s.lastCleanup == nil || t.Sub(*s.lastCleanup) > time.Hour*24 {
 		s.lastCleanup = &t
