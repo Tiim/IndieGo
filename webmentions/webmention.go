@@ -51,7 +51,9 @@ func (w *Webmention) ToGenericComment() model.GenericComment {
 		Type:      "webmention",
 		Timestamp: w.TsCreated.Format(time.RFC3339),
 		Page:      w.Page(),
+		Url:       w.Target,
 		Content:   w.Source,
+		Name:      w.SourceUrl().Host,
 	}
 	return c
 }

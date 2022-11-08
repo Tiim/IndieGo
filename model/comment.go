@@ -4,7 +4,7 @@ type GenericComment struct {
 	Id        string `json:"id"`
 	Type      string `json:"type"`
 	ReplyTo   string `json:"replyTo"`
-	FromEmail string `json:"fromEmail"`
+	FromEmail string `json:"-"`
 	Timestamp string `json:"timestamp"`
 	Page      string `json:"page"`
 	Url       string `json:"url"`
