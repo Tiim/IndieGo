@@ -22,7 +22,8 @@ func (c *comment) ToGenericComment() model.GenericComment {
 		ReplyTo:   c.ReplyTo,
 		FromEmail: c.Email,
 		Timestamp: c.Timestamp,
-		Page:      c.Url,
+		Page:      c.Page,
+		Url:       c.Url,
 		Content:   c.Content,
 		Name:      c.Name,
 	}

@@ -50,7 +50,7 @@ func (w *Webmention) ToGenericComment() model.GenericComment {
 		Id:        w.Id,
 		Type:      "webmention",
 		Timestamp: w.TsCreated.Format(time.RFC3339),
-		Page:      w.Target,
+		Page:      w.Page(),
 		Content:   w.Source,
 	}
 	return c
@@ -59,4 +59,13 @@ func (w *Webmention) ToGenericComment() model.GenericComment {
 func (w *Webmention) SourceUrl() *url.URL {
 	u, _ := url.Parse(w.Source)
 	return u
+}
+
+func (w *Webmention) Page() string {
+	u, _ := url.Parse(w.Target)
+	page := u.Path
+	if page[0] == '/' {
+		page = page[1:]
+	}
+	return page
 }

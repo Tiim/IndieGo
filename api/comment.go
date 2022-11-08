@@ -53,17 +53,20 @@ func (cm *genericCommentApiModule) handleGetAllComments(c *gin.Context) {
 		}
 	}
 
-	allComments := make([]*model.GenericComment, 0)
+	allComments := make([]model.GenericComment, 0)
 
-	for _, CommentProvider := range cm.CommentProviders {
-		comments, err := CommentProvider.GetAllGenericComments(since)
+	for _, commentProvider := range cm.CommentProviders {
+		comments, err := commentProvider.GetAllGenericComments(since)
 		if err != nil {
 			log.Println("Error getting comments: ", err)
 			c.AbortWithError(http.StatusInternalServerError, err)
 			return
 		}
-		allComments = append(allComments, comments...)
+		for _, cmt := range comments {
+			allComments = append(allComments, *cmt)
+		}
 	}
+	fmt.Println("Sending all comments: ", allComments)
 	c.JSON(http.StatusOK, allComments)
 }
 
@@ -86,16 +89,19 @@ func (cm *genericCommentApiModule) handleGetComments(c *gin.Context) {
 		}
 	}
 
-	allComments := make([]*model.GenericComment, 0)
+	allComments := make([]model.GenericComment, 0)
 
-	for _, CommentProvider := range cm.CommentProviders {
-		comments, err := CommentProvider.GetGenericCommentsForPage(page, since)
+	for _, commentProvider := range cm.CommentProviders {
+		comments, err := commentProvider.GetGenericCommentsForPage(page, since)
 		if err != nil {
 			log.Println("Error getting comments: ", err)
 			c.AbortWithError(http.StatusInternalServerError, err)
 			return
 		}
-		allComments = append(allComments, comments...)
+		for _, cmt := range comments {
+			allComments = append(allComments, *cmt)
+		}
 	}
+	fmt.Printf("Sending comments for page %s: %s\n", page, allComments)
 	c.JSON(http.StatusOK, allComments)
 }

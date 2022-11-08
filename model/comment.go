@@ -7,6 +7,7 @@ type GenericComment struct {
 	FromEmail string `json:"fromEmail"`
 	Timestamp string `json:"timestamp"`
 	Page      string `json:"page"`
+	Url       string `json:"url"`
 	Content   string `json:"content"`
 	Name      string `json:"name"`
 }

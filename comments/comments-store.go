@@ -203,6 +203,7 @@ func (cs *commentStore) UnsubscribeAll(email string) ([]comment, error) {
 }
 
 func (cs *commentStore) GetGenericCommentsForPage(page string, since time.Time) ([]*model.GenericComment, error) {
+	fmt.Printf("SELECT * FROM comments WHERE page = '%s' AND timestamp > '%s' ORDER BY timestamp DESC;\n", page, since.UTC().Format(time.RFC3339))
 	stmt := "SELECT * FROM comments WHERE page = ? AND timestamp > ? ORDER BY timestamp DESC;"
 	rows, err := cs.db.Query(stmt, page, since.UTC().Format(time.RFC3339))
 	if err != nil {

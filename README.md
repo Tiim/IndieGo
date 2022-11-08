@@ -143,3 +143,4 @@ By default there are two event components: the [EmailNotify](/event/emailnotify.
 ## Tools for Testing and Development
 - [Node Webmention Testpinger](https://github.com/voxpelli/node-webmention-testpinger)
   - `npx webmention-testpinger --endpoint=http://localhost:8080/wm/webmentions --target https://tiim.ch/target -p 8081`
+  - `npx webmention-testpinger --endpoint=http://localhost:8080/wm/webmentions --target http://localhost:5173/projects/lenex-split-sheet -p 8081`
