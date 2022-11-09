@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"html/template"
 	"io/fs"
+	"log"
 	"net/http"
 
 	_ "embed"
@@ -49,7 +50,7 @@ func (sm *subscriptionModule) handleUnsubscribeComment(c *gin.Context) {
 
 	comment, err := sm.store.Unsubscribe(secret)
 	if err != nil {
-		fmt.Println("Error unsubscribing comment: ", err)
+		log.Println("Error unsubscribing comment: ", err)
 		c.AbortWithError(http.StatusInternalServerError, fmt.Errorf("unsubscribing comment failed: %w", err))
 		return
 	}
@@ -63,7 +64,7 @@ func (sm *subscriptionModule) handleUnsubscribeEmail(c *gin.Context) {
 
 	comments, err := sm.store.UnsubscribeAll(email)
 	if err != nil {
-		fmt.Println("Error unsubscribing comments: ", err)
+		log.Println("Error unsubscribing comments: ", err)
 		c.AbortWithError(http.StatusInternalServerError, fmt.Errorf("unsubscribing comments failed: %w", err))
 		return
 	}

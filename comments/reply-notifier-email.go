@@ -33,11 +33,11 @@ func NewReplyEmail(store *commentStore, from, subject, username, password,
 				<b> {{ .NewComment.Name }} </b> replied to your comment:
 			</p>
 			<blockquote>
-				<p>From: <a href="{{ .YourCommentUrl }}"><b>{{ .YourComment.Name }}</b> (You)</a></p>
+				<p>From: <a href="{{ .YourComment.Url }}"><b>{{ .YourComment.Name }}</b> (You)</a></p>
 				<p>{{ .YourComment.Content }}</p>
 			</blockquote>
 			<blockquote>
-				<p>From: <a href="{{ .NewCommentUrl }}"><b>{{ .NewComment.Name }}</b></a></p>
+				<p>From: <a href="{{ .NewComment.Url }}"><b>{{ .NewComment.Name }}</b></a></p>
 				<p>{{ .NewComment.Content }}</p>
 			</blockquote>
 			<p>
@@ -63,9 +63,7 @@ func NewReplyEmail(store *commentStore, from, subject, username, password,
 }
 
 func (n *replyEmail) OnNewComment(c *model.GenericComment) (bool, error) {
-	if c.ReplyTo != "" {
-		go n.doSendEmail(*c)
-	}
+	go n.doSendEmail(*c)
 	return true, nil
 }
 
@@ -77,21 +75,21 @@ func (n *replyEmail) doSendEmail(c model.GenericComment) {
 	}
 
 	for _, cChain := range commentChain {
-		log.Printf("sending reply notification email from %s to %s", n.from, cChain.Email)
+		if !cChain.Notify {
+			log.Println("not sending email for comment", cChain.Id, "because notify is false")
+			continue
+		}
+		log.Printf("sending reply notification email from %s to %s\n", n.from, cChain.Email)
 
 		var buf bytes.Buffer
 		err := n.template.Execute(&buf, struct {
-			NewComment     model.GenericComment
-			YourComment    comment
-			BaseUrl        string
-			YourCommentUrl string
-			NewCommentUrl  string
+			NewComment  model.GenericComment
+			YourComment comment
+			BaseUrl     string
 		}{
-			NewComment:     c,
-			YourComment:    cChain,
-			BaseUrl:        n.baseUrl,
-			YourCommentUrl: cChain.Url,
-			NewCommentUrl:  c.Page,
+			NewComment:  c,
+			YourComment: cChain,
+			BaseUrl:     n.baseUrl,
 		})
 
 		if err != nil {
@@ -105,27 +103,32 @@ func (n *replyEmail) doSendEmail(c model.GenericComment) {
 		e.Subject = n.subject
 		e.HTML = buf.Bytes()
 
-		log.Printf("sending mail: %s:%s user:%s", n.smtpHost, n.smtpPort, n.username)
+		log.Printf("sending reply mail: %s:%s user:%s\n", n.smtpHost, n.smtpPort, n.username)
 		err = e.Send(n.smtpHost+":"+n.smtpPort, smtp.PlainAuth("", n.username, n.password, n.smtpHost))
 
 		if err != nil {
 			log.Println("error sending notification email:", err)
 		} else {
-			log.Println("notification email sent")
+			log.Println("reply notification email sent")
 		}
 	}
 }
 
-func (n *replyEmail) collectReplyChain(currentComment model.GenericComment) ([]comment, error) {
+func (n *replyEmail) collectReplyChain(topComment model.GenericComment) ([]comment, error) {
+	currentComment := topComment.ReplyTo
 	comments := make([]comment, 0)
-	replyTo := currentComment.ReplyTo
-	for replyTo != "" {
+	for {
 		var err error
-		cmt, err := n.store.GetComment(currentComment.ReplyTo, nil)
+		cmt, err := n.store.GetComment(currentComment, nil)
 		if err != nil {
-			return nil, fmt.Errorf("error getting comment #%d: %s", len(comments), err)
+			return nil, fmt.Errorf("error getting comment #%s: %s", currentComment, err)
 		}
-		replyTo = cmt.ReplyTo
+		if cmt == nil {
+			break
+		}
+		currentComment = cmt.ReplyTo
+		comments = append(comments, *cmt)
+
 	}
 	return comments, nil
 }

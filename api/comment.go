@@ -47,7 +47,7 @@ func (cm *genericCommentApiModule) handleGetAllComments(c *gin.Context) {
 		var err error
 		since, err = time.Parse(time.RFC3339, sinceStr)
 		if err != nil {
-			fmt.Println("Error parsing since: ", err)
+			log.Println("Error parsing since: ", err)
 			c.AbortWithError(http.StatusBadRequest, fmt.Errorf("invalid since query parameter: %w", err))
 			return
 		}
@@ -64,7 +64,6 @@ func (cm *genericCommentApiModule) handleGetAllComments(c *gin.Context) {
 		}
 		allComments = append(allComments, comments...)
 	}
-	fmt.Println("Sending all comments: ", allComments)
 	c.JSON(http.StatusOK, allComments)
 }
 
@@ -81,7 +80,7 @@ func (cm *genericCommentApiModule) handleGetComments(c *gin.Context) {
 		var err error
 		since, err = time.Parse(time.RFC3339, sinceStr)
 		if err != nil {
-			fmt.Println("Error parsing since: ", err)
+			log.Println("Error parsing since: ", err)
 			c.AbortWithError(http.StatusBadRequest, fmt.Errorf("invalid since query parameter: %w", err))
 			return
 		}

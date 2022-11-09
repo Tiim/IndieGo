@@ -41,19 +41,19 @@ func (cm *commentApiModule) handlePostComment(c *gin.Context) {
 	}
 
 	if comment.Content == "" || comment.Page == "" {
-		fmt.Println("Content or Page is empty")
+		log.Println("Content or Page is empty")
 		c.AbortWithError(http.StatusBadRequest, fmt.Errorf("content or page is empty"))
 		return
 	}
 
 	if len(comment.Content) > 1024 || len(comment.Page) > 50 || len(comment.Name) > 70 || len(comment.Email) > 60 || len(comment.ReplyTo) > 40 {
-		fmt.Println("Content, Page, Name or Email is too long")
+		log.Println("Content, Page, Name or Email is too long")
 		c.AbortWithError(http.StatusBadRequest, fmt.Errorf("content, page, name or email is too long"))
 		return
 	}
 	err := cm.store.NewComment(&comment)
 	if err != nil {
-		fmt.Println("Error inserting comment: ", err)
+		log.Println("Error inserting comment: ", err)
 		c.AbortWithError(http.StatusInternalServerError, err)
 		return
 	}
