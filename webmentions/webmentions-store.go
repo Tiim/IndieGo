@@ -203,11 +203,13 @@ func (s *webmentionsStore) MarkSuccess(w *QueuedWebmention) error {
 	if row.Scan() != sql.ErrNoRows {
 		newWebmention = false
 	}
-	query := `INSERT INTO webmentions (id, source, target, ts_created, ts_updated, author_name, content) VALUES (?, ?, ?, ?, ?, ?, ?)
+	query := `INSERT INTO webmentions (id, source, target, ts_created, ts_updated, author_name, content, page) 
+						VALUES (?, ?, ?, ?, ?, ?, ?, ?)
 						ON CONFLICT (source, target) DO UPDATE SET 
 						ts_updated = excluded.ts_updated, author_name = excluded.author_name, content = excluded.content`
 	_, err = tx.Exec(query,
-		w.webmention.Id, w.webmention.Source, w.webmention.Target, w.webmention.TsCreated, w.webmention.TsUpdated, w.webmention.AuthorName, w.webmention.Content)
+		w.webmention.Id, w.webmention.Source, w.webmention.Target, w.webmention.TsCreated,
+		w.webmention.TsUpdated, w.webmention.AuthorName, w.webmention.Content, w.webmention.Page())
 	if err != nil {
 		return fmt.Errorf("could not insert queued webmention to webmention list: %w", err)
 	}
@@ -252,7 +254,7 @@ func (s *webmentionsStore) GetAllGenericComments(since time.Time) ([]model.Gener
 }
 
 func (s *webmentionsStore) GetGenericCommentsForPage(page string, since time.Time) ([]model.GenericComment, error) {
-	rows, err := s.db.Query("SELECT id, source, target, ts_created, ts_updated, author_name, content FROM webmentions WHERE deleted = false AND target = ? AND ts_updated > ?", page, since)
+	rows, err := s.db.Query("SELECT id, source, target, ts_created, ts_updated, author_name, content FROM webmentions WHERE deleted = false AND page = ? AND ts_updated > ?", page, since)
 	if err != nil {
 		return nil, fmt.Errorf("unable to query webmentions: %w", err)
 	}
