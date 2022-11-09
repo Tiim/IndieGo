@@ -11,11 +11,13 @@ import (
 )
 
 type Webmention struct {
-	Id        string
-	Source    string
-	Target    string
-	TsCreated time.Time
-	TsUpdated time.Time
+	Id         string
+	Source     string
+	Target     string
+	AuthorName string
+	Content    string
+	TsCreated  time.Time
+	TsUpdated  time.Time
 }
 
 func NewWebmention(source, target string) (*Webmention, error) {
@@ -37,11 +39,12 @@ func NewWebmention(source, target string) (*Webmention, error) {
 	}
 
 	return &Webmention{
-		Id:        uuid.New().String(),
-		Source:    source,
-		Target:    target,
-		TsCreated: time.Now(),
-		TsUpdated: time.Now(),
+		Id:         uuid.New().String(),
+		Source:     source,
+		Target:     target,
+		AuthorName: sourceUrl.Host,
+		TsCreated:  time.Now(),
+		TsUpdated:  time.Now(),
 	}, nil
 }
 
@@ -51,15 +54,20 @@ func (w *Webmention) ToGenericComment() model.GenericComment {
 		Type:      "webmention",
 		Timestamp: w.TsCreated.Format(time.RFC3339),
 		Page:      w.Page(),
-		Url:       w.Target,
-		Content:   w.Source,
-		Name:      w.SourceUrl().Host,
+		Url:       w.Source,
+		Content:   w.Content,
+		Name:      w.AuthorName,
 	}
 	return c
 }
 
 func (w *Webmention) SourceUrl() *url.URL {
 	u, _ := url.Parse(w.Source)
+	return u
+}
+
+func (w *Webmention) TargetUrl() *url.URL {
+	u, _ := url.Parse(w.Target)
 	return u
 }
 

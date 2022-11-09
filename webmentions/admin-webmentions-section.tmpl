@@ -3,6 +3,7 @@
     <tr>
       <th>Id</th>
       <th>TS</th>
+      <th>Name</th>
       <th>Source</th>
       <th>Target</th>
       <th>Content</th>
@@ -14,9 +15,10 @@
     <tr>
       <td>{{.Id}}</td>
       <td>{{.TsCreated}}</td>
+      <th>{{.AuthorName}}</th>
       <td><a href="{{.Source}}">Source</a></td>
       <td><a href="{{.Target}}">Target</a></td>
-      <td></td>
+      <td>{{.Content}}</td>
       <td>
         <form 
           onsubmit="return confirm('Do you really want to deny this domain?\n{{.Source}}');"
@@ -33,6 +35,13 @@
           method="post">
           <input type="hidden" name="id" value="{{.Id}}" />
           <input type="submit" value="Delete"/>
+        </form>
+        <form 
+          name="wm-update-{{.Id}}" 
+          action="/admin/wm/update" 
+          method="post">
+          <input type="hidden" name="id" value="{{.Id}}" />
+          <input type="submit" value="Update"/>
         </form>
       </td>
     </tr>

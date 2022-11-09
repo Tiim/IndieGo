@@ -39,8 +39,10 @@ func main() {
 	wmStore := webmentions.NewStore(store)
 	wmChecker := webmentions.NewWebmentionChecker(
 		[]webmentions.Checker{
+			webmentions.NewTargetChecker("tiim.ch", "localhost"),
 			webmentions.NewDomainChecker(wmStore),
 			webmentions.NewLinkToTargetChecker(),
+			webmentions.NewMicroformatEnricherChecker(),
 		},
 	)
 	wmApi := webmentions.NewApi(wmStore, webmentions.NewMentionsQueueWorker(wmStore, wmChecker))

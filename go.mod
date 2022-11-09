@@ -19,4 +19,5 @@ require (
 	golang.org/x/xerrors v0.0.0-20220907171357-04be3eba64a2 // indirect
 	google.golang.org/protobuf v1.28.1 // indirect
 	modernc.org/sqlite v1.19.4
+	willnorris.com/go/microformats v1.1.1
 )

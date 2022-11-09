@@ -33,7 +33,7 @@ func (s *webmentionsStore) SetEventHandler(handler event.Handler) {
 }
 
 func (s *webmentionsStore) GetWebmentions() ([]*Webmention, error) {
-	rows, err := s.db.Query("SELECT id, source, target, ts_created, ts_updated FROM webmentions WHERE NOT deleted ORDER BY ts_created DESC")
+	rows, err := s.db.Query("SELECT id, source, target, ts_created, ts_updated, author_name, content FROM webmentions WHERE NOT deleted ORDER BY ts_created DESC")
 	if err != nil {
 		return nil, fmt.Errorf("unable to query webmentions: %w", err)
 	}
@@ -43,7 +43,7 @@ func (s *webmentionsStore) GetWebmentions() ([]*Webmention, error) {
 
 	for rows.Next() {
 		var webmention Webmention
-		err := rows.Scan(&webmention.Id, &webmention.Source, &webmention.Target, &webmention.TsCreated, &webmention.TsUpdated)
+		err := rows.Scan(&webmention.Id, &webmention.Source, &webmention.Target, &webmention.TsCreated, &webmention.TsUpdated, &webmention.AuthorName, &webmention.Content)
 		if err != nil {
 			return nil, fmt.Errorf("unable to scan webmention: %w", err)
 		}
@@ -56,14 +56,14 @@ func (s *webmentionsStore) GetWebmentions() ([]*Webmention, error) {
 func (s *webmentionsStore) GetWebmention(id string, tx *sql.Tx) (*Webmention, error) {
 
 	var webmention Webmention
-	query := "SELECT id, source, target, ts_created, ts_updated FROM webmentions WHERE id = ? AND NOT deleted"
+	query := "SELECT id, source, target, ts_created, ts_updated, author_name, content FROM webmentions WHERE id = ? AND NOT deleted"
 	var row *sql.Row
 	if tx != nil {
 		row = s.db.QueryRow(query, id)
 	} else {
 		row = tx.QueryRow(query, id)
 	}
-	err := row.Scan(&webmention.Id, &webmention.Source, &webmention.Target, &webmention.TsCreated, &webmention.TsUpdated)
+	err := row.Scan(&webmention.Id, &webmention.Source, &webmention.Target, &webmention.TsCreated, &webmention.TsUpdated, &webmention.AuthorName, &webmention.Content)
 	if err != nil {
 		return nil, fmt.Errorf("unable to query webmention: %w", err)
 	}
@@ -172,7 +172,12 @@ func (s *webmentionsStore) MarkInvalid(w *QueuedWebmention, reason string) error
 		return fmt.Errorf("could not begin transaction: %w", err)
 	}
 
-	_, err = s.db.Exec("DELETE FROM webmentions_queue WHERE id = ?", w.webmention.Id)
+	_, err = tx.Exec("DELETE FROM webmentions_queue WHERE id = ?", w.webmention.Id)
+	if err != nil {
+		return err
+	}
+
+	_, err = tx.Exec("DELETE FROM webmentions WHERE source = ? AND target = ?", w.webmention.Source, w.webmention.Target)
 	if err != nil {
 		return err
 	}
@@ -198,10 +203,11 @@ func (s *webmentionsStore) MarkSuccess(w *QueuedWebmention) error {
 	if row.Scan() != sql.ErrNoRows {
 		newWebmention = false
 	}
-
-	_, err = tx.Exec(`INSERT INTO webmentions (id, source, target, ts_created) VALUES (?, ?, ?, ?)
-	 									ON CONFLICT (source, target) DO UPDATE SET ts_updated = ?`,
-		w.webmention.Id, w.webmention.Source, w.webmention.Target, w.webmention.TsCreated, w.webmention.TsUpdated)
+	query := `INSERT INTO webmentions (id, source, target, ts_created, ts_updated, author_name, content) VALUES (?, ?, ?, ?, ?, ?, ?)
+						ON CONFLICT (source, target) DO UPDATE SET 
+						ts_updated = excluded.ts_updated, author_name = excluded.author_name, content = excluded.content`
+	_, err = tx.Exec(query,
+		w.webmention.Id, w.webmention.Source, w.webmention.Target, w.webmention.TsCreated, w.webmention.TsUpdated, w.webmention.AuthorName, w.webmention.Content)
 	if err != nil {
 		return fmt.Errorf("could not insert queued webmention to webmention list: %w", err)
 	}
@@ -225,7 +231,7 @@ func (s *webmentionsStore) MarkSuccess(w *QueuedWebmention) error {
 }
 
 func (s *webmentionsStore) GetAllGenericComments(since time.Time) ([]model.GenericComment, error) {
-	rows, err := s.db.Query("SELECT id, source, target, ts_created, ts_updated FROM webmentions WHERE deleted = false AND ts_updated > ?", since)
+	rows, err := s.db.Query("SELECT id, source, target, ts_created, ts_updated, author_name, content FROM webmentions WHERE deleted = false AND ts_updated > ?", since)
 	if err != nil {
 		return nil, fmt.Errorf("unable to query webmentions: %w", err)
 	}
@@ -235,7 +241,7 @@ func (s *webmentionsStore) GetAllGenericComments(since time.Time) ([]model.Gener
 
 	for rows.Next() {
 		var comment Webmention
-		err := rows.Scan(&comment.Id, &comment.Source, &comment.Target, &comment.TsCreated, &comment.TsUpdated)
+		err := rows.Scan(&comment.Id, &comment.Source, &comment.Target, &comment.TsCreated, &comment.TsUpdated, &comment.AuthorName, &comment.Content)
 		if err != nil {
 			return nil, fmt.Errorf("unable to scan webmention: %w", err)
 		}
@@ -246,7 +252,7 @@ func (s *webmentionsStore) GetAllGenericComments(since time.Time) ([]model.Gener
 }
 
 func (s *webmentionsStore) GetGenericCommentsForPage(page string, since time.Time) ([]model.GenericComment, error) {
-	rows, err := s.db.Query("SELECT id, source, target, ts_created, ts_updated FROM webmentions WHERE deleted = false AND target = ? AND ts_updated > ?", page, since)
+	rows, err := s.db.Query("SELECT id, source, target, ts_created, ts_updated, author_name, content FROM webmentions WHERE deleted = false AND target = ? AND ts_updated > ?", page, since)
 	if err != nil {
 		return nil, fmt.Errorf("unable to query webmentions: %w", err)
 	}
@@ -256,7 +262,7 @@ func (s *webmentionsStore) GetGenericCommentsForPage(page string, since time.Tim
 
 	for rows.Next() {
 		var comment Webmention
-		err := rows.Scan(&comment.Id, &comment.Source, &comment.Target, &comment.TsCreated, &comment.TsUpdated)
+		err := rows.Scan(&comment.Id, &comment.Source, &comment.Target, &comment.TsCreated, &comment.TsUpdated, &comment.AuthorName, &comment.Content)
 		if err != nil {
 			return nil, fmt.Errorf("unable to scan webmention: %w", err)
 		}
