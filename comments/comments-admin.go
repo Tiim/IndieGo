@@ -8,6 +8,8 @@ import (
 	"net/http"
 	"time"
 
+	_ "embed"
+
 	"github.com/gin-gonic/gin"
 )
 
@@ -22,11 +24,11 @@ func NewAdminCommentSection(store *commentStore) *adminCommentsSection {
 	}
 }
 
+//go:embed admin-comments-section.tmpl
+var commentsTemplate string
+
 func (ui *adminCommentsSection) Init(templates fs.FS) error {
-	template, err := template.New("dashboard-comments.tmpl").ParseFS(templates, "templates/dashboard-comments.tmpl")
-	if err != nil {
-		return fmt.Errorf("unable to parse template: %w", err)
-	}
+	template := template.Must(template.New("comments").Parse(commentsTemplate))
 	ui.template = template
 	return nil
 }

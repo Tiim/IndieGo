@@ -22,7 +22,9 @@
       <td>{{.Page}}</td>
       <td><p class="content">{{.Content}}</p></td>
       <td>
-        <form name="delete-{{.Id}}" action="admin/delete" method="post">
+        <form
+          onsubmit="return confirm('Do you really want to delete this comment?\n{{.Content}}');" 
+          name="delete-{{.Id}}" action="admin/delete" method="post">
           <input type="hidden" name="commentId" value="{{.Id}}" />
           <input type="submit" value="Delete"/>
         </form>

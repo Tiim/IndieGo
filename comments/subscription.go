@@ -6,15 +6,27 @@ import (
 	"io/fs"
 	"net/http"
 
+	_ "embed"
+
 	"github.com/gin-gonic/gin"
 )
 
 type subscriptionModule struct {
-	store *commentStore
+	store        *commentStore
+	unsubComment *template.Template
+	unsubEmail   *template.Template
 }
 
+//go:embed unsubscribe_cmt.tmpl
+var unsubCommentTemplate string
+
+//go:embed unsubscribe_email.tmpl
+var unsubEmailTemplate string
+
 func NewSubscriptionModule(store *commentStore) *subscriptionModule {
-	sm := subscriptionModule{store: store}
+	unsubComment := template.Must(template.New("unsubComment").Parse(unsubCommentTemplate))
+	unsubEmail := template.Must(template.New("unsubEmail").Parse(unsubEmailTemplate))
+	sm := subscriptionModule{store: store, unsubComment: unsubComment, unsubEmail: unsubEmail}
 	return &sm
 }
 
@@ -42,7 +54,8 @@ func (sm *subscriptionModule) handleUnsubscribeComment(c *gin.Context) {
 		return
 	}
 
-	c.HTML(http.StatusOK, "unsubscribe_cmt.tmpl", gin.H{"comment": comment, "emailUrl": template.URLQueryEscaper(comment.Email)})
+	c.Writer.Header().Set("Content-Type", "text/html; charset=utf-8")
+	sm.unsubComment.Execute(c.Writer, map[string]interface{}{"comment": comment, "emailUrl": template.URLQueryEscaper(comment.Email)})
 }
 
 func (sm *subscriptionModule) handleUnsubscribeEmail(c *gin.Context) {
@@ -55,5 +68,6 @@ func (sm *subscriptionModule) handleUnsubscribeEmail(c *gin.Context) {
 		return
 	}
 
-	c.HTML(http.StatusOK, "unsubscribe_email.tmpl", gin.H{"comments": comments})
+	c.Writer.Header().Set("Content-Type", "text/html; charset=utf-8")
+	sm.unsubComment.Execute(c.Writer, map[string]interface{}{"comments": comments})
 }
