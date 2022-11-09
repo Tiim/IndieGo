@@ -12,8 +12,8 @@ import (
 )
 
 type CommentProvider interface {
-	GetGenericCommentsForPage(page string, since time.Time) ([]*model.GenericComment, error)
-	GetAllGenericComments(since time.Time) ([]*model.GenericComment, error)
+	GetGenericCommentsForPage(page string, since time.Time) ([]model.GenericComment, error)
+	GetAllGenericComments(since time.Time) ([]model.GenericComment, error)
 }
 
 type genericCommentApiModule struct {
@@ -62,9 +62,7 @@ func (cm *genericCommentApiModule) handleGetAllComments(c *gin.Context) {
 			c.AbortWithError(http.StatusInternalServerError, err)
 			return
 		}
-		for _, cmt := range comments {
-			allComments = append(allComments, *cmt)
-		}
+		allComments = append(allComments, comments...)
 	}
 	fmt.Println("Sending all comments: ", allComments)
 	c.JSON(http.StatusOK, allComments)
@@ -98,10 +96,7 @@ func (cm *genericCommentApiModule) handleGetComments(c *gin.Context) {
 			c.AbortWithError(http.StatusInternalServerError, err)
 			return
 		}
-		for _, cmt := range comments {
-			allComments = append(allComments, *cmt)
-		}
+		allComments = append(allComments, comments...)
 	}
-	fmt.Printf("Sending comments for page %s: %s\n", page, allComments)
 	c.JSON(http.StatusOK, allComments)
 }

@@ -105,6 +105,7 @@ func main() {
 		wmApi,
 	}
 
+	log.Println("Starting server")
 	server := api.NewCommentServer(apiModules)
 	err = server.Start()
 	if err != nil {

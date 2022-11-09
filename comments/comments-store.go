@@ -202,7 +202,7 @@ func (cs *commentStore) UnsubscribeAll(email string) ([]comment, error) {
 	return comments, nil
 }
 
-func (cs *commentStore) GetGenericCommentsForPage(page string, since time.Time) ([]*model.GenericComment, error) {
+func (cs *commentStore) GetGenericCommentsForPage(page string, since time.Time) ([]model.GenericComment, error) {
 	fmt.Printf("SELECT * FROM comments WHERE page = '%s' AND timestamp > '%s' ORDER BY timestamp DESC;\n", page, since.UTC().Format(time.RFC3339))
 	stmt := "SELECT * FROM comments WHERE page = ? AND timestamp > ? ORDER BY timestamp DESC;"
 	rows, err := cs.db.Query(stmt, page, since.UTC().Format(time.RFC3339))
@@ -211,15 +211,14 @@ func (cs *commentStore) GetGenericCommentsForPage(page string, since time.Time) 
 	}
 	defer rows.Close()
 
-	comments := make([]*model.GenericComment, 0)
+	comments := make([]model.GenericComment, 0)
 	for rows.Next() {
 		comment, err := cs.readRow(rows)
 		if err != nil {
 			log.Printf("error reading all comments: %v", err)
 			return nil, fmt.Errorf("error reading all comments: %w", err)
 		}
-		genericComment := comment.ToGenericComment()
-		comments = append(comments, &genericComment)
+		comments = append(comments, comment.ToGenericComment())
 	}
 
 	if err := rows.Err(); err != nil {
@@ -228,15 +227,14 @@ func (cs *commentStore) GetGenericCommentsForPage(page string, since time.Time) 
 
 	return comments, nil
 }
-func (cs *commentStore) GetAllGenericComments(since time.Time) ([]*model.GenericComment, error) {
+func (cs *commentStore) GetAllGenericComments(since time.Time) ([]model.GenericComment, error) {
 	comments, err := cs.GetAllComments(since)
 	if err != nil {
 		return nil, err
 	}
-	genericComments := make([]*model.GenericComment, len(comments))
+	genericComments := make([]model.GenericComment, len(comments))
 	for i, comment := range comments {
-		genericComment := comment.ToGenericComment()
-		genericComments[i] = &genericComment
+		genericComments[i] = comment.ToGenericComment()
 	}
 	return genericComments, nil
 }

@@ -24,7 +24,7 @@ func NewStore(store *model.SQLiteStore) *webmentionsStore {
 		db:    store.GetDBConnection(),
 		queue: make(chan *QueuedWebmention, 20),
 	}
-	s.populateQueue()
+	go s.populateQueue()
 	return s
 }
 
@@ -193,8 +193,15 @@ func (s *webmentionsStore) MarkSuccess(w *QueuedWebmention) error {
 		return fmt.Errorf("could not begin transaction: %w", err)
 	}
 
-	_, err = tx.Exec("INSERT INTO webmentions (id, source, target, ts_created) VALUES (?, ?, ?, ?)",
-		w.webmention.Id, w.webmention.Source, w.webmention.Target, w.webmention.TsCreated)
+	newWebmention := true
+	row := tx.QueryRow("SELECT id FROM webmentions WHERE source = ? AND target = ?")
+	if row.Scan() != sql.ErrNoRows {
+		newWebmention = false
+	}
+
+	_, err = tx.Exec(`INSERT INTO webmentions (id, source, target, ts_created) VALUES (?, ?, ?, ?)
+	 									ON CONFLICT (source, target) DO UPDATE SET ts_updated = ?`,
+		w.webmention.Id, w.webmention.Source, w.webmention.Target, w.webmention.TsCreated, w.webmention.TsUpdated)
 	if err != nil {
 		return fmt.Errorf("could not insert queued webmention to webmention list: %w", err)
 	}
@@ -203,26 +210,28 @@ func (s *webmentionsStore) MarkSuccess(w *QueuedWebmention) error {
 		return fmt.Errorf("could not delete webmention from queue: %w", err)
 	}
 
-	genericComment := w.webmention.ToGenericComment()
-	ok, err := s.eventHandler.OnNewComment(&genericComment)
-	if err != nil {
-		return fmt.Errorf("error handling event: %w", err)
-	} else if !ok {
-		log.Println("Webmention rejected by event handler")
-		return nil
+	if newWebmention {
+		genericComment := w.webmention.ToGenericComment()
+		ok, err := s.eventHandler.OnNewComment(&genericComment)
+		if err != nil {
+			return fmt.Errorf("error handling event: %w", err)
+		} else if !ok {
+			log.Println("Webmention rejected by event handler")
+			return nil
+		}
 	}
 
 	return tx.Commit()
 }
 
-func (s *webmentionsStore) GetAllGenericComments(since time.Time) ([]*model.GenericComment, error) {
+func (s *webmentionsStore) GetAllGenericComments(since time.Time) ([]model.GenericComment, error) {
 	rows, err := s.db.Query("SELECT id, source, target, ts_created, ts_updated FROM webmentions WHERE deleted = false AND ts_updated > ?", since)
 	if err != nil {
 		return nil, fmt.Errorf("unable to query webmentions: %w", err)
 	}
 	defer rows.Close()
 
-	var comments []*model.GenericComment
+	var comments []model.GenericComment
 
 	for rows.Next() {
 		var comment Webmention
@@ -230,21 +239,20 @@ func (s *webmentionsStore) GetAllGenericComments(since time.Time) ([]*model.Gene
 		if err != nil {
 			return nil, fmt.Errorf("unable to scan webmention: %w", err)
 		}
-		genericComment := comment.ToGenericComment()
-		comments = append(comments, &genericComment)
+		comments = append(comments, comment.ToGenericComment())
 	}
 
 	return comments, nil
 }
 
-func (s *webmentionsStore) GetGenericCommentsForPage(page string, since time.Time) ([]*model.GenericComment, error) {
+func (s *webmentionsStore) GetGenericCommentsForPage(page string, since time.Time) ([]model.GenericComment, error) {
 	rows, err := s.db.Query("SELECT id, source, target, ts_created, ts_updated FROM webmentions WHERE deleted = false AND target = ? AND ts_updated > ?", page, since)
 	if err != nil {
 		return nil, fmt.Errorf("unable to query webmentions: %w", err)
 	}
 	defer rows.Close()
 
-	var comments []*model.GenericComment
+	var comments []model.GenericComment
 
 	for rows.Next() {
 		var comment Webmention
@@ -252,8 +260,7 @@ func (s *webmentionsStore) GetGenericCommentsForPage(page string, since time.Tim
 		if err != nil {
 			return nil, fmt.Errorf("unable to scan webmention: %w", err)
 		}
-		genericComment := comment.ToGenericComment()
-		comments = append(comments, &genericComment)
+		comments = append(comments, comment.ToGenericComment())
 	}
 
 	return comments, nil

@@ -24,7 +24,10 @@ func (w *mentionsQueueWorker) run() {
 			log.Println(err)
 			return
 		}
-		w.processNextWebmention(wm)
+		err = w.processNextWebmention(wm)
+		if err != nil {
+			log.Printf("Error processing webmention: %s", err)
+		}
 	}
 }
 
