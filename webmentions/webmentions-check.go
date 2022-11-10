@@ -166,23 +166,10 @@ func extractAuthor(hentry *microformats.Microformat, w *Webmention) {
 }
 
 func extractContent(hentry *microformats.Microformat, w *Webmention) {
-	reply := hentry.Properties["in-reply-to"]
-	isReply := false
-	for _, replyTo := range reply {
-		replyMf, ok := replyTo.(*microformats.Microformat)
-		if ok {
-			if replyMf.Value == w.Target {
-				isReply = true
-			}
-		}
-	}
-	if !isReply {
-		w.Content = ""
-		return
-	}
 	eContent := getMF2EContent(hentry)
 	pSummary := getMF2PSummary(hentry)
 	pName := getMF2PName(hentry)
+	fmt.Printf("content: %s, summary: %s, name: %s\n", eContent, pSummary, pName)
 	w.Content = truncateContentAndSummary(eContent, pSummary, pName)
 }
 
@@ -224,9 +211,9 @@ func truncateContent(content string) string {
 func getMF2EContent(hentry *microformats.Microformat) string {
 	content := hentry.Properties["content"]
 	if len(content) > 0 {
-		contentMf, ok := content[0].(*microformats.Microformat)
+		contentMf, ok := content[0].(map[string]string)
 		if ok {
-			return contentMf.Value
+			return contentMf["value"]
 		}
 	}
 	return ""
