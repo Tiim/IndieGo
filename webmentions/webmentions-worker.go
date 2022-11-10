@@ -6,11 +6,11 @@ import (
 )
 
 type mentionsQueueWorker struct {
-	store   *webmentionsStore
+	store   webmentionsStore
 	checker *WebmentionChecker
 }
 
-func NewMentionsQueueWorker(store *webmentionsStore, checker *WebmentionChecker) *mentionsQueueWorker {
+func NewMentionsQueueWorker(store webmentionsStore, checker *WebmentionChecker) *mentionsQueueWorker {
 	worker := &mentionsQueueWorker{store: store, checker: checker}
 	go worker.run()
 	return worker

@@ -141,6 +141,19 @@ By default there are two event components: the [EmailNotify](/event/emailnotify.
 
 
 ## Tools for Testing and Development
-- [Node Webmention Testpinger](https://github.com/voxpelli/node-webmention-testpinger)
-  - `npx webmention-testpinger --endpoint=http://localhost:8080/wm/webmentions --target https://tiim.ch/target -p 8081`
-  - `npx webmention-testpinger --endpoint=http://localhost:8080/wm/webmentions --target http://localhost:5173/projects/lenex-split-sheet -p 8081`
+
+### Node Webmention Testpinger
+
+[Source](https://github.com/voxpelli/node-webmention-testpinger)
+
+- `npx webmention-testpinger --endpoint=http://localhost:8080/wm/webmentions --target https://tiim.ch/target -p 8081`
+- `npx webmention-testpinger --endpoint=http://localhost:8080/wm/webmentions --target http://localhost:5173/projects/lenex-split-sheet -p 8081`
+
+### Sending single webmention with curl
+
+
+```sh
+cd _data/webmention-html/
+python3 -m http.server
+curl -i -d source=http://localhost:8000/webmention-rocks.html -d target=https://tiim.ch/blog/2022-07-12-first-go-project-commenting-api http://localhost:8080/wm/webmentions
+```

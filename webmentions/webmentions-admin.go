@@ -16,11 +16,11 @@ import (
 var webmentionsTemplate string
 
 type adminWebmentionsSection struct {
-	store    *webmentionsStore
+	store    webmentionsStore
 	template *template.Template
 }
 
-func NewAdminWebmentionsSection(store *webmentionsStore) *adminWebmentionsSection {
+func NewAdminWebmentionsSection(store webmentionsStore) *adminWebmentionsSection {
 	return &adminWebmentionsSection{
 		store: store,
 	}

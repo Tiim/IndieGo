@@ -9,11 +9,11 @@ import (
 )
 
 type webmentionsModule struct {
-	store  *webmentionsStore
+	store  webmentionsStore
 	worker *mentionsQueueWorker
 }
 
-func NewApi(store *webmentionsStore, worker *mentionsQueueWorker) *webmentionsModule {
+func NewApi(store webmentionsStore, worker *mentionsQueueWorker) *webmentionsModule {
 	im := webmentionsModule{store: store, worker: worker}
 	return &im
 }

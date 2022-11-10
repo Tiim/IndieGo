@@ -9,7 +9,21 @@ import (
 	"time"
 )
 
-type webmentionsStore struct {
+type webmentionsStore interface {
+	SetEventHandler(handler event.Handler)
+	GetWebmentions() ([]*Webmention, error)
+	GetWebmention(id string, tx *sql.Tx) (*Webmention, error)
+	DeleteWebmention(id string) error
+	DenyListDomain(domain string) error
+	GetDomainDenyList() ([]string, error)
+	DeleteDomainFromDenyList(domain string) error
+	ScheduleForProcessing(*Webmention) error
+	NextWebmentionFromQueue() (*QueuedWebmention, error)
+	MarkInvalid(w *QueuedWebmention, reason string) error
+	MarkSuccess(w *QueuedWebmention) error
+}
+
+type webmentionsSqLiteStore struct {
 	db           *sql.DB
 	queue        chan *QueuedWebmention
 	eventHandler event.Handler
@@ -19,8 +33,8 @@ type QueuedWebmention struct {
 	webmention *Webmention
 }
 
-func NewStore(store *model.SQLiteStore) *webmentionsStore {
-	s := &webmentionsStore{
+func NewStore(store *model.SQLiteStore) *webmentionsSqLiteStore {
+	s := &webmentionsSqLiteStore{
 		db:    store.GetDBConnection(),
 		queue: make(chan *QueuedWebmention, 20),
 	}
@@ -28,11 +42,11 @@ func NewStore(store *model.SQLiteStore) *webmentionsStore {
 	return s
 }
 
-func (s *webmentionsStore) SetEventHandler(handler event.Handler) {
+func (s *webmentionsSqLiteStore) SetEventHandler(handler event.Handler) {
 	s.eventHandler = handler
 }
 
-func (s *webmentionsStore) GetWebmentions() ([]*Webmention, error) {
+func (s *webmentionsSqLiteStore) GetWebmentions() ([]*Webmention, error) {
 	rows, err := s.db.Query("SELECT id, source, target, ts_created, ts_updated, author_name, content FROM webmentions WHERE NOT deleted ORDER BY ts_created DESC")
 	if err != nil {
 		return nil, fmt.Errorf("unable to query webmentions: %w", err)
@@ -53,7 +67,7 @@ func (s *webmentionsStore) GetWebmentions() ([]*Webmention, error) {
 	return webmentions, nil
 }
 
-func (s *webmentionsStore) GetWebmention(id string, tx *sql.Tx) (*Webmention, error) {
+func (s *webmentionsSqLiteStore) GetWebmention(id string, tx *sql.Tx) (*Webmention, error) {
 
 	var webmention Webmention
 	query := "SELECT id, source, target, ts_created, ts_updated, author_name, content FROM webmentions WHERE id = ? AND NOT deleted"
@@ -70,7 +84,7 @@ func (s *webmentionsStore) GetWebmention(id string, tx *sql.Tx) (*Webmention, er
 	return &webmention, nil
 }
 
-func (s *webmentionsStore) DeleteWebmention(id string) error {
+func (s *webmentionsSqLiteStore) DeleteWebmention(id string) error {
 	tx, err := s.db.Begin()
 	if err != nil {
 		return fmt.Errorf("could not begin transaction: %w", err)
@@ -101,7 +115,7 @@ func (s *webmentionsStore) DeleteWebmention(id string) error {
 	return tx.Commit()
 }
 
-func (s *webmentionsStore) DenyListDomain(domain string) error {
+func (s *webmentionsSqLiteStore) DenyListDomain(domain string) error {
 	_, err := s.db.Exec("INSERT INTO domain_deny_list (domain) VALUES (?)", domain)
 	if err != nil {
 		return fmt.Errorf("could not insert domain to deny list: %w", err)
@@ -122,7 +136,7 @@ func (s *webmentionsStore) DenyListDomain(domain string) error {
 	return nil
 }
 
-func (s *webmentionsStore) GetDomainDenyList() ([]string, error) {
+func (s *webmentionsSqLiteStore) GetDomainDenyList() ([]string, error) {
 	rows, err := s.db.Query("SELECT domain FROM domain_deny_list")
 	if err != nil {
 		return nil, fmt.Errorf("unable to query domain deny list: %w", err)
@@ -143,12 +157,12 @@ func (s *webmentionsStore) GetDomainDenyList() ([]string, error) {
 	return domains, nil
 }
 
-func (s *webmentionsStore) DeleteDomainFromDenyList(domain string) error {
+func (s *webmentionsSqLiteStore) DeleteDomainFromDenyList(domain string) error {
 	_, err := s.db.Exec("DELETE FROM domain_deny_list WHERE domain = ?", domain)
 	return err
 }
 
-func (s *webmentionsStore) ScheduleForProcessing(w *Webmention) error {
+func (s *webmentionsSqLiteStore) ScheduleForProcessing(w *Webmention) error {
 	_, err := s.db.Exec("INSERT INTO webmentions_queue (id, source, target, timestamp) VALUES (?, ?, ?, ?)", w.Id, w.Source, w.Target, w.TsCreated)
 
 	if err != nil {
@@ -159,12 +173,12 @@ func (s *webmentionsStore) ScheduleForProcessing(w *Webmention) error {
 	return nil
 }
 
-func (s *webmentionsStore) NextWebmentionFromQueue() (*QueuedWebmention, error) {
+func (s *webmentionsSqLiteStore) NextWebmentionFromQueue() (*QueuedWebmention, error) {
 	mention := <-s.queue
 	return mention, nil
 }
 
-func (s *webmentionsStore) MarkInvalid(w *QueuedWebmention, reason string) error {
+func (s *webmentionsSqLiteStore) MarkInvalid(w *QueuedWebmention, reason string) error {
 	tx, err := s.db.Begin()
 	defer tx.Rollback()
 
@@ -191,7 +205,7 @@ func (s *webmentionsStore) MarkInvalid(w *QueuedWebmention, reason string) error
 	return tx.Commit()
 }
 
-func (s *webmentionsStore) MarkSuccess(w *QueuedWebmention) error {
+func (s *webmentionsSqLiteStore) MarkSuccess(w *QueuedWebmention) error {
 	tx, err := s.db.Begin()
 	defer tx.Rollback()
 	if err != nil {
@@ -232,7 +246,7 @@ func (s *webmentionsStore) MarkSuccess(w *QueuedWebmention) error {
 	return tx.Commit()
 }
 
-func (s *webmentionsStore) GetAllGenericComments(since time.Time) ([]model.GenericComment, error) {
+func (s *webmentionsSqLiteStore) GetAllGenericComments(since time.Time) ([]model.GenericComment, error) {
 	rows, err := s.db.Query("SELECT id, source, target, ts_created, ts_updated, author_name, content FROM webmentions WHERE deleted = false AND ts_updated > ?", since)
 	if err != nil {
 		return nil, fmt.Errorf("unable to query webmentions: %w", err)
@@ -253,7 +267,7 @@ func (s *webmentionsStore) GetAllGenericComments(since time.Time) ([]model.Gener
 	return comments, nil
 }
 
-func (s *webmentionsStore) GetGenericCommentsForPage(page string, since time.Time) ([]model.GenericComment, error) {
+func (s *webmentionsSqLiteStore) GetGenericCommentsForPage(page string, since time.Time) ([]model.GenericComment, error) {
 	rows, err := s.db.Query("SELECT id, source, target, ts_created, ts_updated, author_name, content FROM webmentions WHERE deleted = false AND page = ? AND ts_updated > ?", page, since)
 	if err != nil {
 		return nil, fmt.Errorf("unable to query webmentions: %w", err)
@@ -274,7 +288,7 @@ func (s *webmentionsStore) GetGenericCommentsForPage(page string, since time.Tim
 	return comments, nil
 }
 
-func (s *webmentionsStore) populateQueue() error {
+func (s *webmentionsSqLiteStore) populateQueue() error {
 	rows, err := s.db.Query("SELECT id, source, target, timestamp FROM webmentions_queue ORDER BY TIMESTAMP ASC")
 	if err != nil {
 		return err
