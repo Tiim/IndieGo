@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io/fs"
 	"net/http"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 )
@@ -52,6 +53,12 @@ func (ui *webmentionsModule) handlePostWebmention(c *gin.Context) {
 
 	if err := ui.store.ScheduleForProcessing(wm); err != nil {
 		c.AbortWithError(http.StatusInternalServerError, err)
+		return
+	}
+
+	// check if the referer header is set and if it is, redirect back to it
+	if referer := c.Request.Header.Get("Referer"); referer != "" && strings.HasSuffix(referer, "/admin") {
+		c.Redirect(http.StatusFound, referer)
 		return
 	}
 

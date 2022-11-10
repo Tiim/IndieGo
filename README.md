@@ -12,6 +12,12 @@ It supports prerendered apps by returning all comments on build time, and only r
 
 You can try out this project on my [Blogpost about this project](https://tiim.ch/blog/2022-07-12-first-go-project-commenting-api).
 
+## Run Tests
+
+```sh
+go test ./...
+```
+
 ## Installation
 
 ### Using docker compose
@@ -153,7 +159,7 @@ By default there are two event components: the [EmailNotify](/event/emailnotify.
 
 
 ```sh
-cd _data/webmention-html/
+cd test-data/html/
 python3 -m http.server
 curl -i -d source=http://localhost:8000/webmention-rocks.html -d target=https://tiim.ch/blog/2022-07-12-first-go-project-commenting-api http://localhost:8080/wm/webmentions
 ```

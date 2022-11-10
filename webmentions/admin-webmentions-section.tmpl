@@ -38,9 +38,10 @@
         </form>
         <form 
           name="wm-update-{{.Id}}" 
-          action="/admin/wm/update" 
+          action="/wm/webmentions" 
           method="post">
-          <input type="hidden" name="id" value="{{.Id}}" />
+          <input type="hidden" name="source" value="{{.Source}}" />
+          <input type="hidden" name="target" value="{{.Target}}" />
           <input type="submit" value="Update"/>
         </form>
       </td>
