@@ -146,20 +146,36 @@ The event component is an easy way to hook into what happens when a new comment 
 By default there are two event components: the [EmailNotify](/event/emailnotify.go) and the [ReplyEmailNotify](/event/replyemailnotify.go) components. You can add as many event handlers as you like.
 
 
-## Tools for Testing and Development
+## Development
 
-### Node Webmention Testpinger
+### Running migrations in the cli
+
+```sh
+# Up
+goose -dir model/sqlite-migrations/ sqlite3 db/comments.sqlite up
+# Down
+goose -dir model/sqlite-migrations/ sqlite3 db/comments.sqlite down
+```
+
+### Tools
+#### Node Webmention Testpinger
 
 [Source](https://github.com/voxpelli/node-webmention-testpinger)
 
 - `npx webmention-testpinger --endpoint=http://localhost:8080/wm/webmentions --target https://tiim.ch/target -p 8081`
 - `npx webmention-testpinger --endpoint=http://localhost:8080/wm/webmentions --target http://localhost:5173/projects/lenex-split-sheet -p 8081`
 
-### Sending single webmention with curl
-
+#### Sending single webmention with curl
 
 ```sh
-cd test-data/html/
+cd test-data/
 python3 -m http.server
-curl -i -d source=http://localhost:8000/webmention-rocks.html -d target=https://tiim.ch/blog/2022-07-12-first-go-project-commenting-api http://localhost:8080/wm/webmentions
+curl -i -d source=http://localhost:8000/html/webmention-rocks.html -d target=https://tiim.ch/blog/2022-07-12-first-go-project-commenting-api http://localhost:8080/wm/webmentions
+```
+
+#### Testing sending webmentions
+
+```sh
+cd test-data/
+python3 -m http.server
 ```

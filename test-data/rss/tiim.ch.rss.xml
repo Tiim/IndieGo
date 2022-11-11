@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="utf-8"?>
+<rss version="2.0" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:content="http://purl.org/rss/1.0/modules/content/" xmlns:atom="http://www.w3.org/2005/Atom">
+    <channel>
+        <title>Tim Bachmann's Blog</title>
+        <link>https://tiim.ch/</link>
+        <description>Blog about web development, programming, and anything that might interest me.</description>
+        <lastBuildDate>Wed, 09 Nov 2022 11:48:44 GMT</lastBuildDate>
+        <docs>https://validator.w3.org/feed/docs/rss2.html</docs>
+        <generator>https://github.com/jpmonette/feed</generator>
+        <language>en</language>
+        <image>
+            <title>Tim Bachmann's Blog</title>
+            <url>https://tiim.ch/swim-emoji.png</url>
+            <link>https://tiim.ch/</link>
+        </image>
+        <copyright>Tim Bachmann</copyright>
+        <atom:link href="https://tiim.ch/blog/rss.xml" rel="self" type="application/rss+xml"/>
+        <item>
+            <title><![CDATA[SvelteKit Server-Side Rendering (SSR) with @urql/svelte]]></title>
+            <link>https://tiim.ch/blog/2022-09-27-sveltekit-ssr-with-urql</link>
+            <guid>https://tiim.ch/blog/2022-09-27-sveltekit-ssr-with-urql</guid>
+            <pubDate>Mon, 26 Sep 2022 00:00:00 GMT</pubDate>
+            <description><![CDATA[Learn why server-side rendering (SSR) using urql as a GraphQL client is not as straightforward as you might think and how to do it anyway.]]></description>
+            <content:encoded><![CDATA[
+            
+            <p>In this blog post, I will explain why server-side rendering with the 
+              <a href="https://webmention.rocks/test/1" rel="nofollow noopener noreferrer">urql</a>
+              GraphQL library is not as straightforward to do with SvelteKit, 
+              and how I solved this in my project anyway.
+            </p>
+            <p>Server-side rendering (SSR) is one of the great features of SvelteKit. 
+              I will try to keep this blog post short and will therefore not explain what
+              server-side rendering is and why you should take advantage of it 
+              <em>(you really should!)</em>.
+               If you want to know more about SSR you can take a look at this article: 
+               <a href="https://webmention.rocks/test/2" rel="nofollow noopener noreferrer">A Deep Dive into Server-Side Rendering (SSR) in JavaScript</a>
+               .
+            </p>
+            <h2>Background - SSR in SvelteKit</h2>
+            <p>SvelteKit implements SSR by providing a 
+              <a href="https://webmention.rocks/test/3" rel="nofollow noopener noreferrer"><code>load</code> function</a> 
+              for every layout and page component. If a page or layout needs to 
+              perform some asynchronous operation, this should be done inside of this 
+              load function. SvelteKit executes this function asynchronously on the server 
+              side as well as on the client side and the return value of this function is 
+              assigned to the <code>data</code> prop of the associated component.
+            </p>
+            <h2>Background - @urql/svelte</h2>
+            <p>The urql library allows us to easily issue GraphQL queries and mutations. 
+              Some of the functionality it has to make our lives easier include:
+            </p>
+            <h2>The Problem</h2>
+            The client gets a <a href="https://webmention.rocks/test/4" rel="nofollow noopener noreferrer">special fetch function</a> 
+            from the event which has a few nice properties, like preventing a second network request on the client side if that same request was just issued on the server-side.</p>
+            <h3>The solution: A query in the load function and a query in the component</h3>
+            <p><a href="https://webmention.rocks/test/5" rel="nofollow noopener noreferrer">Link to the Gist</a></p>
+            <h2>End remarks</h2>
+            <p>Even though I think this solution is not too bad, I wish @urql/svelte would implement a better way to handle SSR with sveltekit. I posted a 
+              <a href="https://webmention.rocks/test/6" rel="nofollow noopener noreferrer">question on the urql GitHub discussions board</a>, but I have not gotten any response yet.</p>
+            <p>If this post helped you, or you found a better or different way to solve SSR with urql, please let me know in the comments, write me an email or tag me on twitter 
+              <a href="https://webmention.rocks/test/7" rel="nofollow noopener noreferrer">@TiimB</a>.</p>
+]]></content:encoded>
+            <author>hey@tiim.ch (Tim Bachmann)</author>
+            <category>graphql</category>
+            <category>ssr</category>
+            <category>sveltekit</category>
+            <category>urql</category>
+            <enclosure url="https://i.imgur.com/5DBIbbT.png" length="0" type="image/png"/>
+        </item>
+    </channel>
+</rss>

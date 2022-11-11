@@ -3,12 +3,15 @@ package main
 import (
 	"fmt"
 	"log"
+	"net/http"
 	"os"
 	"tiim/go-comment-api/api"
 	"tiim/go-comment-api/comments"
 	"tiim/go-comment-api/event"
 	"tiim/go-comment-api/model"
 	"tiim/go-comment-api/webmentions"
+	"tiim/go-comment-api/wmsend"
+	"time"
 
 	"github.com/joho/godotenv"
 )
@@ -17,6 +20,8 @@ func main() {
 	if err := godotenv.Load(".env"); err != nil {
 		log.Fatalf("Error loading .env file: %s", err)
 	}
+
+	httpClient := &http.Client{Timeout: time.Second * 10}
 
 	store, err := model.NewSQLiteStore()
 	if err != nil {
@@ -107,7 +112,15 @@ func main() {
 		wmApi,
 	}
 
+	//
+	// Sending webmentions
+	//
+
+	wmSendStore := wmsend.NewWmSendStore(store.GetDBConnection())
+	wmSender := wmsend.NewWmSend(wmSendStore, httpClient, os.Getenv("WM_SEND_RSS_URL"))
+
 	log.Println("Starting server")
+	wmSender.Start()
 	server := api.NewCommentServer(apiModules)
 	err = server.Start()
 	if err != nil {
