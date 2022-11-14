@@ -1,12 +1,17 @@
 package api
 
 import (
+	"embed"
 	"fmt"
+	"io/fs"
 	"log"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
 )
+
+//go:embed assets/*
+var assets embed.FS
 
 type apiServer struct {
 	modules []ApiModule
@@ -20,6 +25,12 @@ func (cs *apiServer) Start() error {
 	r := gin.New()
 	r.RemoveExtraSlash = true
 	r.RedirectTrailingSlash = false
+
+	assetsFolder, err := fs.Sub(assets, "assets")
+	if err != nil {
+		return fmt.Errorf("unable to get assets folder: %w", err)
+	}
+	r.StaticFS("/assets", http.FS(assetsFolder))
 
 	r.Use(ErrorMiddleware())
 

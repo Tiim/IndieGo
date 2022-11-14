@@ -1,16 +1,23 @@
 package api
 
 import (
-	"net/http"
+	"html/template"
+
+	_ "embed"
 
 	"github.com/gin-gonic/gin"
 )
 
+//go:embed templates/index.tmpl
+var indexTemplate string
+
 type indexModule struct {
+	template *template.Template
 }
 
 func NewIndexModule() *indexModule {
-	im := indexModule{}
+	template := template.Must(template.New("index").Parse(indexTemplate))
+	im := indexModule{template}
 	return &im
 }
 
@@ -24,7 +31,8 @@ func (ui *indexModule) Init(r *gin.Engine) error {
 
 func (ui *indexModule) RegisterRoutes(r *gin.Engine) error {
 	r.GET("/", func(c *gin.Context) {
-		c.HTML(http.StatusOK, "index.tmpl", gin.H{})
+		c.Header("Content-Type", "text/html")
+		ui.template.Execute(c.Writer, nil)
 	})
 	return nil
 }
