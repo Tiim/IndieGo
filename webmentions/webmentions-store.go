@@ -2,6 +2,7 @@ package webmentions
 
 import (
 	"database/sql"
+	"errors"
 	"fmt"
 	"log"
 	"tiim/go-comment-api/event"
@@ -38,7 +39,7 @@ func NewStore(store *model.SQLiteStore) *webmentionsSqLiteStore {
 		db:    store.GetDBConnection(),
 		queue: make(chan *QueuedWebmention, 20),
 	}
-	go s.populateQueue()
+	go s.PopulateQueue()
 	return s
 }
 
@@ -288,7 +289,9 @@ func (s *webmentionsSqLiteStore) GetGenericCommentsForPage(page string, since ti
 	return comments, nil
 }
 
-func (s *webmentionsSqLiteStore) populateQueue() error {
+var ErrQueueFull = errors.New("webmention processing queue is full")
+
+func (s *webmentionsSqLiteStore) PopulateQueue() error {
 	rows, err := s.db.Query("SELECT id, source, target, timestamp FROM webmentions_queue ORDER BY TIMESTAMP ASC")
 	if err != nil {
 		return err
@@ -307,7 +310,7 @@ func (s *webmentionsSqLiteStore) populateQueue() error {
 			return err
 		}
 
-		s.queue <- &QueuedWebmention{
+		wWebmention := &QueuedWebmention{
 			webmention: &Webmention{
 				Id:        id,
 				Source:    source,
@@ -315,6 +318,13 @@ func (s *webmentionsSqLiteStore) populateQueue() error {
 				TsCreated: ts,
 				TsUpdated: time.Now(),
 			},
+		}
+		timeout := time.After(5 * time.Second)
+		select {
+		case s.queue <- wWebmention:
+			return nil
+		case <-timeout:
+			return ErrQueueFull
 		}
 	}
 	return nil

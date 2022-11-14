@@ -33,19 +33,19 @@ func (s *wmSendSqliteStore) IsItemUpdated(f FeedItem) (bool, error) {
 	err = row.Scan(&updated)
 	if err != nil {
 		if err != sql.ErrNoRows {
-			return false, fmt.Errorf("unable to scan updated: %w", err)
+			return true, fmt.Errorf("unable to scan updated: %w", err)
 		}
 	}
 
 	_, err = tx.Exec("INSERT INTO wm_send_feed_item (id, updated) VALUES (?, ?) ON CONFLICT (id) DO UPDATE SET updated = excluded.updated", f.uid, f.updated.Format(time.RFC3339))
 
 	if err != nil {
-		return false, fmt.Errorf("unable to insert updated: %w", err)
+		return true, fmt.Errorf("unable to insert updated: %w", err)
 	}
 
 	err = tx.Commit()
 	if err != nil {
-		return false, fmt.Errorf("unable to commit transaction: %w", err)
+		return true, fmt.Errorf("unable to commit transaction: %w", err)
 	}
 
 	if updated == "" {

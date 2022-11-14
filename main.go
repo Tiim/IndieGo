@@ -13,6 +13,8 @@ import (
 	"tiim/go-comment-api/wmsend"
 	"time"
 
+	"github.com/gin-gonic/gin"
+	"github.com/go-co-op/gocron"
 	"github.com/joho/godotenv"
 )
 
@@ -22,6 +24,7 @@ func main() {
 	}
 
 	httpClient := &http.Client{Timeout: time.Second * 10}
+	scheduler := gocron.NewScheduler(time.UTC)
 
 	store, err := model.NewSQLiteStore()
 	if err != nil {
@@ -52,6 +55,8 @@ func main() {
 	)
 	wmApi := webmentions.NewApi(wmStore, webmentions.NewMentionsQueueWorker(wmStore, wmChecker))
 
+	scheduler.Every(4).Hours().Do(wmStore.PopulateQueue)
+
 	//
 	// Generic Comments
 	//
@@ -60,6 +65,25 @@ func main() {
 		commentStore,
 		wmStore,
 	}
+
+	//
+	// Sending webmentions
+	//
+
+	wmSendStore := wmsend.NewWmSendStore(store.GetDBConnection())
+	wmSender := wmsend.NewWmSend(wmSendStore, httpClient, os.Getenv("WM_SEND_RSS_URL"))
+
+	scheduler.Every(1).Hour().Do(wmSender.SendNow)
+
+	//
+	// Webhooks
+	//
+
+	webhookModule := api.NewWebhookModule()
+	webhookModule.RegisterWebhook("page-build", func(c *gin.Context) error {
+		wmSender.SendNow()
+		return nil
+	}, api.NewGithubValidator(os.Getenv("GITHUB_WEBHOOK_SECRET")))
 
 	//
 	// Event handlers
@@ -110,17 +134,11 @@ func main() {
 		comments.NewCommentModule(commentStore),
 		comments.NewSubscriptionModule(commentStore),
 		wmApi,
+		webhookModule,
 	}
 
-	//
-	// Sending webmentions
-	//
-
-	wmSendStore := wmsend.NewWmSendStore(store.GetDBConnection())
-	wmSender := wmsend.NewWmSend(wmSendStore, httpClient, os.Getenv("WM_SEND_RSS_URL"))
-
 	log.Println("Starting server")
-	wmSender.Start()
+	scheduler.StartAsync()
 	server := api.NewCommentServer(apiModules)
 	err = server.Start()
 	if err != nil {

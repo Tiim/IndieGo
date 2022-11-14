@@ -7,7 +7,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/go-co-op/gocron"
 	"github.com/mmcdole/gofeed"
 	"willnorris.com/go/webmention"
 )
@@ -29,10 +28,13 @@ func NewWmSend(store WmSendStore, client *http.Client, rss string) *wmSend {
 	return &wmSend{store: store, client: client, rss: rss}
 }
 
-func (w *wmSend) Start() {
-	s := gocron.NewScheduler(time.UTC)
-	s.Every(1).Hour().Do(w.doFetchAndSend)
-	w.doFetchAndSend()
+func (w *wmSend) SendNow() {
+	go func() {
+		err := w.doFetchAndSend()
+		if err != nil {
+			log.Printf("unable to send webmentions: %v", err)
+		}
+	}()
 }
 
 func (w *wmSend) doFetchAndSend() error {
@@ -41,8 +43,7 @@ func (w *wmSend) doFetchAndSend() error {
 
 	feed, err := w.getFeedItems()
 	if err != nil {
-		log.Printf("unable to get feed items: %v", err)
-		return err
+		return fmt.Errorf("unable to get feed items: %v", err)
 	}
 	for _, item := range feed {
 		updated, err := w.store.IsItemUpdated(item)
@@ -110,7 +111,11 @@ func (w *wmSend) sendWebmentions(item FeedItem) error {
 		linksSet[link] = struct{}{}
 	}
 
-	w.store.SetUrlsForFeedItem(item, links)
+	err = w.store.SetUrlsForFeedItem(item, links)
+
+	if err != nil {
+		return fmt.Errorf("unable to save links: %w", err)
+	}
 
 	wmClient := webmention.New(w.client)
 
@@ -119,7 +124,7 @@ func (w *wmSend) sendWebmentions(item FeedItem) error {
 		if err != nil {
 			log.Printf("unable to discover endpoint for url %s: %v", link, err)
 		} else {
-			log.Printf("sending webmention from to %s", link)
+			log.Printf("sending webmention from %s to %s", item.baseUrl, link)
 			wmClient.SendWebmention(endpoint, item.baseUrl, link)
 		}
 	}
