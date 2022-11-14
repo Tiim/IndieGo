@@ -1,7 +1,6 @@
 package api
 
 import (
-	"io/fs"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -19,7 +18,7 @@ func (ui *indexModule) Name() string {
 	return "Index"
 }
 
-func (ui *indexModule) Init(r *gin.Engine, templates fs.FS) error {
+func (ui *indexModule) Init(r *gin.Engine) error {
 	return nil
 }
 

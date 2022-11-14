@@ -1,9 +1,7 @@
 package api
 
 import (
-	"embed"
 	"fmt"
-	"html/template"
 	"log"
 	"net/http"
 
@@ -18,9 +16,6 @@ func NewCommentServer(modules []ApiModule) *apiServer {
 	return &apiServer{modules: modules}
 }
 
-//go:embed templates/*
-var templates embed.FS
-
 func (cs *apiServer) Start() error {
 	r := gin.New()
 	r.RemoveExtraSlash = true
@@ -28,11 +23,8 @@ func (cs *apiServer) Start() error {
 
 	r.Use(ErrorMiddleware())
 
-	tp := template.Must(template.New("").ParseFS(templates, "templates/*"))
-	r.SetHTMLTemplate(tp)
-
 	for _, module := range cs.modules {
-		if err := module.Init(r, &templates); err != nil {
+		if err := module.Init(r); err != nil {
 			return fmt.Errorf("initialising module %s failed: %w", module.Name(), err)
 		}
 	}

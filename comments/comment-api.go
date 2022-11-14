@@ -2,7 +2,6 @@ package comments
 
 import (
 	"fmt"
-	"io/fs"
 	"log"
 	"net/http"
 
@@ -22,7 +21,7 @@ func (cm *commentApiModule) Name() string {
 	return "Comment"
 }
 
-func (cm *commentApiModule) Init(r *gin.Engine, templates fs.FS) error {
+func (cm *commentApiModule) Init(r *gin.Engine) error {
 	return nil
 }
 

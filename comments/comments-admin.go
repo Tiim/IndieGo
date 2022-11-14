@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"fmt"
 	"html/template"
-	"io/fs"
 	"net/http"
 	"time"
 
@@ -27,7 +26,7 @@ func NewAdminCommentSection(store *commentStore) *adminCommentsSection {
 //go:embed admin-comments-section.tmpl
 var commentsTemplate string
 
-func (ui *adminCommentsSection) Init(templates fs.FS) error {
+func (ui *adminCommentsSection) Init() error {
 	template := template.Must(template.New("comments").Parse(commentsTemplate))
 	ui.template = template
 	return nil

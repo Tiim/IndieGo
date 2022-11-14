@@ -3,16 +3,20 @@ package api
 import (
 	"fmt"
 	"html/template"
-	"io/fs"
 	"log"
 	"net/http"
 	"os"
 
+	_ "embed"
+
 	"github.com/gin-gonic/gin"
 )
 
+//go:embed templates/dashboard.tmpl
+var dashboardTemplate string
+
 type AdminSection interface {
-	Init(templates fs.FS) error
+	Init() error
 	Name() string
 	HTML() (string, error)
 	RegisterRoutes(r *gin.RouterGroup) error
@@ -27,6 +31,7 @@ type adminModule struct {
 	password string
 	group    *gin.RouterGroup
 	sections []AdminSection
+	template *template.Template
 }
 
 func NewAdminModule(sections []AdminSection) *adminModule {
@@ -35,7 +40,9 @@ func NewAdminModule(sections []AdminSection) *adminModule {
 		log.Fatal("env variable ADMIN_PW not found, check .env file")
 	}
 
-	uir := adminModule{password: password, sections: sections}
+	template := template.Must(template.New("dashboard").Parse(dashboardTemplate))
+
+	uir := adminModule{password: password, sections: sections, template: template}
 	return &uir
 }
 
@@ -43,9 +50,9 @@ func (ui *adminModule) Name() string {
 	return "Admin"
 }
 
-func (ui *adminModule) Init(r *gin.Engine, templates fs.FS) error {
+func (ui *adminModule) Init(r *gin.Engine) error {
 	for _, section := range ui.sections {
-		if err := section.Init(templates); err != nil {
+		if err := section.Init(); err != nil {
 			return fmt.Errorf("initialising section %s failed: %w", section.Name(), err)
 		}
 	}
@@ -75,5 +82,6 @@ func (ui *adminModule) adminDashboard(c *gin.Context) {
 		sections[i] = sectionData{Name: name, HTML: template.HTML(html)}
 	}
 
-	c.HTML(http.StatusOK, "dashboard.tmpl", gin.H{"sections": sections})
+	c.Writer.Header().Set("Content-Type", "text/html; charset=utf-8")
+	ui.template.Execute(c.Writer, map[string][]sectionData{"sections": sections})
 }

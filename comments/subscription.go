@@ -3,7 +3,6 @@ package comments
 import (
 	"fmt"
 	"html/template"
-	"io/fs"
 	"log"
 	"net/http"
 
@@ -35,7 +34,7 @@ func (sm *subscriptionModule) Name() string {
 	return "Subscription"
 }
 
-func (sm *subscriptionModule) Init(r *gin.Engine, templates fs.FS) error {
+func (sm *subscriptionModule) Init(r *gin.Engine) error {
 	return nil
 }
 

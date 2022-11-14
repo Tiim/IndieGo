@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"fmt"
 	"html/template"
-	"io/fs"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -26,7 +25,7 @@ func NewAdminWebmentionsSection(store webmentionsStore) *adminWebmentionsSection
 	}
 }
 
-func (ui *adminWebmentionsSection) Init(templates fs.FS) error {
+func (ui *adminWebmentionsSection) Init() error {
 	template := template.Must(template.New("webmentions").Parse(webmentionsTemplate))
 	ui.template = template
 	return nil

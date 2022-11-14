@@ -4,15 +4,19 @@ import (
 	"bytes"
 	"fmt"
 	"html/template"
-	"io/fs"
 	"io/ioutil"
 	"log"
 	"net/http"
 	"tiim/go-comment-api/model"
 	"time"
 
+	_ "embed"
+
 	"github.com/gin-gonic/gin"
 )
+
+//go:embed templates/dashboard-backup.tmpl
+var backupTemplate string
 
 type adminBackupSection struct {
 	store    model.BackupStore
@@ -25,8 +29,8 @@ func NewAdminBackupSection(store model.BackupStore) *adminBackupSection {
 	}
 }
 
-func (ui *adminBackupSection) Init(templates fs.FS) error {
-	template := template.Must(template.New("dashboard-backup.tmpl").ParseFS(templates, "templates/dashboard-backup.tmpl"))
+func (ui *adminBackupSection) Init() error {
+	template := template.Must(template.New("dashboard-backup").Parse(backupTemplate))
 	ui.template = template
 	return nil
 }

@@ -1,7 +1,6 @@
 package api
 
 import (
-	"io/fs"
 	"log"
 	"net/http"
 
@@ -32,7 +31,7 @@ func (w *webhookApiModule) Name() string {
 	return "Webhook"
 }
 
-func (w *webhookApiModule) Init(r *gin.Engine, templates fs.FS) error {
+func (w *webhookApiModule) Init(r *gin.Engine) error {
 	return nil
 }
 
