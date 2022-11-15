@@ -8,6 +8,7 @@ import (
 	"tiim/go-comment-api/api"
 	"tiim/go-comment-api/comments"
 	"tiim/go-comment-api/event"
+	"tiim/go-comment-api/indieauth"
 	"tiim/go-comment-api/model"
 	"tiim/go-comment-api/webmentions"
 	"tiim/go-comment-api/wmsend"
@@ -25,6 +26,8 @@ func main() {
 
 	httpClient := &http.Client{Timeout: time.Second * 10}
 	scheduler := gocron.NewScheduler(time.UTC)
+
+	adminPassword := os.Getenv("ADMIN_PW")
 
 	store, err := model.NewSQLiteStore()
 	if err != nil {
@@ -74,6 +77,13 @@ func main() {
 	wmSender := wmsend.NewWmSend(wmSendStore, httpClient, os.Getenv("WM_SEND_RSS_URL"))
 
 	scheduler.Every(1).Hour().Do(wmSender.SendNow)
+
+	//
+	// IndieAuth
+	//
+	indieAuthStore := indieauth.NewSQLiteStore(store.GetDBConnection(), 10*time.Minute)
+	indieAuthApiModule := indieauth.NewIndieAuthApiModule(os.Getenv("BASE_URL"), os.Getenv("INDIE_CANONICAL_URL"), adminPassword, indieAuthStore, *httpClient)
+	scheduler.Every(8).Hours().Do(indieAuthStore.CleanUp)
 
 	//
 	// Webhooks
@@ -130,11 +140,12 @@ func main() {
 	apiModules := []api.ApiModule{
 		api.NewIndexModule(),
 		api.NewCommentModule(commentProvider),
-		api.NewAdminModule(adminSections),
+		api.NewAdminModule(adminPassword, adminSections),
 		comments.NewCommentModule(commentStore),
 		comments.NewSubscriptionModule(commentStore),
 		wmApi,
 		webhookModule,
+		indieAuthApiModule,
 	}
 
 	log.Println("Starting server")

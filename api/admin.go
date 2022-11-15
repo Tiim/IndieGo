@@ -5,7 +5,6 @@ import (
 	"html/template"
 	"log"
 	"net/http"
-	"os"
 
 	_ "embed"
 
@@ -34,10 +33,9 @@ type adminModule struct {
 	template *template.Template
 }
 
-func NewAdminModule(sections []AdminSection) *adminModule {
-	password, envExists := os.LookupEnv("ADMIN_PW")
-	if !envExists {
-		log.Fatal("env variable ADMIN_PW not found, check .env file")
+func NewAdminModule(password string, sections []AdminSection) *adminModule {
+	if password == "" || len(password) < 8 {
+		log.Fatal("env variable ADMIN_PW not found or value less than 8 characters, check .env file")
 	}
 
 	template := template.Must(template.New("dashboard").Parse(dashboardTemplate))

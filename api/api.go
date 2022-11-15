@@ -33,6 +33,8 @@ func (cs *apiServer) Start() error {
 	r.StaticFS("/assets", http.FS(assetsFolder))
 
 	r.Use(ErrorMiddleware())
+	r.Use(gin.Logger())
+	r.Use(gin.Recovery())
 
 	for _, module := range cs.modules {
 		if err := module.Init(r); err != nil {
@@ -40,8 +42,6 @@ func (cs *apiServer) Start() error {
 		}
 	}
 
-	r.Use(gin.Recovery())
-	r.Use(gin.Logger())
 	r.Use(trailingSlash(r))
 	r.Use(cors())
 

@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>IndieAuth</title>
+    <link rel="stylesheet" href="/assets/style.css"/>
+  </head>
+  <body>
+    <div>
+      <h1>IndieAuth Authorization</h1>
+      <h2>App Info</h2>
+      <div style="display: flex; gap: 2rem;">
+        <div>
+          {{if .AppInfo.Logo}}
+            <img src="{{.AppInfo.Logo}}" width="100px" alt="App Icon"/>
+          {{end}}
+        </div>
+        <div>
+          <p>
+            <strong>App Name:</strong> {{.AppInfo.Name}}
+          </p>
+          <p>
+            <strong>App URL:</strong> <a href="{{.AppInfo.ClientId}}">{{.AppInfo.ClientId}}</a>
+          </p>
+          {{if .AppInfo.Author}}
+            <p>
+              <strong>Author:</strong> {{.AppInfo.Author}}
+            </p>
+          {{end}}
+          {{if .AppInfo.Summary}}
+            <p>
+              {{.AppInfo.Summary}}
+            </p>
+          {{end}}
+          {{if .Scope}}
+            <p>
+              <strong>Requested Scopes:</strong> {{.Scope}}
+            </p>
+          {{end}}
+        </div>
+      </div>
+      {{if .Warnings}}
+        <h2>Warnings</h2>
+        <div>
+          <ul>
+          {{range .Warnings}}
+            <li>{{.}}</li>
+          {{end}}
+          </ul>
+        </div>
+      {{end}}
+      <h2>Login</h2>
+      <form name="IndieAuth Login" action="/indieauth/login" method="POST">
+        <input type="hidden" name="code" value="{{.Code}}"/>
+        <input type="password" name="password" placeholder="Password"/>
+        <input type="submit" value="Login"/>
+      </form>
+    </div>
+  </body>
+</html>
