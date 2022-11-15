@@ -64,6 +64,9 @@ func (cm *genericCommentApiModule) handleGetAllComments(c *gin.Context) {
 		}
 		allComments = append(allComments, comments...)
 	}
+	sort.Slice(allComments, func(i, j int) bool {
+		return allComments[i].Timestamp > allComments[j].Timestamp
+	})
 	c.JSON(http.StatusOK, allComments)
 }
 
@@ -98,7 +101,7 @@ func (cm *genericCommentApiModule) handleGetComments(c *gin.Context) {
 		allComments = append(allComments, comments...)
 	}
 	sort.Slice(allComments, func(i, j int) bool {
-		return allComments[i].Timestamp < allComments[j].Timestamp
+		return allComments[i].Timestamp > allComments[j].Timestamp
 	})
 	c.JSON(http.StatusOK, allComments)
 }
