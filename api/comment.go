@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"sort"
 	"tiim/go-comment-api/model"
 	"time"
 
@@ -96,5 +97,8 @@ func (cm *genericCommentApiModule) handleGetComments(c *gin.Context) {
 		}
 		allComments = append(allComments, comments...)
 	}
+	sort.Slice(allComments, func(i, j int) bool {
+		return allComments[i].Timestamp < allComments[j].Timestamp
+	})
 	c.JSON(http.StatusOK, allComments)
 }
