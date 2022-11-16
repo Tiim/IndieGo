@@ -214,10 +214,15 @@ func (s *webmentionsSqLiteStore) MarkSuccess(w *QueuedWebmention) error {
 	}
 
 	newWebmention := true
-	row := tx.QueryRow("SELECT id FROM webmentions WHERE source = ? AND target = ?")
-	if row.Scan() != sql.ErrNoRows {
+	row := tx.QueryRow("SELECT id FROM webmentions WHERE source = ? AND target = ?", w.webmention.Source, w.webmention.Target)
+	var id string
+	err = row.Scan(&id)
+	if err == nil {
 		newWebmention = false
+	} else if err != sql.ErrNoRows {
+		return fmt.Errorf("could not query webmention: %w", err)
 	}
+
 	query := `INSERT INTO webmentions (id, source, target, ts_created, ts_updated, author_name, content, page) 
 						VALUES (?, ?, ?, ?, ?, ?, ?, ?)
 						ON CONFLICT (source, target) DO UPDATE SET 
