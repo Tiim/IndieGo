@@ -17,8 +17,12 @@ func (c *microformatEnricherChecker) CheckDocument(gq *goquery.Document, w *Webm
 	data := microformats.ParseNode(gq.Nodes[0], w.SourceUrl())
 	hentry := microformatsextract.GetHEntry(data)
 
-	w.AuthorName = hentry.Author.Name
-	w.Content = hentry.GetShortContent(500, 4)
+	if hentry != nil {
+		if hentry.Author != nil {
+			w.AuthorName = hentry.Author.Name
+		}
+		w.Content = hentry.GetShortContent(500, 4)
+	}
 
 	return nil
 }
