@@ -11,7 +11,7 @@ type targetChecker struct {
 }
 
 func (c *targetChecker) CheckMention(w *Webmention) error {
-	if !strInArray(w.TargetUrl().Hostname(), c.domain) {
+	if !strInSlice(w.TargetUrl().Hostname(), c.domain) {
 		return fmt.Errorf("target domain is not in allow list")
 	}
 	return nil
@@ -23,4 +23,13 @@ func (c *targetChecker) CheckDocument(gq *goquery.Document, w *Webmention) error
 
 func NewTargetChecker(domain ...string) *targetChecker {
 	return &targetChecker{domain}
+}
+
+func strInSlice(str string, slice []string) bool {
+	for _, s := range slice {
+		if str == s {
+			return true
+		}
+	}
+	return false
 }
