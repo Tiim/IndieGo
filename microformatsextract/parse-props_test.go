@@ -1,7 +1,11 @@
 package microformatsextract
 
 import (
+	"encoding/json"
+	"io"
+	"io/ioutil"
 	"net/url"
+	"os"
 	"reflect"
 	"strings"
 	"testing"
@@ -9,118 +13,79 @@ import (
 	"willnorris.com/go/microformats"
 )
 
+func getTestFiles(mfType string) []string {
+	files, _ := ioutil.ReadDir("testdata")
+	fileNames := make([]string, 0, len(files))
+	for _, file := range files {
+		if strings.HasPrefix(file.Name(), mfType) && strings.HasSuffix(file.Name(), ".html") {
+			fileNames = append(fileNames, strings.TrimSuffix(file.Name(), ".html"))
+		}
+	}
+	return fileNames
+}
+
+func getTestFile(name string) (io.Reader, io.Reader, error) {
+	got, err := os.Open("testdata/" + name + ".html")
+	if err != nil {
+		return nil, nil, err
+	}
+	want, err := os.Open("testdata/" + name + ".json")
+	if err != nil {
+		return nil, nil, err
+	}
+	return got, want, nil
+}
+
+func deepEqual(a, b interface{}, t *testing.T, debugMf *microformats.Data, fileName string) bool {
+	if !reflect.DeepEqual(a, b) {
+		// convert got and want to JSON for easier comparison
+		aJSON, _ := json.MarshalIndent(a, "", "  ")
+		bJSON, _ := json.MarshalIndent(b, "", "  ")
+		debugJSON, _ := json.MarshalIndent(debugMf, "", "  ")
+		t.Errorf("File: %s\n got %v\nwant %v\ngot:%s\nwant:%s\ndebug: %s", fileName, a, b, aJSON, bJSON, debugJSON)
+		return false
+	}
+	return true
+}
+
 func TestGetHApp(t *testing.T) {
 	baseUrl, _ := url.Parse("https://webmention.rocks")
-	type args struct {
-		data *microformats.Data
-	}
-	tests := []struct {
-		name string
-		args args
-		want MF2HApp
-	}{
-		{
-			name: "webmention.rocks",
-			args: args{
-				data: microformats.Parse(strings.NewReader(`<div style="display: none;" class="h-app"><a href="/" class="u-url p-name">Webmention.rocks!</a><img src="/assets/webmention-rocks-icon.png" class="u-logo"><a href="https://indielogin.com/redirect/indieauth" class="u-redirect-uri"></a></div>`), baseUrl),
-			},
-			want: MF2HApp{
-				Url:          "https://webmention.rocks/",
-				Name:         "Webmention.rocks!",
-				Logo:         "https://webmention.rocks/assets/webmention-rocks-icon.png",
-				RedirectUris: []string{"https://indielogin.com/redirect/indieauth"},
-			},
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			if got := GetHApp(tt.args.data); !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("GetHApp() = %v, want %v", got, tt.want)
-			}
-		})
+
+	testFiles := getTestFiles("h-app")
+
+	for _, testFile := range testFiles {
+		gotR, wantR, err := getTestFile(testFile)
+		if err != nil {
+			t.Error(err)
+			return
+		}
+		mf := microformats.Parse(gotR, baseUrl)
+		got := GetHApp(mf)
+		want := &MF2HApp{}
+		json.NewDecoder(wantR).Decode(&want)
+		if !deepEqual(got, want, t, mf, testFile) {
+			return
+		}
 	}
 }
 
-func Test_getEntryWithType(t *testing.T) {
-	type args struct {
-		data  *microformats.Data
-		types []string
-	}
-	tests := []struct {
-		name string
-		args args
-		want *microformats.Microformat
-	}{
-		// TODO: Add test cases.
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			if got := getEntryWithType(tt.args.data, tt.args.types...); !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("getEntryWithType() = %v, want %v", got, tt.want)
-			}
-		})
-	}
-}
+func TestGetHEntry(t *testing.T) {
+	baseUrl, _ := url.Parse("https://webmention.rocks")
 
-func TestGetStringProp(t *testing.T) {
-	type args struct {
-		name string
-		item *microformats.Microformat
-	}
-	tests := []struct {
-		name string
-		args args
-		want string
-	}{
-		// TODO: Add test cases.
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			if got := GetStringProp(tt.args.name, tt.args.item); got != tt.want {
-				t.Errorf("GetStringProp() = %v, want %v", got, tt.want)
-			}
-		})
-	}
-}
+	testFiles := getTestFiles("h-entry")
 
-func TestGetStringPropSlice(t *testing.T) {
-	type args struct {
-		name string
-		item *microformats.Microformat
-	}
-	tests := []struct {
-		name string
-		args args
-		want []string
-	}{
-		// TODO: Add test cases.
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			if got := GetStringPropSlice(tt.args.name, tt.args.item); !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("GetStringPropSlice() = %v, want %v", got, tt.want)
-			}
-		})
-	}
-}
-
-func TestGetHCard(t *testing.T) {
-	type args struct {
-		name string
-		item *microformats.Microformat
-	}
-	tests := []struct {
-		name string
-		args args
-		want MF2HCard
-	}{
-		// TODO: Add test cases.
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			if got := GetHCard(tt.args.name, tt.args.item); !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("GetHCard() = %v, want %v", got, tt.want)
-			}
-		})
+	for _, testFile := range testFiles {
+		gotR, wantR, err := getTestFile(testFile)
+		if err != nil {
+			t.Error(err)
+			return
+		}
+		mf := microformats.Parse(gotR, baseUrl)
+		got := GetHEntry(mf)
+		want := &MF2HEntry{}
+		json.NewDecoder(wantR).Decode(want)
+		if !deepEqual(got, want, t, mf, testFile) {
+			return
+		}
 	}
 }

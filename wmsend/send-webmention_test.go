@@ -39,7 +39,7 @@ func Test_wmSend_getFeedItems(t *testing.T) {
 
 	client := NewTestClient(func(req *http.Request) *http.Response {
 		if req.URL.String() == "https://tiim.ch/blog/rss.xml" {
-			f, err := os.Open("../test-data/rss/tiim.ch.rss.xml")
+			f, err := os.Open("testdata/rss/tiim.ch.rss.xml")
 			if err != nil {
 				t.Errorf("unable to open testdata: %v", err)
 			}
@@ -84,7 +84,7 @@ func Test_wmSend_sendWebmentions(t *testing.T) {
 		}
 	})
 
-	buf, err := ioutil.ReadFile("../test-data/html/tiim.ch.rss-content.html")
+	buf, err := ioutil.ReadFile("testdata/html/tiim.ch.rss-content.html")
 
 	if err != nil {
 		t.Errorf("unable to open testdata: %v", err)
@@ -118,7 +118,7 @@ func Test_wmSend_sendWebmentions_preexisting_urls(t *testing.T) {
 		}
 	})
 
-	buf, err := ioutil.ReadFile("../test-data/html/tiim.ch.rss-content.html")
+	buf, err := ioutil.ReadFile("testdata/html/tiim.ch.rss-content.html")
 
 	if err != nil {
 		t.Errorf("unable to open testdata: %v", err)

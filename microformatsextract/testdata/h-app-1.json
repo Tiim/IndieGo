@@ -1,0 +1,10 @@
+{
+  "Url": "https://webmention.rocks/",
+  "Name": "Webmention.rocks!",
+  "Logo": "https://webmention.rocks/assets/webmention-rocks-icon.png",
+  "Summary": "",
+  "Author": null,
+  "RedirectUris": [
+    "https://indielogin.com/redirect/indieauth"
+  ]
+}
