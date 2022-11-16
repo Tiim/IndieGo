@@ -18,7 +18,7 @@
       <th>{{.AuthorName}}</th>
       <td><a href="{{.Source}}">Source</a></td>
       <td><a href="{{.Target}}">Target</a></td>
-      <td>{{.Content}}</td>
+      <td><div class="content">{{.Content}}</div></td>
       <td>
         <form 
           onsubmit="return confirm('Do you really want to deny this domain?\n{{.Source}}');"
