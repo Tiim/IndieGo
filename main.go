@@ -122,7 +122,14 @@ func main() {
 
 	cleanup := &event.CleanUp{Store: store}
 
+	pushoverNotify := event.NewPushoverNotify(
+		os.Getenv("PUSHOVER_API_KEY"),
+		os.Getenv("PUSHOVER_USER_KEY"),
+		*httpClient,
+	)
+
 	eventHandler := event.NewHandlerList([]event.Handler{
+		pushoverNotify,
 		emailnotify,
 		replyEmailNotify,
 		cleanup,
