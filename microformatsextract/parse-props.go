@@ -12,24 +12,24 @@ type MF2HEntry struct {
 	Name      string
 	Summary   string
 	Content   string
-	Published *time.Time
-	Updated   *time.Time
-	Author    *MF2HCard
+	Published time.Time
+	Updated   time.Time
+	Author    MF2HCard
 	Category  []string
 	Url       string
-	InReplyTo *MF2HCite
+	InReplyTo MF2HCite
 	RSVP      string
-	LikeOf    *MF2HCite
-	RepostOf  *MF2HCite
+	LikeOf    MF2HCite
+	RepostOf  MF2HCite
 }
 
 type MF2HCite struct {
 	Name        string
-	Published   *time.Time
-	Author      *MF2HCard
+	Published   time.Time
+	Author      MF2HCard
 	Url         string
 	Publication string
-	Accessed    *time.Time
+	Accessed    time.Time
 	Content     string
 	Summary     string
 }
@@ -43,16 +43,16 @@ type MF2HApp struct {
 	Name         string
 	Logo         string
 	Summary      string
-	Author       *MF2HCard
+	Author       MF2HCard
 	RedirectUris []string
 }
 
-func GetHApp(data *microformats.Data) *MF2HApp {
+func GetHApp(data *microformats.Data) MF2HApp {
 	item := getEntryWithType(data, "h-app", "h-x-app")
 	if item == nil {
-		return nil
+		return MF2HApp{}
 	}
-	return &MF2HApp{
+	return MF2HApp{
 		Url:          GetStringProp("url", item),
 		Name:         GetStringProp("name", item),
 		Logo:         GetStringProp("logo", item),
@@ -62,13 +62,13 @@ func GetHApp(data *microformats.Data) *MF2HApp {
 	}
 }
 
-func GetHEntry(data *microformats.Data) *MF2HEntry {
+func GetHEntry(data *microformats.Data) MF2HEntry {
 	item := getEntryWithType(data, "h-entry")
 	if item == nil {
-		return nil
+		return MF2HEntry{}
 	}
 
-	return &MF2HEntry{
+	return MF2HEntry{
 		Name:      GetStringProp("name", item),
 		Summary:   GetStringProp("summary", item),
 		Content:   GetStringProp("content", item),
@@ -83,34 +83,34 @@ func GetHEntry(data *microformats.Data) *MF2HEntry {
 	}
 }
 
-func GetHCard(name string, item *microformats.Microformat) *MF2HCard {
+func GetHCard(name string, item *microformats.Microformat) MF2HCard {
 	author := item.Properties[name]
 	if len(author) > 0 {
 		if authorStr, ok := author[0].(string); ok {
-			return &MF2HCard{Name: authorStr}
+			return MF2HCard{Name: authorStr}
 		}
 		authorMf, ok := author[0].(*microformats.Microformat)
 		if ok {
-			return &MF2HCard{Name: authorMf.Value}
+			return MF2HCard{Name: authorMf.Value}
 		}
 	}
-	return nil
+	return MF2HCard{}
 }
 
-func GetHCite(name string, item *microformats.Microformat) *MF2HCite {
+func GetHCite(name string, item *microformats.Microformat) MF2HCite {
 	cite, ok := item.Properties[name]
 	if !ok {
-		return nil
+		return MF2HCite{}
 	}
 	if len(cite) == 0 {
-		return nil
+		return MF2HCite{}
 	}
 	if citeString, ok := cite[0].(string); ok {
-		return &MF2HCite{Url: citeString}
+		return MF2HCite{Url: citeString}
 	}
 	citeMf, ok := cite[0].(*microformats.Microformat)
 	if ok {
-		return &MF2HCite{
+		return MF2HCite{
 			Name:        GetStringProp("name", citeMf),
 			Published:   GetTimeProp("published", citeMf),
 			Author:      GetHCard("author", citeMf),
@@ -121,7 +121,7 @@ func GetHCite(name string, item *microformats.Microformat) *MF2HCite {
 			Summary:     GetStringProp("summary", citeMf),
 		}
 	}
-	return nil
+	return MF2HCite{}
 }
 
 func getEntryWithType(data *microformats.Data, types ...string) *microformats.Microformat {
@@ -178,13 +178,13 @@ var timeFormats = []string{
 	"2006-01-02T15:04:05-0700",
 }
 
-func GetTimeProp(name string, item *microformats.Microformat) *time.Time {
+func GetTimeProp(name string, item *microformats.Microformat) time.Time {
 	propValue, ok := item.Properties[name]
 	if !ok {
-		return nil
+		return time.Time{}
 	}
 	if len(propValue) == 0 {
-		return nil
+		return time.Time{}
 	}
 	if value, ok := propValue[0].(string); ok {
 		var parsed time.Time
@@ -196,13 +196,13 @@ func GetTimeProp(name string, item *microformats.Microformat) *time.Time {
 			}
 		}
 		if parsed.IsZero() {
-			return nil
+			return time.Time{}
 		}
 		parsed = parsed.UTC()
-		return &parsed
+		return parsed
 	}
 	fmt.Printf("Did not find time prop %s: %v (%T)", name, propValue[0], propValue[0])
-	return nil
+	return time.Time{}
 }
 
 func (h *MF2HEntry) GetShortContent(maxLength, maxNewlines int) string {

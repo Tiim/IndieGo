@@ -158,6 +158,13 @@ goose -dir model/sqlite-migrations/ sqlite3 db/comments.sqlite down
 ```
 
 ### Tools
+
+#### Exposing tunnel to the web
+
+```
+npx ngrok http 8080
+```
+
 #### Node Webmention Testpinger
 
 [Source](https://github.com/voxpelli/node-webmention-testpinger)

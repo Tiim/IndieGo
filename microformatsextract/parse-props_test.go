@@ -61,7 +61,7 @@ func TestGetHApp(t *testing.T) {
 		}
 		mf := microformats.Parse(gotR, baseUrl)
 		got := GetHApp(mf)
-		want := &MF2HApp{}
+		want := MF2HApp{}
 		json.NewDecoder(wantR).Decode(&want)
 		if !deepEqual(got, want, t, mf, testFile) {
 			return
@@ -82,8 +82,8 @@ func TestGetHEntry(t *testing.T) {
 		}
 		mf := microformats.Parse(gotR, baseUrl)
 		got := GetHEntry(mf)
-		want := &MF2HEntry{}
-		json.NewDecoder(wantR).Decode(want)
+		want := MF2HEntry{}
+		json.NewDecoder(wantR).Decode(&want)
 		if !deepEqual(got, want, t, mf, testFile) {
 			return
 		}
