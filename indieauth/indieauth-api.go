@@ -52,6 +52,7 @@ func (m *indieAuthApiModule) Init(r *gin.Engine) error {
 func (m *indieAuthApiModule) RegisterRoutes(r *gin.Engine) error {
 	m.group.GET("/metadata", m.metadataEndpoint)
 	m.group.POST("/token", m.tokenEndpoint)
+	m.group.GET("/token", m.introspectionEndpoint)
 	m.group.GET("/authorize", m.authorizeEndpoint)
 	m.group.POST("/authorize", m.tokenEndpoint)
 	m.group.POST("/introspection", m.introspectionEndpoint)
@@ -99,6 +100,11 @@ func (m *indieAuthApiModule) authorizeEndpoint(c *gin.Context) {
 	if scope == "" {
 		warnings = append(warnings, "no scope specified, using default scope")
 		scope = "profile"
+	}
+
+	if codeChallenge == "" || codeChallengeMethod == "" || codeChallengeMethod == "plain" {
+		warnings = append(warnings, fmt.Sprintf("Using insecure 'plain' code_challenge: challenge: %s method: %s", codeChallenge, codeChallengeMethod))
+		codeChallenge = "plain"
 	}
 
 	code, err := newAuthCode(redirectUri, clientId, scope, state, codeChallenge, codeChallengeMethod, me)
@@ -215,7 +221,16 @@ func (m *indieAuthApiModule) tokenEndpoint(c *gin.Context) {
 }
 
 func (m *indieAuthApiModule) introspectionEndpoint(c *gin.Context) {
+	authHeader := c.Request.Header.Get("Authorization")
+	if strings.HasPrefix(authHeader, "Bearer ") {
+		authHeader = strings.TrimPrefix(authHeader, "Bearer ")
+	} else {
+		authHeader = ""
+	}
 	tokenString := c.Request.FormValue("token")
+	if tokenString == "" {
+		tokenString = authHeader
+	}
 	if tokenString == "" {
 		c.AbortWithError(400, fmt.Errorf("no token provided"))
 		return

@@ -6,7 +6,8 @@ import (
 )
 
 var challenges = map[string]codeChallenge{
-	"S256": &challengeS256{},
+	"S256":  &challengeS256{},
+	"plain": &challengePlain{},
 }
 
 type codeChallenge interface {
@@ -25,4 +26,15 @@ func (s *challengeS256) Verify(codeVerifier, codeChallenge string) bool {
 	sha256 := sha256.New()
 	sha256.Write([]byte(codeVerifier))
 	return codeChallenge == base64.RawURLEncoding.EncodeToString(sha256.Sum(nil))
+}
+
+type challengePlain struct {
+}
+
+func (s *challengePlain) Name() string {
+	return "plain"
+}
+
+func (s *challengePlain) Verify(codeVerifier, codeChallenge string) bool {
+	return codeVerifier == "" && codeChallenge == ""
 }

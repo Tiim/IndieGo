@@ -171,6 +171,13 @@ For testing IndieAuth:
 INDIE_CANONICAL_URL=https://<ngok-url> go run .
 ```
 
+#### Testing indieauth websub / indie reader with aperture
+
+- Expose app to web via ngrok
+- Register with ngrok url
+- Restart app with `APPERTURE_ID=xxx`
+
+
 #### Node Webmention Testpinger
 
 [Source](https://github.com/voxpelli/node-webmention-testpinger)

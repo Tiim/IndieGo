@@ -2,6 +2,7 @@ package api
 
 import (
 	"html/template"
+	"os"
 
 	_ "embed"
 
@@ -32,7 +33,11 @@ func (ui *indexModule) Init(r *gin.Engine) error {
 func (ui *indexModule) RegisterRoutes(r *gin.Engine) error {
 	r.GET("/", func(c *gin.Context) {
 		c.Header("Content-Type", "text/html")
-		ui.template.Execute(c.Writer, nil)
+		ui.template.Execute(c.Writer, gin.H{
+			"Debug": gin.H{
+				"ApertureId": os.Getenv("APERTURE_ID"),
+			},
+		})
 	})
 	r.HEAD("/", func(c *gin.Context) {
 		c.Status(200)
