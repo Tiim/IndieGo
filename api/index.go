@@ -34,5 +34,8 @@ func (ui *indexModule) RegisterRoutes(r *gin.Engine) error {
 		c.Header("Content-Type", "text/html")
 		ui.template.Execute(c.Writer, nil)
 	})
+	r.HEAD("/", func(c *gin.Context) {
+		c.Status(200)
+	})
 	return nil
 }

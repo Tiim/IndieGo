@@ -165,6 +165,12 @@ goose -dir model/sqlite-migrations/ sqlite3 db/comments.sqlite down
 npx ngrok http 8080
 ```
 
+For testing IndieAuth:
+
+```
+INDIE_CANONICAL_URL=https://<ngok-url> go run .
+```
+
 #### Node Webmention Testpinger
 
 [Source](https://github.com/voxpelli/node-webmention-testpinger)
