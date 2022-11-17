@@ -81,8 +81,15 @@ func main() {
 	//
 	// IndieAuth
 	//
-	indieAuthStore := indieauth.NewSQLiteStore(store.GetDBConnection(), 10*time.Minute)
-	indieAuthApiModule := indieauth.NewIndieAuthApiModule(os.Getenv("BASE_URL"), os.Getenv("INDIE_CANONICAL_URL"), adminPassword, indieAuthStore, *httpClient)
+	indieAuthStore := indieauth.NewSQLiteStore(store.GetDBConnection(), 10*time.Minute, 24*time.Hour*30)
+	indieAuthApiModule := indieauth.NewIndieAuthApiModule(
+		os.Getenv("BASE_URL"),
+		os.Getenv("INDIE_CANONICAL_URL"),
+		adminPassword,
+		os.Getenv("JWT_SECRET"),
+		indieAuthStore,
+		*httpClient,
+	)
 	scheduler.Every(8).Hours().Do(indieAuthStore.CleanUp)
 
 	//

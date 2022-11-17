@@ -10,6 +10,7 @@ import (
 	_ "embed"
 
 	"github.com/gin-gonic/gin"
+	jwt "github.com/golang-jwt/jwt/v4"
 )
 
 //go:embed authorize.tmpl
@@ -22,10 +23,11 @@ type indieAuthApiModule struct {
 	baseUrl             string
 	profileCanonicalUrl string
 	password            string
+	jwtSecret           string
 	authorizeTemplate   *template.Template
 }
 
-func NewIndieAuthApiModule(baseUrl, profileCanonicalUrl, password string, store Store, client http.Client) *indieAuthApiModule {
+func NewIndieAuthApiModule(baseUrl, profileCanonicalUrl, password, jwtSecret string, store Store, client http.Client) *indieAuthApiModule {
 	authorizeTemplate := template.Must(template.New("authorize").Parse(authorizeTemplate))
 	return &indieAuthApiModule{
 		profileCanonicalUrl: profileCanonicalUrl,
@@ -34,6 +36,7 @@ func NewIndieAuthApiModule(baseUrl, profileCanonicalUrl, password string, store 
 		httpClient:          client,
 		store:               store,
 		password:            password,
+		jwtSecret:           jwtSecret,
 	}
 }
 
@@ -68,7 +71,6 @@ func (m *indieAuthApiModule) metadataEndpoint(c *gin.Context) {
 		"authorization_endpoint":           m.baseUrl + "/indieauth/authorize",
 		"token_endpoint":                   m.baseUrl + "/indieauth/token",
 		"introspection_endpoint ":          m.baseUrl + "/indieauth/introspection",
-		"scopes_supported":                 scopes,
 		"code_challenge_methods_supported": challengeNames,
 	})
 }
@@ -133,7 +135,7 @@ func (m *indieAuthApiModule) authorizeEndpoint(c *gin.Context) {
 	}
 
 	c.Header("Content-Type", "text/html")
-	m.authorizeTemplate.Execute(c.Writer, gin.H{"Code": code.code, "AppInfo": appInfo, "Warnings": warnings, "Scope": scope})
+	m.authorizeTemplate.Execute(c.Writer, gin.H{"Code": code.code, "AppInfo": appInfo, "Warnings": warnings, "Scopes": strings.Split(scope, " "), "Me": me})
 }
 
 func (m *indieAuthApiModule) tokenEndpoint(c *gin.Context) {
@@ -172,15 +174,71 @@ func (m *indieAuthApiModule) tokenEndpoint(c *gin.Context) {
 		c.AbortWithError(400, fmt.Errorf("invalid code_verifier"))
 		return
 	}
+
+	accessToken, err := m.store.RedeemAccessToken(code)
+
+	if err != nil {
+		c.AbortWithError(500, err)
+		return
+	}
+
 	if c.Request.URL.Path == "/indieauth/authorize" {
 		// only a profile request, do not issue a token
 		c.JSON(200, gin.H{"me": m.profileCanonicalUrl})
 	} else {
-		c.JSON(200, gin.H{"me": m.profileCanonicalUrl})
+
+		jwtClaim := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
+			"iss": m.baseUrl,
+			"sub": m.profileCanonicalUrl,
+			"aud": accessToken.clientId,
+			"iat": accessToken.issuedAt.Unix(),
+			"exp": accessToken.expiresAt.Unix(),
+			m.baseUrl: map[string]interface{}{
+				"scope": accessToken.scope,
+			},
+		})
+
+		token, error := jwtClaim.SignedString([]byte(m.jwtSecret))
+
+		if error != nil {
+			c.AbortWithError(500, error)
+			return
+		}
+
+		c.JSON(200, gin.H{
+			"me":           m.profileCanonicalUrl,
+			"scope":        accessToken.scope,
+			"access_token": token,
+			"token_type":   "bearer",
+		})
 	}
 }
 
 func (m *indieAuthApiModule) introspectionEndpoint(c *gin.Context) {
+	tokenString := c.Request.FormValue("token")
+	if tokenString == "" {
+		c.AbortWithError(400, fmt.Errorf("no token provided"))
+		return
+	}
+	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
+		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
+		}
+		return []byte(m.jwtSecret), nil
+	})
+
+	if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid && err == nil {
+		c.JSON(200, gin.H{
+			"active":    true,
+			"me":        claims["sub"],
+			"scope":     claims[m.baseUrl].(map[string]interface{})["scope"],
+			"client_id": claims["aud"],
+			"exp":       claims["exp"],
+			"iat":       claims["iat"],
+		})
+	} else {
+		c.JSON(200, gin.H{"active": false})
+	}
 }
 
 func (m *indieAuthApiModule) loginEndpoint(c *gin.Context) {
@@ -197,6 +255,14 @@ func (m *indieAuthApiModule) loginEndpoint(c *gin.Context) {
 		c.AbortWithError(500, err)
 		return
 	}
+
+	approvedScopes := make([]string, 0)
+	for _, scope := range strings.Split(authCode.scope, " ") {
+		if c.Request.FormValue("scope-"+scope) == "true" {
+			approvedScopes = append(approvedScopes, scope)
+		}
+	}
+	m.store.UpdateScope(code, strings.Join(approvedScopes, " "))
 
 	queryValues := url.Values{}
 	queryValues.Set("code", authCode.code)

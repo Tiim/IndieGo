@@ -31,9 +31,14 @@
               {{.AppInfo.Summary}}
             </p>
           {{end}}
-          {{if .Scope}}
+          {{if .Scopes}}
             <p>
-              <strong>Requested Scopes:</strong> {{.Scope}}
+              <strong>Requested Scopes:</strong> 
+              <ul>
+              {{range .Scopes}}
+                <li>{{.}}</li>
+              {{end}}
+              </ul>
             </p>
           {{end}}
         </div>
@@ -48,9 +53,14 @@
           </ul>
         </div>
       {{end}}
-      <h2>Login</h2>
+      <h2>Grant Access</h2>
       <form name="IndieAuth Login" action="/indieauth/login" method="POST">
         <input type="hidden" name="code" value="{{.Code}}"/>
+        {{range .Scopes}}
+          <input type="checkbox" name="scope-{{.}}" id="scope-{{.}}" value="true" checked/>
+          <label for="scope-{{.}}">Scope {{.}}</label>
+        {{end}}
+        <br/>
         <input type="password" name="password" placeholder="Password"/>
         <input type="submit" value="Login"/>
       </form>

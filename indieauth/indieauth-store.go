@@ -19,19 +19,29 @@ type AuthCode struct {
 	ts                  time.Time
 }
 
+type AccessToken struct {
+	scope     string
+	clientId  string
+	issuedAt  time.Time
+	expiresAt time.Time
+}
+
 type Store interface {
 	StoreAuthCode(authCode *AuthCode) error
 	GetAuthCode(code string) (*AuthCode, error)
 	DeleteAuthCode(code string) error
+	UpdateScope(code, scope string) error
+	RedeemAccessToken(authCode string) (*AccessToken, error)
 }
 
-type SQLiteStore struct {
-	db                *sql.DB
-	authCodeValidTime time.Duration
+type sQLiteStore struct {
+	db                 *sql.DB
+	authCodeValidTime  time.Duration
+	authTokenValidTime time.Duration
 }
 
-func NewSQLiteStore(db *sql.DB, authCodeValidTime time.Duration) *SQLiteStore {
-	return &SQLiteStore{db: db, authCodeValidTime: authCodeValidTime}
+func NewSQLiteStore(db *sql.DB, authCodeValidTime, authTokenValidTime time.Duration) *sQLiteStore {
+	return &sQLiteStore{db: db, authCodeValidTime: authCodeValidTime, authTokenValidTime: authTokenValidTime}
 }
 
 func newAuthCode(redirectUri, clientId, scope, state, codeChallenge, codeChallengeMethod, me string) (*AuthCode, error) {
@@ -54,13 +64,13 @@ func newAuthCode(redirectUri, clientId, scope, state, codeChallenge, codeChallen
 	}, nil
 }
 
-func (s *SQLiteStore) StoreAuthCode(authCode *AuthCode) error {
+func (s *sQLiteStore) StoreAuthCode(authCode *AuthCode) error {
 	_, err := s.db.Exec("INSERT INTO indieauth_auth_codes (code, client_id, redirect_uri, scope, state, code_challenge, code_challenge_method, me, ts) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
 		authCode.code, authCode.clientId, authCode.redirectUri, authCode.scope, authCode.state, authCode.codeChallenge, authCode.codeChallengeMethod, authCode.me, authCode.ts.Format(time.RFC3339))
 	return err
 }
 
-func (s *SQLiteStore) GetAuthCode(code string) (*AuthCode, error) {
+func (s *sQLiteStore) GetAuthCode(code string) (*AuthCode, error) {
 	var authCode AuthCode
 	var ts string
 	row := s.db.QueryRow("SELECT code, client_id, redirect_uri, scope, state, code_challenge, code_challenge_method, me, ts FROM indieauth_auth_codes WHERE code = ? AND ts > ?",
@@ -88,12 +98,58 @@ func (s *SQLiteStore) GetAuthCode(code string) (*AuthCode, error) {
 	return &authCode, nil
 }
 
-func (s *SQLiteStore) DeleteAuthCode(code string) error {
+func (s *sQLiteStore) DeleteAuthCode(code string) error {
 	_, err := s.db.Exec("DELETE FROM indieauth_auth_codes WHERE code = ?", code)
 	return err
 }
 
-func (s *SQLiteStore) CleanUp() error {
+func (s *sQLiteStore) UpdateScope(code, scope string) error {
+	_, err := s.db.Exec("UPDATE indieauth_auth_codes SET scope = ? WHERE code = ?", scope, code)
+	return err
+}
+
+func (s *sQLiteStore) CleanUp() error {
 	_, err := s.db.Exec("DELETE FROM indieauth_auth_codes WHERE ts < ?", time.Now().Add(-s.authCodeValidTime).Format(time.RFC3339))
 	return err
+}
+
+func (s *sQLiteStore) RedeemAccessToken(authCode string) (*AccessToken, error) {
+	tx, err := s.db.Begin()
+	defer tx.Rollback()
+	if err != nil {
+		return nil, err
+	}
+
+	var ts string
+	var authCodeObj AuthCode
+	row := tx.QueryRow("SELECT code, client_id, scope, me, ts FROM indieauth_auth_codes WHERE code = ? AND ts > ?",
+		authCode, time.Now().Add(-s.authCodeValidTime).Format(time.RFC3339))
+	err = row.Scan(
+		&authCodeObj.code,
+		&authCodeObj.clientId,
+		&authCodeObj.scope,
+		&authCodeObj.me,
+		&ts,
+	)
+	if err != nil {
+		return nil, err
+	}
+	authCodeObj.ts, _ = time.Parse(time.RFC3339, ts)
+
+	_, err = tx.Exec("DELETE FROM indieauth_auth_codes WHERE code = ?", authCode)
+
+	if err != nil {
+		return nil, err
+	}
+
+	if err := tx.Commit(); err != nil {
+		return nil, err
+	}
+
+	return &AccessToken{
+		scope:     authCodeObj.scope,
+		clientId:  authCodeObj.clientId,
+		issuedAt:  time.Now(),
+		expiresAt: time.Now().Add(s.authTokenValidTime),
+	}, nil
 }
