@@ -6,7 +6,7 @@ import (
 	"net"
 	"net/http"
 	"net/url"
-	"tiim/go-comment-api/microformatsextract"
+	"tiim/go-comment-api/mfobjects"
 
 	"willnorris.com/go/microformats"
 )
@@ -60,7 +60,7 @@ func getAppInfo(clientId string, client http.Client, ctx context.Context) (*appI
 		return &appInfo{ClientId: clientId}, nil
 	}
 
-	happ := microformatsextract.GetHApp(mfData)
+	happ := mfobjects.GetHApp(mfData)
 
 	return &appInfo{
 		ClientId:     clientId,

@@ -1,4 +1,4 @@
-package microformatsextract
+package mfobjects
 
 import (
 	"fmt"

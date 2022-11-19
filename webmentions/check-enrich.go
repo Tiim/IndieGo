@@ -1,7 +1,7 @@
 package webmentions
 
 import (
-	"tiim/go-comment-api/microformatsextract"
+	"tiim/go-comment-api/mfobjects"
 
 	"github.com/PuerkitoBio/goquery"
 	"willnorris.com/go/microformats"
@@ -15,7 +15,7 @@ func (c *microformatEnricherChecker) CheckMention(w *Webmention) error {
 
 func (c *microformatEnricherChecker) CheckDocument(gq *goquery.Document, w *Webmention) error {
 	data := microformats.ParseNode(gq.Nodes[0], w.SourceUrl())
-	hentry := microformatsextract.GetHEntry(data)
+	hentry := mfobjects.GetHEntry(data)
 
 	w.AuthorName = hentry.Author.Name
 	w.Content = hentry.GetShortContent(500, 4)
