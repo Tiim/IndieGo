@@ -2,6 +2,7 @@ package micropub
 
 import (
 	"tiim/go-comment-api/mfobjects"
+	"time"
 
 	"willnorris.com/go/microformats"
 )
@@ -30,9 +31,13 @@ func ParseMicropubPost(data MicropubPostRaw) MicropubPost {
 			},
 		},
 	}
-	return MicropubPost{
+	post := MicropubPost{
 		Entry: mfobjects.GetHEntry(&mf),
 	}
+	if post.Entry.Published.IsZero() {
+		post.Entry.Published = time.Now().UTC()
+	}
+	return post
 }
 
 func (post *MicropubPost) ToMarkdown() string {

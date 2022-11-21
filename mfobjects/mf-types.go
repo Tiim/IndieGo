@@ -13,8 +13,8 @@ type MF2HEntry struct {
 	Name      string    `yaml:"name,omitempty"`
 	Summary   string    `yaml:"summary,omitempty"`
 	Content   string    `yaml:"-"`
-	Published time.Time `yaml:"published,omitempty"`
-	Updated   time.Time `yaml:"updated,omitempty"`
+	Published time.Time `yaml:"date,omitempty"`
+	Updated   time.Time `yaml:"modified,omitempty"`
 	Author    MF2HCard  `yaml:"author,omitempty"`
 	Category  []string  `yaml:"content_tags,omitempty"`
 	Url       string    `yaml:"-"`

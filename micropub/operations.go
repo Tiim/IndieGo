@@ -3,6 +3,7 @@ package micropub
 import (
 	"fmt"
 	"tiim/go-comment-api/mfobjects"
+	"time"
 
 	"willnorris.com/go/microformats"
 )
@@ -41,6 +42,8 @@ func ModifyEntry(post *MicropubPost, deleteProps interface{}, addProps, replaceP
 			return fmt.Errorf("unknown delete type %T", del)
 		}
 	}
-	*post = MicropubPost{Entry: mfobjects.GetHEntry(&microformats.Data{Items: []*microformats.Microformat{mf}})}
+	entry := mfobjects.GetHEntry(&microformats.Data{Items: []*microformats.Microformat{mf}})
+	entry.Updated = time.Now().UTC()
+	*post = MicropubPost{Entry: entry}
 	return nil
 }

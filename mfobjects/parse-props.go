@@ -1,7 +1,7 @@
 package mfobjects
 
 import (
-	"fmt"
+	"log"
 	"strings"
 	"time"
 
@@ -141,7 +141,7 @@ func GetStringProp(name string, item *microformats.Microformat) string {
 			return trimLines(value["html"].(string))
 		}
 	}
-	fmt.Printf("Did not find string prop %s: %v (%T)", name, propValue[0], propValue[0])
+	log.Printf("Did not find string prop %s: %v (%T)", name, propValue[0], propValue[0])
 	return ""
 }
 
@@ -191,7 +191,7 @@ func GetTimeProp(name string, item *microformats.Microformat) time.Time {
 		parsed = parsed.UTC()
 		return parsed
 	}
-	fmt.Printf("Did not find time prop %s: %v (%T)", name, propValue[0], propValue[0])
+	log.Printf("Did not find time prop %s: %v (%T)", name, propValue[0], propValue[0])
 	return time.Time{}
 }
 

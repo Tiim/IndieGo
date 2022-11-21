@@ -3,6 +3,7 @@ package micropub
 import (
 	"encoding/json"
 	"fmt"
+	"log"
 	"tiim/go-comment-api/mfobjects"
 
 	"willnorris.com/go/microformats"
@@ -105,5 +106,5 @@ func (m *micropubMemoryStore) printStore() {
 	if err != nil {
 		return
 	}
-	fmt.Println(string(prettyJson))
+	log.Println(string(prettyJson))
 }
