@@ -8,6 +8,10 @@ import (
 	"willnorris.com/go/microformats"
 )
 
+type MicroformatFormatter interface {
+	ToMicroformat() *microformats.Microformat
+}
+
 type MF2HEntry struct {
 	Name      string
 	Summary   string
@@ -251,4 +255,95 @@ func trimLines(s string) string {
 		}
 	}
 	return strings.Join(newLines, "\n")
+}
+
+func (h *MF2HEntry) ToMicroformat() *microformats.Microformat {
+	mf := &microformats.Microformat{
+		Type:       []string{"h-entry"},
+		Properties: map[string][]interface{}{},
+	}
+	if h.Name != "" {
+		mf.Properties["name"] = []interface{}{h.Name}
+	}
+	if h.Summary != "" {
+		mf.Properties["summary"] = []interface{}{h.Summary}
+	}
+	if h.Content != "" {
+		mf.Properties["content"] = []interface{}{h.Content}
+	}
+	if !h.Published.IsZero() {
+		mf.Properties["published"] = []interface{}{h.Published.Format(time.RFC3339)}
+	}
+	if !h.Updated.IsZero() {
+		mf.Properties["updated"] = []interface{}{h.Updated.Format(time.RFC3339)}
+	}
+	if h.Author.Name != "" {
+		mf.Properties["author"] = []interface{}{h.Author.ToMicroformat()}
+	}
+	if len(h.Category) > 0 {
+		mf.Properties["category"] = []interface{}{}
+		for _, category := range h.Category {
+			mf.Properties["category"] = append(mf.Properties["category"], category)
+		}
+	}
+	if h.Url != "" {
+		mf.Properties["url"] = []interface{}{h.Url}
+	}
+	if h.InReplyTo.Url != "" {
+		mf.Properties["in-reply-to"] = []interface{}{h.InReplyTo.ToMicroformat()}
+	}
+	if h.RSVP != "" {
+		mf.Properties["rsvp"] = []interface{}{h.RSVP}
+	}
+	if h.LikeOf.Url != "" {
+		mf.Properties["like-of"] = []interface{}{h.LikeOf.ToMicroformat()}
+	}
+	if h.RepostOf.Url != "" {
+		mf.Properties["repost-of"] = []interface{}{h.RepostOf.ToMicroformat()}
+	}
+
+	return mf
+}
+
+func (h *MF2HCard) ToMicroformat() *microformats.Microformat {
+	mf := &microformats.Microformat{
+		Type:       []string{"h-card"},
+		Properties: map[string][]interface{}{},
+	}
+	if h.Name != "" {
+		mf.Properties["name"] = []interface{}{h.Name}
+	}
+	return mf
+}
+
+func (h *MF2HCite) ToMicroformat() *microformats.Microformat {
+	mf := &microformats.Microformat{
+		Type:       []string{"h-cite"},
+		Properties: map[string][]interface{}{},
+	}
+	if h.Name != "" {
+		mf.Properties["name"] = []interface{}{h.Name}
+	}
+	if !h.Published.IsZero() {
+		mf.Properties["published"] = []interface{}{h.Published.Format(time.RFC3339)}
+	}
+	if h.Author.Name != "" {
+		mf.Properties["author"] = []interface{}{h.Author.ToMicroformat()}
+	}
+	if h.Url != "" {
+		mf.Properties["url"] = []interface{}{h.Url}
+	}
+	if h.Publication != "" {
+		mf.Properties["publication"] = []interface{}{h.Publication}
+	}
+	if !h.Accessed.IsZero() {
+		mf.Properties["accessed"] = []interface{}{h.Accessed.Format(time.RFC3339)}
+	}
+	if h.Content != "" {
+		mf.Properties["content"] = []interface{}{h.Content}
+	}
+	if h.Summary != "" {
+		mf.Properties["summary"] = []interface{}{h.Summary}
+	}
+	return mf
 }

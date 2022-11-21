@@ -92,19 +92,20 @@ func (m *indieAuthApiModule) authorizeEndpoint(c *gin.Context) {
 
 	warnings := make([]string, 0)
 
+	if codeChallengeMethod == "" {
+		codeChallengeMethod = "plain"
+	}
+	if codeChallengeMethod == "plain" {
+		warnings = append(warnings, "using insecure code_challenge_method 'plain'")
+	}
 	_, ok := challenges[codeChallengeMethod]
 	if !ok {
-		c.AbortWithError(400, fmt.Errorf("invalid code_challenge_method"))
+		c.AbortWithError(400, fmt.Errorf("invalid code_challenge_method %s", codeChallengeMethod))
 		return
 	}
 	if scope == "" {
 		warnings = append(warnings, "no scope specified, using default scope")
 		scope = "profile"
-	}
-
-	if codeChallenge == "" || codeChallengeMethod == "" || codeChallengeMethod == "plain" {
-		warnings = append(warnings, fmt.Sprintf("Using insecure 'plain' code_challenge: challenge: %s method: %s", codeChallenge, codeChallengeMethod))
-		codeChallenge = "plain"
 	}
 
 	code, err := newAuthCode(redirectUri, clientId, scope, state, codeChallenge, codeChallengeMethod, me)
@@ -177,7 +178,7 @@ func (m *indieAuthApiModule) tokenEndpoint(c *gin.Context) {
 
 	challenge := challenges[authCode.codeChallengeMethod]
 	if !challenge.Verify(codeVerifier, authCode.codeChallenge) {
-		c.AbortWithError(400, fmt.Errorf("invalid code_verifier"))
+		c.AbortWithError(400, fmt.Errorf("invalid code_verifier: %s code_challenge %s", codeVerifier, authCode.codeChallenge))
 		return
 	}
 
@@ -253,6 +254,49 @@ func (m *indieAuthApiModule) introspectionEndpoint(c *gin.Context) {
 		})
 	} else {
 		c.JSON(200, gin.H{"active": false})
+	}
+}
+
+func (m *indieAuthApiModule) VerifyToken(tokenString string, minimalScopes []string) (ScopeCheck, error) {
+	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
+		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
+		}
+		return []byte(m.jwtSecret), nil
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	if claims, ok := token.Claims.(jwt.MapClaims); ok && err == nil && token.Valid {
+		// check scopes
+		scopes := strings.Split(claims[m.baseUrl].(map[string]interface{})["scope"].(string), " ")
+		for _, minimalScope := range minimalScopes {
+			found := false
+			for _, scope := range scopes {
+				if scope == minimalScope {
+					found = true
+					break
+				}
+			}
+			if !found {
+				return nil, fmt.Errorf("missing scope %s", minimalScope)
+			}
+		}
+
+		scopeChecker := func(scope string) bool {
+			for _, s := range scopes {
+				if s == scope {
+					return true
+				}
+			}
+			return false
+		}
+
+		return scopeChecker, nil
+	} else {
+		return nil, fmt.Errorf("invalid token")
 	}
 }
 

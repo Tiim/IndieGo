@@ -9,6 +9,7 @@ import (
 	"tiim/go-comment-api/comments"
 	"tiim/go-comment-api/event"
 	"tiim/go-comment-api/indieauth"
+	"tiim/go-comment-api/micropub"
 	"tiim/go-comment-api/model"
 	"tiim/go-comment-api/webmentions"
 	"tiim/go-comment-api/wmsend"
@@ -93,6 +94,12 @@ func main() {
 	scheduler.Every(8).Hours().Do(indieAuthStore.CleanUp)
 
 	//
+	// Micropub
+	//
+	mpStore := micropub.NewMicropubPrintStore()
+	mpApi := micropub.NewMicropubApiModule(mpStore, indieAuthApiModule.VerifyToken)
+
+	//
 	// Webhooks
 	//
 
@@ -160,6 +167,7 @@ func main() {
 		wmApi,
 		webhookModule,
 		indieAuthApiModule,
+		mpApi,
 	}
 
 	log.Println("Starting server")
