@@ -22,7 +22,6 @@ type MicropubPost struct {
 }
 
 func ParseMicropubPost(data MicropubPostRaw) MicropubPost {
-
 	mf := microformats.Data{
 		Items: []*microformats.Microformat{
 			{
@@ -33,5 +32,15 @@ func ParseMicropubPost(data MicropubPostRaw) MicropubPost {
 	}
 	return MicropubPost{
 		Entry: mfobjects.GetHEntry(&mf),
+	}
+}
+
+func (post *MicropubPost) ToMarkdown() string {
+	return post.Entry.ToMarkdown()
+}
+
+func PostFromMarkdown(markdown string) MicropubPost {
+	return MicropubPost{
+		Entry: mfobjects.EntryFromMarkdonw(markdown),
 	}
 }

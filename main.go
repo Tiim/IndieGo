@@ -5,6 +5,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"strings"
 	"tiim/go-comment-api/api"
 	"tiim/go-comment-api/comments"
 	"tiim/go-comment-api/event"
@@ -96,7 +97,15 @@ func main() {
 	//
 	// Micropub
 	//
-	mpStore := micropub.NewMicropubPrintStore()
+	mpUrlConv := micropub.UrlConverter{
+		UrlToFilePath: func(url string) string {
+			return strings.TrimSuffix(strings.TrimPrefix(url, "https://github.com/Tiim/test-content/blob/main/"), ".md?plain=1")
+		},
+		FilePathToUrl: func(path string) string {
+			return "https://github.com/Tiim/test-content/blob/main/" + path + ".md?plain=1"
+		},
+	}
+	mpStore := micropub.NewMicropubGithubStore(os.Getenv("GITHUB_TOKEN"), "Tiim", "test-content", "content", mpUrlConv, httpClient)
 	mpApi := micropub.NewMicropubApiModule(mpStore, indieAuthApiModule.VerifyToken)
 
 	//
