@@ -141,6 +141,13 @@ func GetStringProp(name string, item *microformats.Microformat) string {
 			return trimLines(value["html"].(string))
 		}
 	}
+	if value, ok := propValue[0].(map[string]string); ok {
+		if value["value"] != "" {
+			return trimLines(value["value"])
+		} else if value["html"] != "" {
+			return trimLines(value["html"])
+		}
+	}
 	log.Printf("Did not find string prop %s: %v (%T)", name, propValue[0], propValue[0])
 	return ""
 }
@@ -186,6 +193,7 @@ func GetTimeProp(name string, item *microformats.Microformat) time.Time {
 			}
 		}
 		if parsed.IsZero() {
+			log.Printf("Could not parse time value %s", value)
 			return time.Time{}
 		}
 		parsed = parsed.UTC()
