@@ -97,15 +97,26 @@ func main() {
 	//
 	// Micropub
 	//
+
+	mpGhFolder := os.Getenv("MICROPUB_GH_FOLDER")
+	mpPublishUrl := os.Getenv("MICROPUB_PUBLISH_URL")
 	mpUrlConv := micropub.UrlConverter{
 		UrlToFilePath: func(url string) string {
-			return strings.TrimSuffix(strings.TrimPrefix(url, "https://github.com/Tiim/test-content/blob/main/"), ".md?plain=1")
+			return strings.TrimSuffix(
+				strings.TrimSuffix(
+					strings.TrimPrefix(url, mpPublishUrl), ".md"), "?plain=1")
 		},
 		FilePathToUrl: func(path string) string {
-			return "https://github.com/Tiim/test-content/blob/main/" + path + ".md?plain=1"
+			return strings.Replace(mpPublishUrl, "{}", path, 1)
 		},
 	}
-	mpStore := micropub.NewMicropubGithubStore(os.Getenv("GITHUB_TOKEN"), "Tiim", "test-content", "content", mpUrlConv, httpClient)
+	mpStore := micropub.NewMicropubGithubStore(os.Getenv("GITHUB_TOKEN"),
+		os.Getenv("GITHUB_USER"),
+		os.Getenv("GITHUB_REPO"),
+		mpGhFolder,
+		mpUrlConv,
+		httpClient,
+	)
 	mpApi := micropub.NewMicropubApiModule(mpStore, indieAuthApiModule.VerifyToken)
 
 	//
