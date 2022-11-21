@@ -19,6 +19,7 @@ type wmSend struct {
 
 type FeedItem struct {
 	uid     string
+	link    string
 	content string
 	updated *time.Time
 	baseUrl string
@@ -84,7 +85,7 @@ func (w *wmSend) getFeedItems() ([]FeedItem, error) {
 		if time == nil {
 			time = item.PublishedParsed
 		}
-		items[i] = FeedItem{uid: item.Link, content: item.Content, updated: time, baseUrl: feed.Link}
+		items[i] = FeedItem{uid: item.Link, content: item.Content, updated: time, link: item.Link, baseUrl: feed.Link}
 	}
 
 	return items, nil
@@ -124,8 +125,8 @@ func (w *wmSend) sendWebmentions(item FeedItem) error {
 		if err != nil {
 			log.Printf("unable to discover endpoint for url %s: %v", link, err)
 		} else {
-			log.Printf("sending webmention from %s to %s", item.baseUrl, link)
-			wmClient.SendWebmention(endpoint, item.baseUrl, link)
+			log.Printf("sending webmention from %s to %s", item.link, link)
+			wmClient.SendWebmention(endpoint, item.link, link)
 		}
 	}
 
