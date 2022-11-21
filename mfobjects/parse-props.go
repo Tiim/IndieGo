@@ -8,10 +8,6 @@ import (
 	"willnorris.com/go/microformats"
 )
 
-type MicroformatFormatter interface {
-	ToMicroformat() *microformats.Microformat
-}
-
 type MF2HEntry struct {
 	Name      string
 	Summary   string
@@ -21,6 +17,7 @@ type MF2HEntry struct {
 	Author    MF2HCard
 	Category  []string
 	Url       string
+	Photos    MF2Photos
 	InReplyTo MF2HCite
 	RSVP      string
 	LikeOf    MF2HCite
@@ -50,6 +47,13 @@ type MF2HApp struct {
 	Author       MF2HCard
 	RedirectUris []string
 }
+
+type MF2Photo struct {
+	Url string
+	Alt string
+}
+
+type MF2Photos []MF2Photo
 
 func GetHApp(data *microformats.Data) MF2HApp {
 	item := getEntryWithType(data, "h-app", "h-x-app")
@@ -81,6 +85,7 @@ func GetHEntry(data *microformats.Data) MF2HEntry {
 		Author:    GetHCard("author", item),
 		Category:  GetStringPropSlice("category", item),
 		Url:       GetStringProp("url", item),
+		Photos:    GetPhotos("photo", item),
 		InReplyTo: GetHCite("in-reply-to", item),
 		LikeOf:    GetHCite("like-of", item),
 		RepostOf:  GetHCite("repost-of", item),
@@ -128,6 +133,30 @@ func GetHCite(name string, item *microformats.Microformat) MF2HCite {
 	return MF2HCite{}
 }
 
+func GetPhotos(name string, item *microformats.Microformat) MF2Photos {
+	propValue, ok := item.Properties[name]
+	if !ok || len(propValue) == 0 {
+		return []MF2Photo{}
+	}
+	slice := make([]MF2Photo, 0, len(propValue))
+	for _, val := range propValue {
+		if value, ok := val.(string); ok {
+			slice = append(slice, MF2Photo{Url: value})
+		} else if value, ok := val.(map[string]interface{}); ok {
+			var url string
+			var alt string
+			if value["value"] != nil && value["value"].(string) != "" {
+				url = value["value"].(string)
+			}
+			if value["alt"] != nil && value["alt"].(string) != "" {
+				alt = value["alt"].(string)
+			}
+			slice = append(slice, MF2Photo{Url: url, Alt: alt})
+		}
+	}
+	return slice
+}
+
 func getEntryWithType(data *microformats.Data, types ...string) *microformats.Microformat {
 	for _, item := range data.Items {
 		for _, itemType := range item.Type {
@@ -152,8 +181,12 @@ func GetStringProp(name string, item *microformats.Microformat) string {
 	if value, ok := propValue[0].(string); ok {
 		return trimLines(value)
 	}
-	if value, ok := propValue[0].(map[string]string); ok && value["value"] != "" {
-		return trimLines(value["value"])
+	if value, ok := propValue[0].(map[string]interface{}); ok {
+		if value["value"] != nil && value["value"].(string) != "" {
+			return trimLines(value["value"].(string))
+		} else if value["html"] != nil && value["html"].(string) != "" {
+			return trimLines(value["html"].(string))
+		}
 	}
 	fmt.Printf("Did not find string prop %s: %v (%T)", name, propValue[0], propValue[0])
 	return ""
@@ -289,6 +322,9 @@ func (h *MF2HEntry) ToMicroformat() *microformats.Microformat {
 	if h.Url != "" {
 		mf.Properties["url"] = []interface{}{h.Url}
 	}
+	if len(h.Photos) > 0 {
+		mf.Properties["photo"] = []interface{}{h.Photos.ToMicroformat()}
+	}
 	if h.InReplyTo.Url != "" {
 		mf.Properties["in-reply-to"] = []interface{}{h.InReplyTo.ToMicroformat()}
 	}
@@ -346,4 +382,12 @@ func (h *MF2HCite) ToMicroformat() *microformats.Microformat {
 		mf.Properties["summary"] = []interface{}{h.Summary}
 	}
 	return mf
+}
+
+func (p *MF2Photos) ToMicroformat() []map[string]interface{} {
+	slice := make([]map[string]interface{}, 0)
+	for _, photo := range *p {
+		slice = append(slice, map[string]interface{}{"url": photo.Url, "alt": photo.Alt})
+	}
+	return slice
 }
