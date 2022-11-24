@@ -121,6 +121,10 @@ func main() {
 		os.Getenv("STORJ_ACCESS_GRANT"),
 		os.Getenv("STORJ_BUCKET"),
 		os.Getenv("STORJ_BUCKET_PREFIX"),
+		func(name, contentType, prefix, bucket string) string {
+			url := os.Getenv("MICROPUB_MEDIA_URL_PREFIX")
+			return url + name
+		},
 	)
 	mpApi := micropub.NewMicropubApiModule(
 		mpStore,

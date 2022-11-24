@@ -4,24 +4,36 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"log"
 	"tiim/go-comment-api/mfobjects"
 
 	"github.com/google/uuid"
 	"storj.io/uplink"
-	"storj.io/uplink/edge"
 )
 
+type FormatUrl func(name, contentType, prefix, bucket string) string
+
 type storjMediaStore struct {
+	// the access grant from the storj.io dashboard
 	accessGrant string
-	bucketName  string
-	prefix      string
+	// the name of the storage bucket
+	bucketName string
+	// the prefix to use for the uploaded files
+	prefix string
+
+	formatUrl FormatUrl
 }
 
-func NewStorjMediaStore(accessGrant, bucketName, prefix string) storjMediaStore {
+func NewStorjMediaStore(accessGrant, bucketName, prefix string, formatUrl FormatUrl) storjMediaStore {
+	if prefix != "" && prefix[len(prefix)-1] != '/' {
+		prefix += "/"
+	}
+
 	return storjMediaStore{
 		accessGrant: accessGrant,
 		bucketName:  bucketName,
 		prefix:      prefix,
+		formatUrl:   formatUrl,
 	}
 }
 
@@ -46,7 +58,7 @@ func (s storjMediaStore) SaveMediaFiles(ctx context.Context, mpr MicropubPostRaw
 
 	for _, file := range mpr.Files {
 		// Intitiate the upload of our Object to the specified bucket and key.
-		key := s.uploadKey(file.ContentType)
+		key, name := s.uploadKey(file.ContentType)
 		upload, err := project.UploadObject(ctx, s.bucketName, key, nil)
 		if err != nil {
 			return fmt.Errorf("could not initiate upload: %v", err)
@@ -63,23 +75,7 @@ func (s storjMediaStore) SaveMediaFiles(ctx context.Context, mpr MicropubPostRaw
 		if err != nil {
 			return fmt.Errorf("could not commit uploaded object: %v", err)
 		}
-
-		urlAccess, err := access.Share(uplink.Permission{AllowDownload: true}, uplink.SharePrefix{Bucket: s.bucketName, Prefix: s.prefix})
-		if err != nil {
-			return fmt.Errorf("could not create url access: %v", err)
-		}
-		accessConfig := edge.Config{
-			//https://forum.storj.io/t/s3-compatability-copy/17426/5
-			AuthServiceAddress: "auth.eu1.storjshare.io:7777",
-		}
-		cred, err := accessConfig.RegisterAccess(ctx, urlAccess, &edge.RegisterAccessOptions{Public: true})
-		if err != nil {
-			return fmt.Errorf("could not register access: %v", err)
-		}
-		url, err := edge.JoinShareURL("https://link.storjshare.io", cred.AccessKeyID, s.bucketName, key, &edge.ShareURLOptions{Raw: true})
-		if err != nil {
-			return fmt.Errorf("could not join share url: %v", err)
-		}
+		url := s.formatUrl(name, file.ContentType, s.prefix, s.bucketName)
 		fmt.Printf("Uploaded %s to %s\n", file.Name, url)
 
 		addFile(mp, url, file.Name, file.ContentType)
@@ -87,11 +83,8 @@ func (s storjMediaStore) SaveMediaFiles(ctx context.Context, mpr MicropubPostRaw
 	return nil
 }
 
-func (s storjMediaStore) uploadKey(mimeType string) string {
+func (s storjMediaStore) uploadKey(mimeType string) (string, string) {
 	key := s.prefix
-	if key != "" && key[len(key)-1] != '/' {
-		key += "/"
-	}
 	extension := "bin"
 	switch mimeType {
 	case "image/jpeg":
@@ -100,10 +93,14 @@ func (s storjMediaStore) uploadKey(mimeType string) string {
 		extension = "png"
 	case "image/gif":
 		extension = "gif"
+	default:
+		log.Println("Unknown mime type for micropub upload: ", mimeType)
 	}
 	id := uuid.New()
-	key += id.String() + "." + extension
-	return key
+	name := id.String() + "." + extension
+	key += name
+
+	return key, name
 }
 
 func addFile(mp *MicropubPost, url, name, contentType string) {
