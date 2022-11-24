@@ -1,11 +1,19 @@
 package micropub
 
 import (
+	"io"
 	"tiim/go-comment-api/mfobjects"
 	"time"
 
 	"willnorris.com/go/microformats"
 )
+
+type MicropubFile struct {
+	ContentType string
+	Reader      io.ReadCloser
+	Name        string
+	Size        int64
+}
 
 type MicropubPostRaw struct {
 	Action      string                   `json:"action"`
@@ -16,6 +24,7 @@ type MicropubPostRaw struct {
 	Replace     map[string][]interface{} `json:"replace"`
 	Delete      interface{}              `json:"delete"`
 	AccessToken string                   `json:"-"`
+	Files       []MicropubFile           `json:"-"`
 }
 
 type MicropubPost struct {

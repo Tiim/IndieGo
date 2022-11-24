@@ -1,7 +1,9 @@
 package micropub
 
 import (
+	"context"
 	"fmt"
+	"mime/multipart"
 	"strings"
 	"tiim/go-comment-api/indieauth"
 
@@ -10,11 +12,12 @@ import (
 
 type micropubApiModule struct {
 	store       MicropubStore
+	mediaStore  MediaStore
 	verifyToken indieauth.TokenVerifier
 }
 
-func NewMicropubApiModule(store MicropubStore, verifyToken indieauth.TokenVerifier) *micropubApiModule {
-	return &micropubApiModule{store: store, verifyToken: verifyToken}
+func NewMicropubApiModule(store MicropubStore, mediaStore MediaStore, verifyToken indieauth.TokenVerifier) *micropubApiModule {
+	return &micropubApiModule{store: store, mediaStore: mediaStore, verifyToken: verifyToken}
 }
 
 func (m *micropubApiModule) Name() string {
@@ -50,7 +53,7 @@ func (m *micropubApiModule) micropubEndpoint(c *gin.Context) {
 		return
 	}
 	if err != nil {
-		c.AbortWithError(400, err)
+		c.AbortWithError(400, fmt.Errorf("failed to parse request: %w", err))
 		return
 	}
 	if data.AccessToken != "" && authorization != "" {
@@ -67,6 +70,13 @@ func (m *micropubApiModule) micropubEndpoint(c *gin.Context) {
 
 	if data.Action == "create" {
 		post := ParseMicropubPost(data)
+		if len(data.Files) > 0 {
+			err := m.mediaStore.SaveMediaFiles(context.Background(), data, &post)
+			if err != nil {
+				c.AbortWithError(500, err)
+				return
+			}
+		}
 		location, err := m.store.Create(post)
 		c.Header("Location", location)
 		if err != nil {
@@ -194,6 +204,12 @@ func extractMultipartFormData(c *gin.Context) (MicropubPostRaw, error) {
 			data[k][i] = s
 		}
 	}
+
+	files, err := getFiles(c.Request.MultipartForm.File)
+	if err != nil {
+		return MicropubPostRaw{}, err
+	}
+
 	postType := c.Request.MultipartForm.Value["h"]
 	if len(postType) == 0 {
 		postType = []string{"h-entry"}
@@ -227,6 +243,7 @@ func extractMultipartFormData(c *gin.Context) (MicropubPostRaw, error) {
 		Properties:  data,
 		AccessToken: accessToken,
 		Url:         url,
+		Files:       files,
 	}, nil
 }
 
@@ -241,4 +258,23 @@ func extractJSONData(c *gin.Context) (MicropubPostRaw, error) {
 		data.Action = "create"
 	}
 	return data, nil
+}
+
+func getFiles(files map[string][]*multipart.FileHeader) ([]MicropubFile, error) {
+	mpfiles := make([]MicropubFile, 0)
+	for _, v := range files {
+		for _, f := range v {
+			file, err := f.Open()
+			if err != nil {
+				return nil, err
+			}
+			mpfiles = append(mpfiles, MicropubFile{
+				Name:        f.Filename,
+				ContentType: f.Header.Get("Content-Type"),
+				Size:        f.Size,
+				Reader:      file,
+			})
+		}
+	}
+	return mpfiles, nil
 }

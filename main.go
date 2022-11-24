@@ -117,7 +117,16 @@ func main() {
 		mpUrlConv,
 		httpClient,
 	)
-	mpApi := micropub.NewMicropubApiModule(mpStore, indieAuthApiModule.VerifyToken)
+	mpMediaStore := micropub.NewStorjMediaStore(
+		os.Getenv("STORJ_ACCESS_GRANT"),
+		os.Getenv("STORJ_BUCKET"),
+		os.Getenv("STORJ_BUCKET_PREFIX"),
+	)
+	mpApi := micropub.NewMicropubApiModule(
+		mpStore,
+		mpMediaStore,
+		indieAuthApiModule.VerifyToken,
+	)
 
 	//
 	// Webhooks
