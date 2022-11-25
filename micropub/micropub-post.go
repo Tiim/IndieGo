@@ -16,15 +16,14 @@ type MicropubFile struct {
 }
 
 type MicropubPostRaw struct {
-	Action      string                   `json:"action"`
-	Url         string                   `json:"url"`
-	PostTye     []string                 `json:"type"`
-	Properties  map[string][]interface{} `json:"properties"`
-	Add         map[string][]interface{} `json:"add"`
-	Replace     map[string][]interface{} `json:"replace"`
-	Delete      interface{}              `json:"delete"`
-	AccessToken string                   `json:"-"`
-	Files       []MicropubFile           `json:"-"`
+	Action     string                   `json:"action"`
+	Url        string                   `json:"url"`
+	PostTye    []string                 `json:"type"`
+	Properties map[string][]interface{} `json:"properties"`
+	Add        map[string][]interface{} `json:"add"`
+	Replace    map[string][]interface{} `json:"replace"`
+	Delete     interface{}              `json:"delete"`
+	Files      []MicropubFile           `json:"-"`
 }
 
 type MicropubPost struct {

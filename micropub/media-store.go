@@ -7,15 +7,13 @@ import (
 
 type MediaStore interface {
 	// Save the files in the micropub raw post and insert the urls into the micropub post
-	SaveMediaFiles(ctx context.Context, mpr MicropubPostRaw, mp *MicropubPost) error
+	SaveMediaFiles(ctx context.Context, file MicropubFile) (string, error)
 }
 
 type NopMediaStore struct{}
 
-func (n NopMediaStore) SaveMediaFiles(ctx context.Context, mpr MicropubPostRaw, mp *MicropubPost) error {
-	for _, file := range mpr.Files {
-		log.Println("Skipping file:", file)
-		file.Reader.Close()
-	}
-	return nil
+func (n NopMediaStore) SaveMediaFiles(ctx context.Context, file MicropubFile) (string, error) {
+	defer file.Reader.Close()
+	log.Println("Skipping file: ", file.Name)
+	return "", nil
 }

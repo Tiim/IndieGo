@@ -1,11 +1,12 @@
 package micropub
 
 import (
-	"context"
 	"fmt"
+	"log"
 	"mime/multipart"
 	"strings"
 	"tiim/go-comment-api/indieauth"
+	"tiim/go-comment-api/mfobjects"
 
 	"github.com/gin-gonic/gin"
 )
@@ -31,119 +32,8 @@ func (m *micropubApiModule) Init(r *gin.Engine) error {
 func (m *micropubApiModule) RegisterRoutes(r *gin.Engine) error {
 	r.POST("/micropub", m.micropubEndpoint)
 	r.GET("/micropub", m.queryEndpoint)
+	r.POST("/micropub/media", m.mediaEndpoint)
 	return nil
-}
-
-func (m *micropubApiModule) micropubEndpoint(c *gin.Context) {
-	authorization := c.Request.Header.Get("Authorization")
-	authorization = strings.TrimPrefix(authorization, "Bearer ")
-
-	ct := c.ContentType()
-
-	var err error
-	var data MicropubPostRaw
-	if ct == "application/x-www-form-urlencoded" {
-		data, err = extractFormData(c)
-	} else if ct == "multipart/form-data" {
-		data, err = extractMultipartFormData(c)
-	} else if ct == "application/json" {
-		data, err = extractJSONData(c)
-	} else {
-		c.AbortWithError(400, fmt.Errorf("unsupported Content-Type: %s", ct))
-		return
-	}
-	if err != nil {
-		c.AbortWithError(400, fmt.Errorf("failed to parse request: %w", err))
-		return
-	}
-	if data.AccessToken != "" && authorization != "" {
-		c.AbortWithError(400, fmt.Errorf("access_token must not be set in both Authorization header and form data"))
-		return
-	} else if data.AccessToken != "" {
-		authorization = data.AccessToken
-	}
-	scopeChecker, err := m.verifyToken(authorization, []string{"create"})
-	if err != nil {
-		c.AbortWithError(401, err)
-		return
-	}
-
-	if data.Action == "create" {
-		post := ParseMicropubPost(data)
-		if len(data.Files) > 0 {
-			err := m.mediaStore.SaveMediaFiles(context.Background(), data, &post)
-			if err != nil {
-				c.AbortWithError(500, err)
-				return
-			}
-		}
-		location, err := m.store.Create(post)
-		c.Header("Location", location)
-		if err != nil {
-			c.AbortWithError(500, err)
-			return
-		}
-		c.Status(202)
-	} else if data.Action == "update" {
-		if !scopeChecker("update") {
-			c.JSON(401, gin.H{"error": "unauthorized"})
-			return
-		}
-		err := m.store.Modify(data.Url, data.Delete, data.Add, data.Replace)
-		if err != nil {
-			c.AbortWithError(500, err)
-			return
-		}
-		c.Status(200)
-	} else if data.Action == "delete" {
-		if !scopeChecker("delete") {
-			c.JSON(401, gin.H{"error": "unauthorized"})
-			return
-		}
-		err := m.store.Delete(data.Url)
-		if err != nil {
-			c.AbortWithError(500, err)
-			return
-		}
-		c.Status(200)
-	} else {
-		c.AbortWithError(400, fmt.Errorf("unsupported action: %s", data.Action))
-		return
-	}
-}
-
-func (m *micropubApiModule) queryEndpoint(c *gin.Context) {
-	authorization := c.Request.Header.Get("Authorization")
-	authorization = strings.TrimPrefix(authorization, "Bearer ")
-	authQuery := c.Query("access_token")
-	if authQuery != "" && authorization != "" {
-		c.AbortWithError(400, fmt.Errorf("access_token must not be set in both Authorization header and form data"))
-		return
-	} else if authQuery != "" {
-		authorization = authQuery
-	}
-	_, err := m.verifyToken(authorization, []string{"create"})
-	if err != nil {
-		c.AbortWithError(401, err)
-		return
-	}
-	q := c.Query("q")
-	if q == "config" {
-		c.JSON(200, gin.H{"syndicate-to": []gin.H{}})
-	} else if q == "source" {
-		url := c.Query("url")
-		post, err := m.store.Get(url)
-		if err != nil {
-			c.AbortWithError(404, err)
-			return
-		}
-		c.JSON(200, post)
-	} else if q == "syndicate-to" {
-		c.JSON(200, gin.H{"syndicate-to": []gin.H{}})
-	} else {
-		c.AbortWithError(400, fmt.Errorf("unsupported query: %s", q))
-		return
-	}
 }
 
 func extractFormData(c *gin.Context) (MicropubPostRaw, error) {
@@ -180,14 +70,12 @@ func extractFormData(c *gin.Context) (MicropubPostRaw, error) {
 		url = urlForm[0]
 		delete(data, "url")
 	}
-	accessToken := c.Request.FormValue("access_token")
 	c.Request.Form.Del("access_token")
 	return MicropubPostRaw{
-		Action:      action,
-		PostTye:     postType,
-		Properties:  data,
-		AccessToken: accessToken,
-		Url:         url,
+		Action:     action,
+		PostTye:    postType,
+		Properties: data,
+		Url:        url,
 	}, nil
 }
 
@@ -225,12 +113,6 @@ func extractMultipartFormData(c *gin.Context) (MicropubPostRaw, error) {
 		delete(data, "action")
 		action = actionForm[0]
 	}
-	var accessToken string
-	accessTokenForm := c.Request.MultipartForm.Value["access_token"]
-	if len(accessToken) > 0 {
-		accessToken = accessTokenForm[0]
-		delete(data, "access_token")
-	}
 	var url string
 	urlForm := c.Request.MultipartForm.Value["url"]
 	if len(urlForm) > 0 {
@@ -238,12 +120,11 @@ func extractMultipartFormData(c *gin.Context) (MicropubPostRaw, error) {
 		delete(data, "url")
 	}
 	return MicropubPostRaw{
-		Action:      action,
-		PostTye:     postType,
-		Properties:  data,
-		AccessToken: accessToken,
-		Url:         url,
-		Files:       files,
+		Action:     action,
+		PostTye:    postType,
+		Properties: data,
+		Url:        url,
+		Files:      files,
 	}, nil
 }
 
@@ -277,4 +158,36 @@ func getFiles(files map[string][]*multipart.FileHeader) ([]MicropubFile, error) 
 		}
 	}
 	return mpfiles, nil
+}
+
+func addUrlToPost(mp *MicropubPost, url, name, contentType string) {
+	switch contentType {
+	case "image/jpeg", "image/png", "image/gif":
+		mp.Entry.Photos = append(mp.Entry.Photos, mfobjects.MF2Photo{
+			Url: url,
+		})
+	default:
+		log.Println("Unknown content type to add to MicropubPost: ", contentType)
+	}
+}
+
+func authToken(c *gin.Context) (string, error) {
+	authHeader := c.Request.Header.Get("Authorization")
+	if authHeader != "" {
+		authHeader = strings.TrimPrefix(authHeader, "Bearer ")
+	}
+	authForm := c.Request.FormValue("access_token")
+	if authForm != "" {
+		c.Request.Form.Del("access_token")
+	}
+
+	if authHeader != "" && authForm != "" {
+		return "", fmt.Errorf("both authorization header and access_token form value are set")
+	}
+	if authHeader != "" {
+		return authHeader, nil
+	} else if authForm != "" {
+		return authForm, nil
+	}
+	return "", fmt.Errorf("no authorization header or access_token form value set")
 }
