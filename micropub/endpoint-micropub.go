@@ -54,8 +54,6 @@ func (m *micropubApiModule) micropubEndpoint(c *gin.Context) {
 func (m *micropubApiModule) actionCreate(c *gin.Context, data MicropubPostRaw) {
 	post := ParseMicropubPost(data)
 
-	fmt.Printf("Raw post: %+v\n\nParsed post: %+v\n", data, post)
-
 	for _, file := range data.Files {
 		url, err := m.mediaStore.SaveMediaFiles(context.Background(), file)
 		if err != nil {
