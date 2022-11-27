@@ -42,8 +42,9 @@ func ModifyEntry(post *MicropubPost, deleteProps interface{}, addProps, replaceP
 			return fmt.Errorf("unknown delete type %T", del)
 		}
 	}
-	entry := mfobjects.GetHEntry(&microformats.Data{Items: []*microformats.Microformat{mf}})
+	mfData := &microformats.Data{Items: []*microformats.Microformat{mf}}
+	entry := mfobjects.GetHEntry(mfData)
 	entry.Updated = time.Now().UTC()
-	*post = MicropubPost{Entry: entry}
+	*post = MicropubPost{Entry: entry, RawData: mfData}
 	return nil
 }

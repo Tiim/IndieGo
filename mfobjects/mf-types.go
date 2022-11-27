@@ -1,11 +1,8 @@
 package mfobjects
 
 import (
-	"log"
-	"strings"
 	"time"
 
-	"gopkg.in/yaml.v2"
 	"willnorris.com/go/microformats"
 )
 
@@ -55,31 +52,6 @@ type MF2Photo struct {
 }
 
 type MF2Photos []MF2Photo
-
-func (h *MF2HEntry) ToMarkdown() string {
-	frontmatter, err := yaml.Marshal(h)
-	if err != nil {
-		frontmatter = []byte("")
-	}
-	return "---\n" + string(frontmatter) + "---\n\n\n" + h.Content
-}
-
-func EntryFromMarkdonw(md string) MF2HEntry {
-	splits := strings.Split(md, "---")
-	if len(splits) < 3 {
-		log.Println("Markdown does not contain frontmatter")
-		return MF2HEntry{Content: md}
-	}
-	frontmatter := splits[1]
-	content := strings.Join(splits[2:], "---")
-	var entry MF2HEntry
-	err := yaml.Unmarshal([]byte(frontmatter), &entry)
-	if err != nil {
-		log.Println("Could not parse frontmatter", err)
-	}
-	entry.Content = strings.TrimSpace(content)
-	return entry
-}
 
 func (h *MF2HEntry) ToMicroformat() *microformats.Microformat {
 	mf := &microformats.Microformat{
