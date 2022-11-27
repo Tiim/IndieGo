@@ -163,7 +163,9 @@ func GetStringPropSlice(name string, item *microformats.Microformat) []string {
 	slice := make([]string, 0, len(propValue))
 	for _, value := range propValue {
 		if value, ok := value.(string); ok {
-			slice = append(slice, trimLines(value))
+			if value != "" {
+				slice = append(slice, trimLines(value))
+			}
 		}
 	}
 	return slice
