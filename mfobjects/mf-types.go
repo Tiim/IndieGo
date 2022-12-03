@@ -7,19 +7,20 @@ import (
 )
 
 type MF2HEntry struct {
-	Name      string    `yaml:"name,omitempty"`
-	Summary   string    `yaml:"summary,omitempty"`
-	Content   string    `yaml:"-"`
-	Published time.Time `yaml:"date,omitempty"`
-	Updated   time.Time `yaml:"modified,omitempty"`
-	Author    MF2HCard  `yaml:"author,omitempty"`
-	Category  []string  `yaml:"content_tags,omitempty"`
-	Url       string    `yaml:"-"`
-	Photos    MF2Photos `yaml:"photos,omitempty"`
-	InReplyTo MF2HCite  `yaml:"in_reply_to,omitempty"`
-	RSVP      string    `yaml:"rsvp,omitempty"`
-	LikeOf    MF2HCite  `yaml:"like_of,omitempty"`
-	RepostOf  MF2HCite  `yaml:"repost_of,omitempty"`
+	Name        string    `yaml:"name,omitempty"`
+	Summary     string    `yaml:"summary,omitempty"`
+	Content     string    `yaml:"-"`
+	Published   time.Time `yaml:"date,omitempty"`
+	Updated     time.Time `yaml:"modified,omitempty"`
+	Author      MF2HCard  `yaml:"author,omitempty"`
+	Category    []string  `yaml:"content_tags,omitempty"`
+	Url         string    `yaml:"-"`
+	Photos      MF2Photos `yaml:"photos,omitempty"`
+	InReplyTo   MF2HCite  `yaml:"in_reply_to,omitempty"`
+	RSVP        string    `yaml:"rsvp,omitempty"`
+	LikeOf      MF2HCite  `yaml:"like_of,omitempty"`
+	RepostOf    MF2HCite  `yaml:"repost_of,omitempty"`
+	Syndication []string  `yaml:"syndication,omitempty"`
 }
 
 type MF2HCite struct {
@@ -99,6 +100,12 @@ func (h *MF2HEntry) ToMicroformat() *microformats.Microformat {
 	}
 	if h.RepostOf.Url != "" {
 		mf.Properties["repost-of"] = []interface{}{h.RepostOf.ToMicroformat()}
+	}
+	if len(h.Syndication) > 0 {
+		mf.Properties["syndication"] = []interface{}{}
+		for _, syndication := range h.Syndication {
+			mf.Properties["syndication"] = append(mf.Properties["syndication"], syndication)
+		}
 	}
 
 	return mf

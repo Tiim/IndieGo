@@ -30,18 +30,19 @@ func GetHEntry(data *microformats.Data) MF2HEntry {
 	}
 
 	return MF2HEntry{
-		Name:      GetStringProp("name", item),
-		Summary:   GetStringProp("summary", item),
-		Content:   GetStringProp("content", item),
-		Published: GetTimeProp("published", item),
-		Updated:   GetTimeProp("updated", item),
-		Author:    GetHCard("author", item),
-		Category:  GetStringPropSlice("category", item),
-		Url:       GetStringProp("url", item),
-		Photos:    GetPhotos("photo", item),
-		InReplyTo: GetHCite("in-reply-to", item),
-		LikeOf:    GetHCite("like-of", item),
-		RepostOf:  GetHCite("repost-of", item),
+		Name:        GetStringProp("name", item),
+		Summary:     GetStringProp("summary", item),
+		Content:     GetStringProp("content", item),
+		Published:   GetTimeProp("published", item),
+		Updated:     GetTimeProp("updated", item),
+		Author:      GetHCard("author", item),
+		Category:    GetStringPropSlice("category", item),
+		Url:         GetStringProp("url", item),
+		Photos:      GetPhotos("photo", item),
+		InReplyTo:   GetHCite("in-reply-to", item),
+		LikeOf:      GetHCite("like-of", item),
+		RepostOf:    GetHCite("repost-of", item),
+		Syndication: GetStringPropSlice("syndication", item),
 	}
 }
 

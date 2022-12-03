@@ -21,5 +21,7 @@
     "Content": "",
     "Summary": "This site now supports sending and receiving webmentions and\nsurfacing structured data using microformats2."
   },
-  "RepostOf": null
+  "RepostOf": null,
+  "Photos": [],
+  "Syndication": []
 }

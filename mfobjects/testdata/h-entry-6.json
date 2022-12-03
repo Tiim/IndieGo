@@ -1,19 +1,19 @@
 {
-  "Name": "Receiver Test #1",
+  "Name": "A photo stream for my site",
   "Summary": "",
-  "Content": "Test content.",
-  "Published": "2022-11-09T12:54:45Z",
+  "Content": "Also posted on IndieNews.",
+  "Published": "2022-11-06T16:35:54Z",
   "Updated": null,
   "Author": {
-    "Name": "Webmention Rocks!"
+    "Name": ""
   },
   "Category": [],
-  "Url": "",
+  "Url": "https://webmention.rocks/a-photo-stream-for-my-site",
   "InReplyTo": {
     "Name": "",
     "Published": null,
     "Author": null,
-    "Url": "https://tiim.ch/blog/2022-07-12-first-go-project-commenting-api",
+    "Url": "",
     "Publication": "",
     "Accessed": null,
     "Content": "",
@@ -23,5 +23,7 @@
   "LikeOf": null,
   "RepostOf": null,
   "Photos": [],
-  "Syndication": []
+  "Syndication": [
+    "https://news.indieweb.org/en"
+  ]
 }
