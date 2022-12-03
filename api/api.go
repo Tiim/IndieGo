@@ -6,6 +6,7 @@ import (
 	"io/fs"
 	"log"
 	"net/http"
+	"tiim/go-comment-api/plugin"
 
 	"github.com/gin-gonic/gin"
 )
@@ -14,21 +15,21 @@ import (
 var assets embed.FS
 
 type apiServer struct {
-	modules []ApiModule
+	plugins []plugin.PluginInstance
 }
 
-func NewCommentServer(modules []ApiModule) *apiServer {
-	return &apiServer{modules: modules}
+func NewApiServer(modules []plugin.PluginInstance) *apiServer {
+	return &apiServer{plugins: modules}
 }
 
-func (cs *apiServer) Start() error {
+func (cs *apiServer) Start() (*gin.Engine, error) {
 	r := gin.New()
 	r.RemoveExtraSlash = true
 	r.RedirectTrailingSlash = false
 
 	assetsFolder, err := fs.Sub(assets, "assets")
 	if err != nil {
-		return fmt.Errorf("unable to get assets folder: %w", err)
+		return nil, fmt.Errorf("unable to get assets folder: %w", err)
 	}
 	r.StaticFS("/assets", http.FS(assetsFolder))
 
@@ -36,23 +37,22 @@ func (cs *apiServer) Start() error {
 	r.Use(gin.Logger())
 	r.Use(gin.Recovery())
 
-	for _, module := range cs.modules {
+	for _, module := range cs.plugins {
 		if err := module.Init(r); err != nil {
-			return fmt.Errorf("initialising module %s failed: %w", module.Name(), err)
+			return nil, fmt.Errorf("initialising module %s failed: %w", module.Name(), err)
 		}
 	}
 
 	r.Use(trailingSlash(r))
 	r.Use(cors())
 
-	for _, module := range cs.modules {
+	for _, module := range cs.plugins {
 		if err := module.RegisterRoutes(r); err != nil {
-			return fmt.Errorf("registering routes failed for module %s: %w", module.Name(), err)
+			return nil, fmt.Errorf("registering routes failed for module %s: %w", module.Name(), err)
 		}
 	}
 
-	r.Run(":8080")
-	return nil
+	return r, nil
 }
 
 func ErrorMiddleware() gin.HandlerFunc {

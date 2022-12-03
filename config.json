@@ -1,0 +1,23 @@
+{
+  "admin": {
+    "password": "password"
+  },
+  "plugins": [
+    {
+      "name": "sqlite-store"
+    },
+    {
+      "name": "indieauth",
+      "args": {
+        "auth_code_valid_time": 10,
+        "auth_token_valid_time": 43200,
+        "base_url": "https://example.com",
+        "canonical_url": "https://example.com",
+        "store": {
+          "name": "indieauth-sqlite-store",
+          "args": {}
+        }
+      }
+    }
+  ]
+}

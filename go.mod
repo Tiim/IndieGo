@@ -10,7 +10,6 @@ require (
 	github.com/goccy/go-json v0.9.11 // indirect
 	github.com/golang-jwt/jwt/v4 v4.4.2
 	github.com/google/uuid v1.3.0
-	github.com/joho/godotenv v1.4.0
 	github.com/jordan-wright/email v4.0.1-0.20210109023952-943e75fe5223+incompatible
 	github.com/mattn/go-sqlite3 v2.0.3+incompatible // indirect
 	github.com/mmcdole/gofeed v1.1.3
