@@ -12,7 +12,7 @@ import (
 )
 
 type subscriptionModule struct {
-	store        *commentStore
+	store        *commentSQLiteStore
 	unsubComment *template.Template
 	unsubEmail   *template.Template
 }
@@ -23,7 +23,7 @@ var unsubCommentTemplate string
 //go:embed unsubscribe_email.tmpl
 var unsubEmailTemplate string
 
-func NewSubscriptionModule(store *commentStore) *subscriptionModule {
+func NewSubscriptionModule(store *commentSQLiteStore) *subscriptionModule {
 	unsubComment := template.Must(template.New("unsubComment").Parse(unsubCommentTemplate))
 	unsubEmail := template.Must(template.New("unsubEmail").Parse(unsubEmailTemplate))
 	sm := subscriptionModule{store: store, unsubComment: unsubComment, unsubEmail: unsubEmail}

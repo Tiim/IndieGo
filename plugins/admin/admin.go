@@ -1,4 +1,4 @@
-package api
+package admin
 
 import (
 	"fmt"
@@ -11,7 +11,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-//go:embed templates/dashboard.tmpl
+//go:embed dashboard.tmpl
 var dashboardTemplate string
 
 type AdminSection interface {
@@ -26,39 +26,42 @@ type sectionData struct {
 	HTML template.HTML
 }
 
-type adminModule struct {
+type AdminModule struct {
 	password string
 	group    *gin.RouterGroup
 	sections []AdminSection
 	template *template.Template
 }
 
-func NewAdminModule(password string, sections []AdminSection) *adminModule {
+func newAdminModule(password string) *AdminModule {
 	if password == "" || len(password) < 8 {
-		log.Fatal("env variable ADMIN_PW not found or value less than 8 characters, check .env file")
+		log.Fatal("admin password must be at least 8 characters long")
 	}
 
 	template := template.Must(template.New("dashboard").Parse(dashboardTemplate))
 
-	uir := adminModule{password: password, sections: sections, template: template}
+	uir := AdminModule{password: password, sections: []AdminSection{}, template: template}
 	return &uir
 }
 
-func (ui *adminModule) Name() string {
-	return "Admin"
+func (ui *AdminModule) Name() string {
+	return "admin"
 }
-
-func (ui *adminModule) Init(r *gin.Engine) error {
+func (ui *AdminModule) Init() error {
 	for _, section := range ui.sections {
 		if err := section.Init(); err != nil {
 			return fmt.Errorf("initialising section %s failed: %w", section.Name(), err)
 		}
 	}
+	return nil
+}
+
+func (ui *AdminModule) InitGroups(r *gin.Engine) error {
 	ui.group = r.Group("/admin", gin.BasicAuth(gin.Accounts{"admin": ui.password}))
 	return nil
 }
 
-func (ui *adminModule) RegisterRoutes(r *gin.Engine) error {
+func (ui *AdminModule) RegisterRoutes(r *gin.Engine) error {
 
 	for _, section := range ui.sections {
 		section.RegisterRoutes(ui.group)
@@ -68,7 +71,15 @@ func (ui *adminModule) RegisterRoutes(r *gin.Engine) error {
 	return nil
 }
 
-func (ui *adminModule) adminDashboard(c *gin.Context) {
+func (ui *AdminModule) Start() error {
+	return nil
+}
+
+func (ui *AdminModule) RegisterSection(section AdminSection) {
+	ui.sections = append(ui.sections, section)
+}
+
+func (ui *AdminModule) adminDashboard(c *gin.Context) {
 	sections := make([]sectionData, len(ui.sections))
 	for i, section := range ui.sections {
 		name := section.Name()

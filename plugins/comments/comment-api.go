@@ -9,10 +9,10 @@ import (
 )
 
 type commentApiModule struct {
-	store *commentStore
+	store commentStore
 }
 
-func NewCommentModule(store *commentStore) *commentApiModule {
+func NewCommentModule(store commentStore) *commentApiModule {
 	im := commentApiModule{store: store}
 	return &im
 }
@@ -21,12 +21,20 @@ func (cm *commentApiModule) Name() string {
 	return "Comment"
 }
 
-func (cm *commentApiModule) Init(r *gin.Engine) error {
+func (cm *commentApiModule) Init() error {
+	return nil
+}
+
+func (cm *commentApiModule) InitGroups(r *gin.Engine) error {
 	return nil
 }
 
 func (cm *commentApiModule) RegisterRoutes(r *gin.Engine) error {
 	r.POST("/comment", cm.handlePostComment)
+	return nil
+}
+
+func (cm *commentApiModule) Start() error {
 	return nil
 }
 

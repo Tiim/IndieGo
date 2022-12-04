@@ -3,27 +3,27 @@ package indieauth
 import (
 	"encoding/json"
 	"fmt"
+	"tiim/go-comment-api/config"
 	"tiim/go-comment-api/model"
-	"tiim/go-comment-api/plugin"
 	"time"
 )
 
 type indieAuthSQLiteStoreModule struct{}
-type indieAuthSqliteStoreModuleData struct {
+type indieAuthSQLiteStoreModuleData struct {
 	AuthCodeExpirationMinutes  int `json:"authCodeExpirationMinutes"`
 	AuthTokenExpirationMinutes int `json:"authTokenExpirationMinutes"`
 }
 
 func init() {
-	plugin.RegisterModule(&indieAuthSQLiteStoreModule{})
+	config.RegisterModule(&indieAuthSQLiteStoreModule{})
 }
 
 func (m *indieAuthSQLiteStoreModule) Name() string {
 	return "indieauth-sqlite-store"
 }
 
-func (m *indieAuthSQLiteStoreModule) Load(data json.RawMessage, config plugin.GlobalConfig) (plugin.ModuleInstance, error) {
-	d := indieAuthSqliteStoreModuleData{
+func (m *indieAuthSQLiteStoreModule) Load(data json.RawMessage, config config.GlobalConfig) (config.ModuleInstance, error) {
+	d := indieAuthSQLiteStoreModuleData{
 		AuthCodeExpirationMinutes:  10,
 		AuthTokenExpirationMinutes: 60 * 24 * 30,
 	}

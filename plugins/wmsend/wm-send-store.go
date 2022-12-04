@@ -16,7 +16,7 @@ type wmSendSqliteStore struct {
 	db *sql.DB
 }
 
-func NewWmSendStore(db *sql.DB) *wmSendSqliteStore {
+func newWmSendStore(db *sql.DB) *wmSendSqliteStore {
 	return &wmSendSqliteStore{db: db}
 }
 

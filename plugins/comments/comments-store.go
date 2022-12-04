@@ -11,23 +11,28 @@ import (
 	"github.com/google/uuid"
 )
 
-type CommentPageToUrlMapper func(page string, id string) string
+type commentStore interface {
+	NewComment(c *comment) error
+	GetAllComments(since time.Time) ([]comment, error)
+	DeleteComment(id string) error
+	GetComment(id string, tx *sql.Tx) (*comment, error)
+	Unsubscribe(secret string) (*comment, error)
+	UnsubscribeAll(email string) ([]comment, error)
+	GetGenericCommentsForPage(page string, since time.Time) ([]model.GenericComment, error)
+	GetAllGenericComments(since time.Time) ([]model.GenericComment, error)
+}
 
-type commentStore struct {
+type commentSQLiteStore struct {
 	db              *sql.DB
 	eventHandler    event.Handler
 	pageToUrlMapper CommentPageToUrlMapper
 }
 
-func NewCommentStore(db *sql.DB, pageToUrl CommentPageToUrlMapper) *commentStore {
-	return &commentStore{db: db, pageToUrlMapper: pageToUrl}
-}
-
-func (cs *commentStore) SetEventHandler(h event.Handler) {
+func (cs *commentSQLiteStore) SetEventHandler(h event.Handler) {
 	cs.eventHandler = h
 }
 
-func (cs *commentStore) NewComment(c *comment) error {
+func (cs *commentSQLiteStore) NewComment(c *comment) error {
 
 	c.Id = uuid.New().String()
 	c.Timestamp = time.Now().UTC().Format(time.RFC3339)
@@ -61,7 +66,7 @@ func (cs *commentStore) NewComment(c *comment) error {
 	return tx.Commit()
 }
 
-func (cs *commentStore) GetAllComments(since time.Time) ([]comment, error) {
+func (cs *commentSQLiteStore) GetAllComments(since time.Time) ([]comment, error) {
 	stmt := "SELECT * FROM comments WHERE timestamp > ? ORDER BY timestamp DESC;"
 	rows, err := cs.db.Query(stmt, since.UTC().Format(time.RFC3339))
 	if err != nil {
@@ -86,7 +91,7 @@ func (cs *commentStore) GetAllComments(since time.Time) ([]comment, error) {
 	return comments, nil
 }
 
-func (cs *commentStore) DeleteComment(id string) error {
+func (cs *commentSQLiteStore) DeleteComment(id string) error {
 	stmt := "DELETE FROM comments WHERE id = ?;"
 	tx, err := cs.db.Begin()
 	if err != nil {
@@ -116,7 +121,7 @@ func (cs *commentStore) DeleteComment(id string) error {
 	return tx.Commit()
 }
 
-func (cs *commentStore) GetComment(id string, tx *sql.Tx) (*comment, error) {
+func (cs *commentSQLiteStore) GetComment(id string, tx *sql.Tx) (*comment, error) {
 	stmt := "SELECT * FROM comments WHERE id = ?;"
 	var rows *sql.Rows
 	var err error
@@ -146,7 +151,7 @@ func (cs *commentStore) GetComment(id string, tx *sql.Tx) (*comment, error) {
 	return comment, nil
 }
 
-func (cs *commentStore) Unsubscribe(secret string) (*comment, error) {
+func (cs *commentSQLiteStore) Unsubscribe(secret string) (*comment, error) {
 	stmt := "UPDATE comments SET notify = FALSE WHERE unsubscribe_secret = ?;"
 	_, err := cs.db.Exec(stmt, secret)
 	if err != nil {
@@ -173,7 +178,7 @@ func (cs *commentStore) Unsubscribe(secret string) (*comment, error) {
 	return comment, nil
 }
 
-func (cs *commentStore) UnsubscribeAll(email string) ([]comment, error) {
+func (cs *commentSQLiteStore) UnsubscribeAll(email string) ([]comment, error) {
 	stmt := "UPDATE comments SET notify = FALSE WHERE email = ?;"
 	_, err := cs.db.Exec(stmt, email)
 	if err != nil {
@@ -202,7 +207,7 @@ func (cs *commentStore) UnsubscribeAll(email string) ([]comment, error) {
 	return comments, nil
 }
 
-func (cs *commentStore) GetGenericCommentsForPage(page string, since time.Time) ([]model.GenericComment, error) {
+func (cs *commentSQLiteStore) GetGenericCommentsForPage(page string, since time.Time) ([]model.GenericComment, error) {
 	stmt := "SELECT * FROM comments WHERE page = ? AND timestamp > ? ORDER BY timestamp DESC;"
 	rows, err := cs.db.Query(stmt, page, since.UTC().Format(time.RFC3339))
 	if err != nil {
@@ -226,7 +231,8 @@ func (cs *commentStore) GetGenericCommentsForPage(page string, since time.Time) 
 
 	return comments, nil
 }
-func (cs *commentStore) GetAllGenericComments(since time.Time) ([]model.GenericComment, error) {
+
+func (cs *commentSQLiteStore) GetAllGenericComments(since time.Time) ([]model.GenericComment, error) {
 	comments, err := cs.GetAllComments(since)
 	if err != nil {
 		return nil, err
@@ -238,7 +244,7 @@ func (cs *commentStore) GetAllGenericComments(since time.Time) ([]model.GenericC
 	return genericComments, nil
 }
 
-func (cs *commentStore) readRow(rows *sql.Rows) (*comment, error) {
+func (cs *commentSQLiteStore) readRow(rows *sql.Rows) (*comment, error) {
 	c := comment{}
 	var replyTo sql.NullString
 	err := rows.Scan(
@@ -256,7 +262,7 @@ func (cs *commentStore) readRow(rows *sql.Rows) (*comment, error) {
 		return nil, err
 	}
 
-	c.Url = cs.pageToUrlMapper(c.Page, c.Id)
+	c.Url = cs.pageToUrlMapper.Map(c.Page, c.Id)
 	if replyTo.Valid {
 		c.ReplyTo = replyTo.String
 	}

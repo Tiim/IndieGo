@@ -54,7 +54,7 @@ func Test_wmSend_getFeedItems(t *testing.T) {
 		return nil
 	})
 
-	wmsend := NewWmSend(&TestWMStore{}, client, "https://tiim.ch/blog/rss.xml")
+	wmsend := newWmSend(&TestWMStore{}, client, "https://tiim.ch/blog/rss.xml", nil, 0)
 	feed, err := wmsend.getFeedItems()
 
 	if err != nil {
@@ -90,7 +90,7 @@ func Test_wmSend_sendWebmentions(t *testing.T) {
 		t.Errorf("unable to open testdata: %v", err)
 	}
 
-	wmsend := NewWmSend(&TestWMStore{}, client, "")
+	wmsend := newWmSend(&TestWMStore{}, client, "", nil, 0)
 	now := time.Now()
 	item := FeedItem{uid: "123", baseUrl: "https://tiim.ch/blog/2022-09-27-sveltekit-ssr-with-urql", updated: &now, content: string(buf)}
 	err = wmsend.sendWebmentions(item)
@@ -124,7 +124,7 @@ func Test_wmSend_sendWebmentions_preexisting_urls(t *testing.T) {
 		t.Errorf("unable to open testdata: %v", err)
 	}
 
-	wmsend := NewWmSend(&TestWMStore{urls: []string{"https://example.com/1", "https://kit.svelte.dev/docs/load"}}, client, "")
+	wmsend := newWmSend(&TestWMStore{urls: []string{"https://example.com/1", "https://kit.svelte.dev/docs/load"}}, client, "", nil, 0)
 	now := time.Now()
 	item := FeedItem{uid: "123", baseUrl: "https://tiim.ch/blog/2022-09-27-sveltekit-ssr-with-urql", updated: &now, content: string(buf)}
 	err = wmsend.sendWebmentions(item)

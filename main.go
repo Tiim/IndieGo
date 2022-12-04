@@ -3,21 +3,28 @@ package main
 import (
 	"log"
 	"tiim/go-comment-api/api"
-	"tiim/go-comment-api/plugin"
+	"tiim/go-comment-api/config"
 
-	_ "tiim/go-comment-api/indieauth"
+	_ "tiim/go-comment-api/plugins/admin"
+	_ "tiim/go-comment-api/plugins/comments"
+	_ "tiim/go-comment-api/plugins/indieauth"
+	_ "tiim/go-comment-api/plugins/wmsend"
 )
 
 func main() {
 
 	configPath := "config.json"
-	configStr, err := plugin.ReadConfigString(configPath)
+	configStr, err := config.ReadConfigString(configPath)
 	if err != nil {
 		log.Fatalf("unable to read config file: %v", err)
 	}
-	config, err := plugin.LoadConfig(configStr)
+	config, err := config.LoadConfig(configStr)
 	if err != nil {
 		log.Fatalf("unable to load config: %v", err)
+	}
+
+	for _, plugin := range config.Plugins {
+		plugin.Init()
 	}
 
 	apiServer := api.NewApiServer(config.Plugins)

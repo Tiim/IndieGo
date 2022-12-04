@@ -13,11 +13,11 @@ import (
 )
 
 type adminCommentsSection struct {
-	store    *commentStore
+	store    commentStore
 	template *template.Template
 }
 
-func NewAdminCommentSection(store *commentStore) *adminCommentsSection {
+func newAdminCommentSection(store commentStore) *adminCommentsSection {
 	return &adminCommentsSection{
 		store: store,
 	}

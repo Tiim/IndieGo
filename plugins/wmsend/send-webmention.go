@@ -7,14 +7,17 @@ import (
 	"strings"
 	"time"
 
+	"github.com/go-co-op/gocron"
 	"github.com/mmcdole/gofeed"
 	"willnorris.com/go/webmention"
 )
 
 type wmSend struct {
-	store  WmSendStore
-	rss    string
-	client *http.Client
+	store     WmSendStore
+	rss       string
+	client    *http.Client
+	scheduler *gocron.Scheduler
+	interval  time.Duration
 }
 
 type FeedItem struct {
@@ -25,8 +28,27 @@ type FeedItem struct {
 	baseUrl string
 }
 
-func NewWmSend(store WmSendStore, client *http.Client, rss string) *wmSend {
-	return &wmSend{store: store, client: client, rss: rss}
+func newWmSend(store WmSendStore, client *http.Client, rss string, scheduler *gocron.Scheduler, interval time.Duration) *wmSend {
+	return &wmSend{
+		store:     store,
+		rss:       rss,
+		client:    client,
+		scheduler: scheduler,
+		interval:  interval,
+	}
+}
+
+func (w *wmSend) Name() string {
+	return "wmsend"
+}
+
+func (w *wmSend) Init() error {
+	return nil
+}
+
+func (w *wmSend) Start() error {
+	w.scheduler.Every(w.interval).Do(w.SendNow)
+	return nil
 }
 
 func (w *wmSend) SendNow() {

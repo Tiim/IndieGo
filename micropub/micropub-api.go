@@ -5,8 +5,8 @@ import (
 	"log"
 	"mime/multipart"
 	"strings"
-	"tiim/go-comment-api/indieauth"
 	"tiim/go-comment-api/mfobjects"
+	"tiim/go-comment-api/plugins/indieauth"
 
 	"github.com/gin-gonic/gin"
 )

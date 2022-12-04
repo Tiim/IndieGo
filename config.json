@@ -1,8 +1,11 @@
 {
-  "admin": {
-    "password": "password"
-  },
   "plugins": [
+    {
+      "name": "admin",
+      "args": {
+        "password": "password"
+      }
+    },
     {
       "name": "sqlite-store"
     },
@@ -15,6 +18,33 @@
         "canonical_url": "https://example.com",
         "store": {
           "name": "indieauth-sqlite-store",
+          "args": {}
+        }
+      }
+    },
+    {
+      "name": "comments",
+      "args": {
+        "store": {
+          "name": "comments-sqlite-store",
+          "args": {
+            "page_mapper": {
+              "name": "comments-page-mapper",
+              "args": {
+                "format": "https://tiim.ch/%s#%s"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "webmention-send",
+      "args": {
+        "feed_url": "https://example.com/feed.xml",
+        "send_interval_minutes": 60,
+        "store": {
+          "name": "webmention-send-sqlite-store",
           "args": {}
         }
       }

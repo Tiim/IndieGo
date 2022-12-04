@@ -48,7 +48,11 @@ func (m *indieAuthApiModule) Start() error {
 	return nil
 }
 
-func (m *indieAuthApiModule) Init(r *gin.Engine) error {
+func (m *indieAuthApiModule) Init() error {
+	return nil
+}
+
+func (m *indieAuthApiModule) InitGroups(r *gin.Engine) error {
 	m.group = r.Group("/indieauth")
 	return nil
 }

@@ -1,4 +1,4 @@
-package plugin
+package config
 
 import (
 	"encoding/json"
@@ -23,9 +23,14 @@ type Module interface {
 
 type PluginInstance interface {
 	Name() string
-	Init(r *gin.Engine) error
-	RegisterRoutes(r *gin.Engine) error
+	Init() error
 	Start() error
+}
+
+type ApiPluginInstance interface {
+	PluginInstance
+	InitGroups(r *gin.Engine) error
+	RegisterRoutes(r *gin.Engine) error
 }
 
 type ModuleInstance interface{}

@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log"
-	"tiim/go-comment-api/indieauth"
+	"tiim/go-comment-api/plugins/indieauth"
 
 	"github.com/gin-gonic/gin"
 )

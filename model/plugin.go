@@ -3,34 +3,29 @@ package model
 import (
 	"encoding/json"
 	"log"
-	"tiim/go-comment-api/plugin"
+	"tiim/go-comment-api/config"
 	"time"
-
-	"github.com/gin-gonic/gin"
 )
 
 type sqliteStorePlugin struct{}
 
 func init() {
-	plugin.RegisterPlugin(&sqliteStorePlugin{})
+	config.RegisterPlugin(&sqliteStorePlugin{})
 }
 
 func (p *sqliteStorePlugin) Name() string {
 	return "sqlite-store"
 }
 
-func (p *sqliteStorePlugin) Load(data json.RawMessage, config plugin.GlobalConfig) (plugin.PluginInstance, error) {
+func (p *sqliteStorePlugin) Load(data json.RawMessage, config config.GlobalConfig) (config.PluginInstance, error) {
 	return NewSQLiteStore(config.Scheduler)
 }
 
 func (p *SQLiteStore) Name() string {
 	return "sqlite-store"
 }
-func (p *SQLiteStore) Init(r *gin.Engine) error {
+func (p *SQLiteStore) Init() error {
 	p.runMigrations()
-	return nil
-}
-func (p *SQLiteStore) RegisterRoutes(r *gin.Engine) error {
 	return nil
 }
 func (p *SQLiteStore) Start() error {

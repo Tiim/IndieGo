@@ -3,7 +3,7 @@ package indieauth
 import (
 	"encoding/json"
 	"fmt"
-	"tiim/go-comment-api/plugin"
+	"tiim/go-comment-api/config"
 )
 
 type indieAuthPlugin struct{}
@@ -13,18 +13,18 @@ type indieAuthPluginData struct {
 	ProfileCanonicalUrl string           `json:"profileCanonicalUrl"`
 	Password            string           `json:"password"`
 	JWTSecret           string           `json:"jwtSecret"`
-	StoreData           plugin.ModuleRaw `json:"store"`
+	StoreData           config.ModuleRaw `json:"store"`
 }
 
 func init() {
-	plugin.RegisterPlugin(&indieAuthPlugin{})
+	config.RegisterPlugin(&indieAuthPlugin{})
 }
 
 func (p *indieAuthPlugin) Name() string {
 	return "indieauth"
 }
 
-func (p *indieAuthPlugin) Load(data json.RawMessage, config plugin.GlobalConfig) (plugin.PluginInstance, error) {
+func (p *indieAuthPlugin) Load(data json.RawMessage, config config.GlobalConfig) (config.PluginInstance, error) {
 
 	var d indieAuthPluginData
 	err := json.Unmarshal(data, &d)

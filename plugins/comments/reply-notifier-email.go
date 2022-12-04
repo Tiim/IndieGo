@@ -12,7 +12,7 @@ import (
 )
 
 type replyEmail struct {
-	store    *commentStore
+	store    *commentSQLiteStore
 	from     string
 	subject  string
 	username string
@@ -23,7 +23,7 @@ type replyEmail struct {
 	template *template.Template
 }
 
-func NewReplyEmail(store *commentStore, from, subject, username, password,
+func NewReplyEmail(store *commentSQLiteStore, from, subject, username, password,
 	smtpHost, smtpPort, baseUrl string) *replyEmail {
 
 	html := `

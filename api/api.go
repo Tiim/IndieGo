@@ -6,7 +6,7 @@ import (
 	"io/fs"
 	"log"
 	"net/http"
-	"tiim/go-comment-api/plugin"
+	"tiim/go-comment-api/config"
 
 	"github.com/gin-gonic/gin"
 )
@@ -15,10 +15,10 @@ import (
 var assets embed.FS
 
 type apiServer struct {
-	plugins []plugin.PluginInstance
+	plugins []config.PluginInstance
 }
 
-func NewApiServer(modules []plugin.PluginInstance) *apiServer {
+func NewApiServer(modules []config.PluginInstance) *apiServer {
 	return &apiServer{plugins: modules}
 }
 
@@ -38,7 +38,11 @@ func (cs *apiServer) Start() (*gin.Engine, error) {
 	r.Use(gin.Recovery())
 
 	for _, module := range cs.plugins {
-		if err := module.Init(r); err != nil {
+		apiPlugin, ok := module.(config.ApiPluginInstance)
+		if !ok {
+			continue
+		}
+		if err := apiPlugin.InitGroups(r); err != nil {
 			return nil, fmt.Errorf("initialising module %s failed: %w", module.Name(), err)
 		}
 	}
@@ -47,7 +51,11 @@ func (cs *apiServer) Start() (*gin.Engine, error) {
 	r.Use(cors())
 
 	for _, module := range cs.plugins {
-		if err := module.RegisterRoutes(r); err != nil {
+		apiPlugin, ok := module.(config.ApiPluginInstance)
+		if !ok {
+			continue
+		}
+		if err := apiPlugin.RegisterRoutes(r); err != nil {
 			return nil, fmt.Errorf("registering routes failed for module %s: %w", module.Name(), err)
 		}
 	}

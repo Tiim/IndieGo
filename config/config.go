@@ -1,4 +1,4 @@
-package plugin
+package config
 
 import (
 	"database/sql"
@@ -12,13 +12,8 @@ import (
 	"github.com/go-co-op/gocron"
 )
 
-type Admin struct {
-	Password string `json:"password"`
-}
-
 type GlobalConfig struct {
 	Config     *Config
-	Admin      Admin             `json:"admin"`
 	HttpClient *http.Client      `json:"-"`
 	Scheduler  *gocron.Scheduler `json:"-"`
 	DB         *sql.DB           `json:"-"`
