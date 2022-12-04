@@ -5,7 +5,7 @@ import (
 	"io"
 	"log"
 	"strings"
-	"tiim/go-comment-api/mfobjects"
+	"tiim/go-comment-api/lib/mfobjects"
 	"time"
 
 	"gopkg.in/yaml.v3"

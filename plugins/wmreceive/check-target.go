@@ -1,4 +1,4 @@
-package webmentions
+package wmrecv
 
 import (
 	"fmt"
@@ -21,7 +21,7 @@ func (c *targetChecker) CheckDocument(gq *goquery.Document, w *Webmention) error
 	return nil
 }
 
-func NewTargetChecker(domain ...string) *targetChecker {
+func newTargetChecker(domain ...string) *targetChecker {
 	return &targetChecker{domain}
 }
 

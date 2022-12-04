@@ -1,7 +1,7 @@
-package webmentions
+package wmrecv
 
 import (
-	"tiim/go-comment-api/mfobjects"
+	"tiim/go-comment-api/lib/mfobjects"
 
 	"github.com/PuerkitoBio/goquery"
 	"willnorris.com/go/microformats"
@@ -23,6 +23,6 @@ func (c *microformatEnricherChecker) CheckDocument(gq *goquery.Document, w *Webm
 	return nil
 }
 
-func NewMicroformatEnricherChecker() *microformatEnricherChecker {
+func newMicroformatEnricherChecker() *microformatEnricherChecker {
 	return &microformatEnricherChecker{}
 }

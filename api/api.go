@@ -38,7 +38,7 @@ func (cs *apiServer) Start() (*gin.Engine, error) {
 	r.Use(gin.Recovery())
 
 	for _, module := range cs.plugins {
-		apiPlugin, ok := module.(config.ApiPluginInstance)
+		apiPlugin, ok := module.(config.GroupedApiPluginInstance)
 		if !ok {
 			continue
 		}

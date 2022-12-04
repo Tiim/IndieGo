@@ -12,7 +12,7 @@ import (
 )
 
 type replyEmail struct {
-	store    *commentSQLiteStore
+	store    commentStore
 	from     string
 	subject  string
 	username string
@@ -23,7 +23,7 @@ type replyEmail struct {
 	template *template.Template
 }
 
-func NewReplyEmail(store *commentSQLiteStore, from, subject, username, password,
+func newReplyEmail(store commentStore, from, subject, username, password,
 	smtpHost, smtpPort, baseUrl string) *replyEmail {
 
 	html := `
@@ -75,8 +75,8 @@ func (n *replyEmail) doSendEmail(c model.GenericComment) {
 	}
 
 	for _, cChain := range commentChain {
-		if !cChain.Notify {
-			log.Println("not sending email for comment", cChain.Id, "because notify is false")
+		if !cChain.Notify || cChain.Email == "" {
+			log.Println("not sending email for comment", cChain.Id, "because notify is false or email is empty")
 			continue
 		}
 		log.Printf("sending reply notification email from %s to %s\n", n.from, cChain.Email)

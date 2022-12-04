@@ -6,12 +6,14 @@ import (
 	"log"
 	"tiim/go-comment-api/config"
 	"tiim/go-comment-api/plugins/admin"
+	"tiim/go-comment-api/plugins/shared-modules/event"
 )
 
 type commentsPlugin struct{}
 
 type commentsPluginData struct {
-	StoreData config.ModuleRaw `json:"store"`
+	StoreData    config.ModuleRaw `json:"store"`
+	EventHandler config.ModuleRaw `json:"event_handler"`
 }
 
 func init() {
@@ -28,7 +30,7 @@ func (p *commentsPlugin) Load(data json.RawMessage, config config.GlobalConfig) 
 	if err != nil {
 		return nil, err
 	}
-	storeInt, err := config.Config.LoadModule(d.StoreData)
+	storeInt, err := config.Config.LoadModule(d.StoreData, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -47,6 +49,16 @@ func (p *commentsPlugin) Load(data json.RawMessage, config config.GlobalConfig) 
 	} else {
 		log.Printf("comments plugin: admin plugin not loaded, not registering admin section")
 	}
+
+	eventHandlerInt, err := config.Config.LoadModule(d.EventHandler, store)
+	if err != nil {
+		return nil, fmt.Errorf("error loading event handler: %v", err)
+	}
+	eventHandler, ok := eventHandlerInt.(event.Handler)
+	if !ok {
+		return nil, fmt.Errorf("comments-event-handler is not a of type event.Handler: %T", eventHandlerInt)
+	}
+	store.SetEventHandler(eventHandler)
 
 	return NewCommentModule(store), nil
 }

@@ -5,19 +5,20 @@ import (
 	"log"
 	"mime/multipart"
 	"strings"
-	"tiim/go-comment-api/mfobjects"
+	"tiim/go-comment-api/config"
+	"tiim/go-comment-api/lib/mfobjects"
 	"tiim/go-comment-api/plugins/indieauth"
 
 	"github.com/gin-gonic/gin"
 )
 
 type micropubApiModule struct {
-	store       MicropubStore
-	mediaStore  MediaStore
+	store       micropubStore
+	mediaStore  mediaStore
 	verifyToken indieauth.TokenVerifier
 }
 
-func NewMicropubApiModule(store MicropubStore, mediaStore MediaStore, verifyToken indieauth.TokenVerifier) *micropubApiModule {
+func newMicropubApiModule(store micropubStore, mediaStore mediaStore, verifyToken indieauth.TokenVerifier) *micropubApiModule {
 	return &micropubApiModule{store: store, mediaStore: mediaStore, verifyToken: verifyToken}
 }
 
@@ -25,7 +26,7 @@ func (m *micropubApiModule) Name() string {
 	return "micropub"
 }
 
-func (m *micropubApiModule) Init(r *gin.Engine) error {
+func (m *micropubApiModule) Init(config config.GlobalConfig) error {
 	return nil
 }
 
@@ -33,6 +34,10 @@ func (m *micropubApiModule) RegisterRoutes(r *gin.Engine) error {
 	r.POST("/micropub", m.micropubEndpoint)
 	r.GET("/micropub", m.queryEndpoint)
 	r.POST("/micropub/media", m.mediaEndpoint)
+	return nil
+}
+
+func (m *micropubApiModule) Start() error {
 	return nil
 }
 

@@ -6,7 +6,7 @@ import (
 	"net"
 	"net/http"
 	"net/url"
-	"tiim/go-comment-api/mfobjects"
+	"tiim/go-comment-api/lib/mfobjects"
 
 	"willnorris.com/go/microformats"
 )

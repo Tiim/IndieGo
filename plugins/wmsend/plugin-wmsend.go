@@ -30,7 +30,7 @@ func (p *WmSendPlugin) Load(data json.RawMessage, config config.GlobalConfig) (c
 		return nil, err
 	}
 
-	storeInt, err := config.Config.LoadModule(d.StoreData)
+	storeInt, err := config.Config.LoadModule(d.StoreData, nil)
 	if err != nil {
 		return nil, err
 	}

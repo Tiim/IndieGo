@@ -31,7 +31,7 @@ func (p *indieAuthPlugin) Load(data json.RawMessage, config config.GlobalConfig)
 	if err != nil {
 		return nil, err
 	}
-	storeInt, err := config.Config.LoadModule(d.StoreData)
+	storeInt, err := config.Config.LoadModule(d.StoreData, nil)
 	if err != nil {
 		return nil, err
 	}

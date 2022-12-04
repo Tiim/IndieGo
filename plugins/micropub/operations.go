@@ -2,7 +2,7 @@ package micropub
 
 import (
 	"fmt"
-	"tiim/go-comment-api/mfobjects"
+	"tiim/go-comment-api/lib/mfobjects"
 	"time"
 
 	"willnorris.com/go/microformats"

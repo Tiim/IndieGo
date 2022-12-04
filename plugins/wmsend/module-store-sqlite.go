@@ -14,10 +14,10 @@ func init() {
 }
 
 func (m *wmSendSQLiteStoreModule) Name() string {
-	return "webmention-send-sqlite-store"
+	return "webmention-send-store-sqlite"
 }
 
-func (m *wmSendSQLiteStoreModule) Load(data json.RawMessage, config config.GlobalConfig) (config.ModuleInstance, error) {
+func (m *wmSendSQLiteStoreModule) Load(data json.RawMessage, config config.GlobalConfig, args interface{}) (config.ModuleInstance, error) {
 	storeInt, err := config.GetPlugin("sqlite-store")
 	if err != nil {
 		return nil, err

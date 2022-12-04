@@ -17,7 +17,7 @@
         "base_url": "https://example.com",
         "canonical_url": "https://example.com",
         "store": {
-          "name": "indieauth-sqlite-store",
+          "name": "indieauth-store-sqlite",
           "args": {}
         }
       }
@@ -26,7 +26,7 @@
       "name": "comments",
       "args": {
         "store": {
-          "name": "comments-sqlite-store",
+          "name": "comments-store-sqlite",
           "args": {
             "page_mapper": {
               "name": "comments-page-mapper",
@@ -34,6 +34,32 @@
                 "format": "https://tiim.ch/%s#%s"
               }
             }
+          }
+        },
+        "event_handler": {
+          "name": "event-handler-list",
+          "args": {
+            "handlers": [
+              {
+                "name": "event-pushover-notify",
+                "args": {
+                  "api_token": "test",
+                  "user_key": "key"
+                }
+              },
+              {
+                "name": "event-email-notify",
+                "args": {
+                  "from": ""
+                }
+              },
+              {
+                "name": "comment-notify-reply",
+                "args": {
+                  "base_url": "https://example.com"
+                }
+              }
+            ]
           }
         }
       }
@@ -44,8 +70,55 @@
         "feed_url": "https://example.com/feed.xml",
         "send_interval_minutes": 60,
         "store": {
-          "name": "webmention-send-sqlite-store",
+          "name": "webmention-send-store-sqlite",
           "args": {}
+        }
+      }
+    },
+    {
+      "name": "webmention-receive",
+      "args": {
+        "target_domains": [
+          "localhost",
+          "tiim.ch"
+        ],
+        "event_handler": {
+          "name": "event-handler-list",
+          "args": {
+            "handlers": [
+              {
+                "name": "event-pushover-notify",
+                "args": {
+                  "api_token": "test",
+                  "user_key": "key"
+                }
+              },
+              {
+                "name": "event-email-notify",
+                "args": {
+                  "from": ""
+                }
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "name": "micropub",
+      "args": {
+        "store": {
+          "name": "micropub-store-github",
+          "args": {}
+        },
+        "media_store": {
+          "name": "micropub-mediastore-storj",
+          "args": {
+            "access_grant": "test",
+            "bucket": "test",
+            "prefix": "test",
+            "url_format": "https://media.example.com/{name}"
+          }
         }
       }
     }

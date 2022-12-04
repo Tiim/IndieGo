@@ -16,12 +16,9 @@ import (
 	"willnorris.com/go/microformats"
 )
 
-type UrlToFilePath func(url string) string
-type FilePathToUrl func(path string) string
-
-type UrlConverter struct {
-	UrlToFilePath UrlToFilePath
-	FilePathToUrl FilePathToUrl
+type UrlConverter interface {
+	UrlToFilePath(url string) string
+	FilePathToUrl(path string) string
 }
 
 type micropubGithubStore struct {
@@ -34,7 +31,7 @@ type micropubGithubStore struct {
 	rand         *rand.Rand
 }
 
-func NewMicropubGithubStore(token, user, repo, folder string, urlConverter UrlConverter, client *http.Client) *micropubGithubStore {
+func newMicropubGithubStore(token, user, repo, folder string, urlConverter UrlConverter, client *http.Client) *micropubGithubStore {
 	return &micropubGithubStore{
 		token:        token,
 		user:         user,

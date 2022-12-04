@@ -1,4 +1,4 @@
-package webmentions
+package wmrecv
 
 import (
 	"log"
@@ -10,7 +10,7 @@ type mentionsQueueWorker struct {
 	checker *WebmentionChecker
 }
 
-func NewMentionsQueueWorker(store webmentionsStore, checker *WebmentionChecker) *mentionsQueueWorker {
+func newMentionsQueueWorker(store webmentionsStore, checker *WebmentionChecker) *mentionsQueueWorker {
 	worker := &mentionsQueueWorker{store: store, checker: checker}
 	go worker.run()
 	return worker

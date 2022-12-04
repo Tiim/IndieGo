@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
+	"tiim/go-comment-api/config"
 
 	_ "embed"
 
@@ -16,7 +17,8 @@ import (
 //go:embed authorize.tmpl
 var authorizeTemplate string
 
-type indieAuthApiModule struct {
+// TODO: find proper names for the plugin instances
+type IndieAuthApiModule struct {
 	store               Store
 	httpClient          http.Client
 	group               *gin.RouterGroup
@@ -27,9 +29,9 @@ type indieAuthApiModule struct {
 	authorizeTemplate   *template.Template
 }
 
-func NewIndieAuthApiModule(baseUrl, profileCanonicalUrl, password, jwtSecret string, store Store, client http.Client) *indieAuthApiModule {
+func NewIndieAuthApiModule(baseUrl, profileCanonicalUrl, password, jwtSecret string, store Store, client http.Client) *IndieAuthApiModule {
 	authorizeTemplate := template.Must(template.New("authorize").Parse(authorizeTemplate))
-	return &indieAuthApiModule{
+	return &IndieAuthApiModule{
 		profileCanonicalUrl: profileCanonicalUrl,
 		baseUrl:             baseUrl,
 		authorizeTemplate:   authorizeTemplate,
@@ -40,24 +42,24 @@ func NewIndieAuthApiModule(baseUrl, profileCanonicalUrl, password, jwtSecret str
 	}
 }
 
-func (m *indieAuthApiModule) Name() string {
-	return "IndieAuth"
+func (m *IndieAuthApiModule) Name() string {
+	return "indieauth"
 }
 
-func (m *indieAuthApiModule) Start() error {
+func (m *IndieAuthApiModule) Start() error {
 	return nil
 }
 
-func (m *indieAuthApiModule) Init() error {
+func (m *IndieAuthApiModule) Init(config config.GlobalConfig) error {
 	return nil
 }
 
-func (m *indieAuthApiModule) InitGroups(r *gin.Engine) error {
+func (m *IndieAuthApiModule) InitGroups(r *gin.Engine) error {
 	m.group = r.Group("/indieauth")
 	return nil
 }
 
-func (m *indieAuthApiModule) RegisterRoutes(r *gin.Engine) error {
+func (m *IndieAuthApiModule) RegisterRoutes(r *gin.Engine) error {
 	m.group.GET("/metadata", m.metadataEndpoint)
 	m.group.POST("/token", m.tokenEndpoint)
 	m.group.GET("/token", m.introspectionEndpoint)
@@ -68,7 +70,7 @@ func (m *indieAuthApiModule) RegisterRoutes(r *gin.Engine) error {
 	return nil
 }
 
-func (m *indieAuthApiModule) metadataEndpoint(c *gin.Context) {
+func (m *IndieAuthApiModule) metadataEndpoint(c *gin.Context) {
 
 	challengeNames := make([]string, 0, len(challenges))
 	for name := range challenges {
@@ -84,7 +86,7 @@ func (m *indieAuthApiModule) metadataEndpoint(c *gin.Context) {
 	})
 }
 
-func (m *indieAuthApiModule) authorizeEndpoint(c *gin.Context) {
+func (m *IndieAuthApiModule) authorizeEndpoint(c *gin.Context) {
 	responseType := c.Query("response_type")
 	if responseType != "code" {
 		c.AbortWithError(400, fmt.Errorf("invalid response_type, only 'code' is supported"))
@@ -153,7 +155,7 @@ func (m *indieAuthApiModule) authorizeEndpoint(c *gin.Context) {
 	m.authorizeTemplate.Execute(c.Writer, gin.H{"Code": code.code, "AppInfo": appInfo, "Warnings": warnings, "Scopes": strings.Split(scope, " "), "Me": me})
 }
 
-func (m *indieAuthApiModule) tokenEndpoint(c *gin.Context) {
+func (m *IndieAuthApiModule) tokenEndpoint(c *gin.Context) {
 	grantType := c.Request.FormValue("grant_type")
 	code := c.Request.FormValue("code")
 	clientId := c.Request.FormValue("client_id")
@@ -229,7 +231,7 @@ func (m *indieAuthApiModule) tokenEndpoint(c *gin.Context) {
 	}
 }
 
-func (m *indieAuthApiModule) introspectionEndpoint(c *gin.Context) {
+func (m *IndieAuthApiModule) introspectionEndpoint(c *gin.Context) {
 	authHeader := c.Request.Header.Get("Authorization")
 	if strings.HasPrefix(authHeader, "Bearer ") {
 		authHeader = strings.TrimPrefix(authHeader, "Bearer ")
@@ -265,7 +267,7 @@ func (m *indieAuthApiModule) introspectionEndpoint(c *gin.Context) {
 	}
 }
 
-func (m *indieAuthApiModule) VerifyToken(tokenString string, minimalScopes []string) (ScopeCheck, error) {
+func (m *IndieAuthApiModule) VerifyToken(tokenString string, minimalScopes []string) (ScopeCheck, error) {
 	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
@@ -308,7 +310,7 @@ func (m *indieAuthApiModule) VerifyToken(tokenString string, minimalScopes []str
 	}
 }
 
-func (m *indieAuthApiModule) loginEndpoint(c *gin.Context) {
+func (m *IndieAuthApiModule) loginEndpoint(c *gin.Context) {
 	code := c.Request.FormValue("code")
 	password := c.Request.FormValue("password")
 

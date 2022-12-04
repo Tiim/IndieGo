@@ -1,33 +1,45 @@
-package webmentions
+package wmrecv
 
 import (
 	"fmt"
 	"net/http"
 	"strings"
+	"tiim/go-comment-api/config"
 
 	"github.com/gin-gonic/gin"
+	"github.com/go-co-op/gocron"
 )
 
 type webmentionsModule struct {
-	store  webmentionsStore
-	worker *mentionsQueueWorker
+	store     webmentionsStore
+	worker    *mentionsQueueWorker
+	scheduler *gocron.Scheduler
 }
 
-func NewApi(store webmentionsStore, worker *mentionsQueueWorker) *webmentionsModule {
-	im := webmentionsModule{store: store, worker: worker}
+func newApi(store webmentionsStore, worker *mentionsQueueWorker, scheduler *gocron.Scheduler) *webmentionsModule {
+	im := webmentionsModule{store: store, worker: worker, scheduler: scheduler}
 	return &im
 }
 
 func (ui *webmentionsModule) Name() string {
-	return "Webmentions"
+	return "webmention-receive"
 }
 
-func (ui *webmentionsModule) Init(r *gin.Engine) error {
+func (ui *webmentionsModule) Init(config config.GlobalConfig) error {
+	return nil
+}
+
+func (ui *webmentionsModule) InitGroups(r *gin.Engine) error {
 	return nil
 }
 
 func (ui *webmentionsModule) RegisterRoutes(r *gin.Engine) error {
 	r.POST("/wm/webmentions", ui.handlePostWebmention)
+	return nil
+}
+
+func (ui *webmentionsModule) Start() error {
+	ui.scheduler.Every(4).Hours().Do(ui.store.RefetchQueue)
 	return nil
 }
 

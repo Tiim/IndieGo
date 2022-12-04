@@ -1,4 +1,4 @@
-package webmentions
+package wmrecv
 
 import (
 	"fmt"
@@ -16,7 +16,7 @@ type WebmentionChecker struct {
 	checkers []Checker
 }
 
-func NewWebmentionChecker(checkers []Checker) *WebmentionChecker {
+func newWebmentionChecker(checkers []Checker) *WebmentionChecker {
 	return &WebmentionChecker{checkers: checkers}
 }
 

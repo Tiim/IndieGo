@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"tiim/go-comment-api/config"
 
 	"github.com/gin-gonic/gin"
 )
@@ -18,10 +19,10 @@ func NewCommentModule(store commentStore) *commentApiModule {
 }
 
 func (cm *commentApiModule) Name() string {
-	return "Comment"
+	return "comments"
 }
 
-func (cm *commentApiModule) Init() error {
+func (cm *commentApiModule) Init(config config.GlobalConfig) error {
 	return nil
 }
 

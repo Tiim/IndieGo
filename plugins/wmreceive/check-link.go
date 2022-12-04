@@ -1,4 +1,4 @@
-package webmentions
+package wmrecv
 
 import (
 	"fmt"
@@ -27,6 +27,6 @@ func (c *linkToTargetChecker) CheckDocument(gq *goquery.Document, w *Webmention)
 	}
 }
 
-func NewLinkToTargetChecker() *linkToTargetChecker {
+func newLinkToTargetChecker() *linkToTargetChecker {
 	return &linkToTargetChecker{}
 }

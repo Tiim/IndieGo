@@ -13,7 +13,7 @@ type pushoverNotify struct {
 	client   http.Client
 }
 
-func NewPushoverNotify(apiToken, userKey string, client http.Client) *pushoverNotify {
+func newPushoverNotify(apiToken, userKey string, client http.Client) *pushoverNotify {
 	return &pushoverNotify{
 		apiToken: apiToken,
 		userKey:  userKey,

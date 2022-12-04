@@ -19,10 +19,10 @@ func init() {
 }
 
 func (m *indieAuthSQLiteStoreModule) Name() string {
-	return "indieauth-sqlite-store"
+	return "indieauth-store-sqlite"
 }
 
-func (m *indieAuthSQLiteStoreModule) Load(data json.RawMessage, config config.GlobalConfig) (config.ModuleInstance, error) {
+func (m *indieAuthSQLiteStoreModule) Load(data json.RawMessage, config config.GlobalConfig, args interface{}) (config.ModuleInstance, error) {
 	d := indieAuthSQLiteStoreModuleData{
 		AuthCodeExpirationMinutes:  10,
 		AuthTokenExpirationMinutes: 60 * 24 * 30,

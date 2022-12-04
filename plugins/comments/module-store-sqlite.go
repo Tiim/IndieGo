@@ -17,10 +17,10 @@ func init() {
 }
 
 func (m *commentSQLiteStoreModule) Name() string {
-	return "comments-sqlite-store"
+	return "comments-store-sqlite"
 }
 
-func (m *commentSQLiteStoreModule) Load(data json.RawMessage, config config.GlobalConfig) (config.ModuleInstance, error) {
+func (m *commentSQLiteStoreModule) Load(data json.RawMessage, config config.GlobalConfig, args interface{}) (config.ModuleInstance, error) {
 	d := commentSQLiteStoreModuelData{}
 	err := json.Unmarshal(data, &d)
 	if err != nil {
@@ -34,7 +34,7 @@ func (m *commentSQLiteStoreModule) Load(data json.RawMessage, config config.Glob
 	if !ok {
 		return nil, fmt.Errorf("sqlite-store is not a of type model.SQLiteStore: %T", storeInt)
 	}
-	pageMapperInt, err := config.Config.LoadModule(d.PageMapper)
+	pageMapperInt, err := config.Config.LoadModule(d.PageMapper, nil)
 	if err != nil {
 		return nil, fmt.Errorf("error loading page mapper: %v", err)
 	}
@@ -42,5 +42,6 @@ func (m *commentSQLiteStoreModule) Load(data json.RawMessage, config config.Glob
 	if !ok {
 		return nil, fmt.Errorf("comments-page-mapper is not a of type comments.CommentPageToUrlMapper: %T", pageMapperInt)
 	}
-	return &commentSQLiteStore{db: store.GetDBConnection(), pageToUrlMapper: pageMapper}, nil
+	sqliteStore := &commentSQLiteStore{db: store.GetDBConnection(), pageToUrlMapper: pageMapper}
+	return sqliteStore, nil
 }

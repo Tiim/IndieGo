@@ -5,6 +5,7 @@ import (
 	"html/template"
 	"log"
 	"net/http"
+	"tiim/go-comment-api/config"
 
 	_ "embed"
 
@@ -47,7 +48,7 @@ func newAdminModule(password string) *AdminModule {
 func (ui *AdminModule) Name() string {
 	return "admin"
 }
-func (ui *AdminModule) Init() error {
+func (ui *AdminModule) Init(config config.GlobalConfig) error {
 	for _, section := range ui.sections {
 		if err := section.Init(); err != nil {
 			return fmt.Errorf("initialising section %s failed: %w", section.Name(), err)

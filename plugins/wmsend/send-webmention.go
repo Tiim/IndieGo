@@ -5,6 +5,7 @@ import (
 	"log"
 	"net/http"
 	"strings"
+	"tiim/go-comment-api/config"
 	"time"
 
 	"github.com/go-co-op/gocron"
@@ -39,10 +40,10 @@ func newWmSend(store WmSendStore, client *http.Client, rss string, scheduler *go
 }
 
 func (w *wmSend) Name() string {
-	return "wmsend"
+	return "webmention-send"
 }
 
-func (w *wmSend) Init() error {
+func (w *wmSend) Init(config config.GlobalConfig) error {
 	return nil
 }
 

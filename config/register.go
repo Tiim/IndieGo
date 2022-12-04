@@ -33,7 +33,7 @@ func RegisterModule(m Module) {
 func (c *Config) LoadPlugins() error {
 	for i, pluginRaw := range c.PluginsRaw {
 		p, ok := plugins[pluginRaw.Name]
-		log.Printf("Loading plugin %d: '%s'\n", i, pluginRaw.Name)
+		log.Printf("Loading plugin: '%s'\n", pluginRaw.Name)
 		if !ok {
 			return fmt.Errorf("plugin '%s' not found", pluginRaw.Name)
 		}
@@ -41,17 +41,23 @@ func (c *Config) LoadPlugins() error {
 		if err != nil {
 			return fmt.Errorf("failed to load plugin '%s' (%d): %w", pluginRaw.Name, i, err)
 		}
+		log.Printf("Loaded  plugin: '%s'\n", plugin.Name())
+		if plugin.Name() != pluginRaw.Name {
+			return fmt.Errorf("plugin '%s' (%d) returned wrong name: %s", pluginRaw.Name, i, plugin.Name())
+		}
 		c.Plugins = append(c.Plugins, plugin)
 	}
+	log.Printf("Successfully loaded %d plugins and %d modules\n", len(c.Plugins), len(c.Modules))
 	return nil
 }
 
-func (c *Config) LoadModule(moduleData ModuleRaw) (ModuleInstance, error) {
-	log.Printf("Loading module '%s'\n", moduleData.Name)
+func (c *Config) LoadModule(moduleData ModuleRaw, args interface{}) (ModuleInstance, error) {
+	log.Printf("Loading module: '%s'\n", moduleData.Name)
 	m, ok := modules[moduleData.Name]
 	if !ok {
 		return nil, fmt.Errorf("module %s not found", moduleData.Name)
 	}
-	module, err := m.Load(moduleData.Args, c.GlobalConfig)
+	module, err := m.Load(moduleData.Args, c.GlobalConfig, args)
+	c.Modules = append(c.Modules, module)
 	return module, err
 }

@@ -18,7 +18,7 @@ func (m *pageMapperModule) Name() string {
 	return "comments-page-mapper"
 }
 
-func (m *pageMapperModule) Load(data json.RawMessage, config config.GlobalConfig) (config.ModuleInstance, error) {
+func (m *pageMapperModule) Load(data json.RawMessage, config config.GlobalConfig, args interface{}) (config.ModuleInstance, error) {
 	d := pageMapperModuleData{}
 	err := json.Unmarshal(data, &d)
 	if err != nil {

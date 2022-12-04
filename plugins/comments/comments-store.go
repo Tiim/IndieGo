@@ -4,14 +4,15 @@ import (
 	"database/sql"
 	"fmt"
 	"log"
-	"tiim/go-comment-api/event"
 	"tiim/go-comment-api/model"
+	"tiim/go-comment-api/plugins/shared-modules/event"
 	"time"
 
 	"github.com/google/uuid"
 )
 
 type commentStore interface {
+	SetEventHandler(h event.Handler)
 	NewComment(c *comment) error
 	GetAllComments(since time.Time) ([]comment, error)
 	DeleteComment(id string) error

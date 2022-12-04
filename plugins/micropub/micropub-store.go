@@ -4,7 +4,7 @@ import (
 	"willnorris.com/go/microformats"
 )
 
-type MicropubStore interface {
+type micropubStore interface {
 	Create(post MicropubPost) (string, error)
 	Modify(url string, deleteProps interface{}, addProps, replaceProps map[string][]interface{}) error
 	Delete(url string) error

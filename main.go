@@ -8,6 +8,8 @@ import (
 	_ "tiim/go-comment-api/plugins/admin"
 	_ "tiim/go-comment-api/plugins/comments"
 	_ "tiim/go-comment-api/plugins/indieauth"
+	_ "tiim/go-comment-api/plugins/micropub"
+	_ "tiim/go-comment-api/plugins/wmreceive"
 	_ "tiim/go-comment-api/plugins/wmsend"
 )
 
@@ -23,8 +25,9 @@ func main() {
 		log.Fatalf("unable to load config: %v", err)
 	}
 
-	for _, plugin := range config.Plugins {
-		plugin.Init()
+	err = config.Init()
+	if err != nil {
+		log.Fatalf("unable to init config: %v", err)
 	}
 
 	apiServer := api.NewApiServer(config.Plugins)

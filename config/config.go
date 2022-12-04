@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"log"
 	"net/http"
 	"os"
 	"time"
@@ -23,6 +24,7 @@ type Config struct {
 	GlobalConfig
 	PluginsRaw []ModuleRaw      `json:"plugins"`
 	Plugins    []PluginInstance `json:"-"`
+	Modules    []ModuleInstance `json:"-"`
 }
 
 func ReadConfigString(path string) (string, error) {
@@ -50,6 +52,18 @@ func LoadConfig(configString string) (*Config, error) {
 	err = config.LoadPlugins()
 
 	return config, err
+}
+
+func (c *Config) Init() error {
+	log.Println("Initializing modules")
+	for _, plugin := range c.Plugins {
+		err := plugin.Init(c.GlobalConfig)
+		if err != nil {
+			return fmt.Errorf("failed initializing plugin %s: %v", plugin.Name(), err)
+		}
+	}
+	log.Println("Initializing modules done")
+	return nil
 }
 
 func (c *Config) StartPlugins() error {

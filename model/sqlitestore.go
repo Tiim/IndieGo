@@ -92,9 +92,5 @@ func NewSQLiteStore(scheduler *gocron.Scheduler) (*SQLiteStore, error) {
 
 	store := &SQLiteStore{db, scheduler}
 
-	if err := store.runMigrations(); err != nil {
-		return nil, fmt.Errorf("error running migrations: %w", err)
-	}
-
 	return store, nil
 }

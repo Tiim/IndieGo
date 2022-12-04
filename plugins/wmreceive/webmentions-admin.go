@@ -1,4 +1,4 @@
-package webmentions
+package wmrecv
 
 import (
 	"bytes"

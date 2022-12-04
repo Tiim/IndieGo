@@ -23,7 +23,7 @@ type storjMediaStore struct {
 	formatUrl FormatUrl
 }
 
-func NewStorjMediaStore(accessGrant, bucketName, prefix string, formatUrl FormatUrl) storjMediaStore {
+func newStorjMediaStore(accessGrant, bucketName, prefix string, formatUrl FormatUrl) storjMediaStore {
 	if prefix != "" && prefix[len(prefix)-1] != '/' {
 		prefix += "/"
 	}
