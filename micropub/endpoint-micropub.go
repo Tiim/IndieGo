@@ -1,7 +1,6 @@
 package micropub
 
 import (
-	"context"
 	"fmt"
 	"log"
 	"tiim/go-comment-api/indieauth"
@@ -55,7 +54,7 @@ func (m *micropubApiModule) actionCreate(c *gin.Context, data MicropubPostRaw) {
 	post := ParseMicropubPost(data)
 
 	for _, file := range data.Files {
-		url, err := m.mediaStore.SaveMediaFiles(context.Background(), file)
+		url, err := m.mediaStore.SaveMediaFiles(c, file)
 		if err != nil {
 			c.AbortWithError(500, err)
 			return
