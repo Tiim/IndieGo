@@ -133,8 +133,7 @@ func (c *Config) loadModule(structPtr any, fieldName string, args interface{}) (
 func (c *Config) loadSingleModule(moduleData ModuleRaw, nameSpace, fieldName string) (Module, error) {
 	name := moduleData.Name
 
-	namespaceSegments := strings.Split(name, ".")
-	actualNamespace := strings.Join(namespaceSegments[:len(namespaceSegments)-1], ".")
+	actualNamespace := GetNamespaceFromName(name)
 
 	if actualNamespace != nameSpace {
 		return nil, fmt.Errorf("field %s has namespace '%s' but module %s has namespace '%s'", fieldName, nameSpace, name, actualNamespace)
@@ -154,4 +153,9 @@ func (c *Config) loadSingleModule(moduleData ModuleRaw, nameSpace, fieldName str
 		}
 	}
 	return module, nil
+}
+
+func GetNamespaceFromName(name string) string {
+	namespaceSegments := strings.Split(name, ".")
+	return strings.Join(namespaceSegments[:len(namespaceSegments)-1], ".")
 }

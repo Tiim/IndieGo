@@ -81,8 +81,13 @@ func (c *Config) StartModules() error {
 
 func (gc *GlobalConfig) GetModule(name string) (ModuleInstance, error) {
 	module, ok := gc.Config.Modules[name]
-	if !ok {
-		return nil, fmt.Errorf("plugin '%s' not found", name)
+	if ok {
+		return module, nil
 	}
-	return module, nil
+	for mname, module := range gc.Config.Modules {
+		if GetNamespaceFromName(mname) == name {
+			return module, nil
+		}
+	}
+	return nil, fmt.Errorf("plugin '%s' not found", name)
 }
