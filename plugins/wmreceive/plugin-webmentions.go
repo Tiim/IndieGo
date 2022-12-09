@@ -2,8 +2,10 @@ package wmrecv
 
 import (
 	"fmt"
+	"log"
 	"tiim/go-comment-api/config"
 	"tiim/go-comment-api/model"
+	"tiim/go-comment-api/plugins/admin"
 	"tiim/go-comment-api/plugins/shared-modules/event"
 )
 
@@ -56,6 +58,17 @@ func (p *wmReceivePlugin) Load(config config.GlobalConfig, _ interface{}) (confi
 		return nil, fmt.Errorf("comments-event-handler is not a of type event.Handler: %T", eventHandlerInt)
 	}
 	wmStore.SetEventHandler(eventHandler)
+
+	adminInt, err := config.GetModule("admin")
+	if err == nil {
+		admin, ok := adminInt.(*admin.AdminModule)
+		if !ok {
+			return nil, fmt.Errorf("admin is not a of type admin.AdminModule: %T", admin)
+		}
+		admin.RegisterSection(newAdminWebmentionsSection(wmStore))
+	} else {
+		log.Printf("webmention.receive plugin: admin plugin not loaded, not registering admin section")
+	}
 
 	return newApi(wmStore, wmWorker, config.Scheduler), nil
 }

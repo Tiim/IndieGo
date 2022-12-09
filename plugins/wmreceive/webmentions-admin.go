@@ -19,7 +19,7 @@ type adminWebmentionsSection struct {
 	template *template.Template
 }
 
-func NewAdminWebmentionsSection(store webmentionsStore) *adminWebmentionsSection {
+func newAdminWebmentionsSection(store webmentionsStore) *adminWebmentionsSection {
 	return &adminWebmentionsSection{
 		store: store,
 	}
