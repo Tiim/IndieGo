@@ -9,6 +9,7 @@ import (
 	_ "tiim/go-comment-api/plugins/admin"
 	_ "tiim/go-comment-api/plugins/comments"
 	_ "tiim/go-comment-api/plugins/indieauth"
+	_ "tiim/go-comment-api/plugins/manual-backup"
 	_ "tiim/go-comment-api/plugins/micropub"
 	_ "tiim/go-comment-api/plugins/public-site"
 	_ "tiim/go-comment-api/plugins/wmreceive"

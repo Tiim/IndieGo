@@ -10,7 +10,8 @@
       "type": "go",
       "request": "launch",
       "mode": "auto",
-      "program": "."
+      "program": ".",
+      "args": ["--config", "config-local.json"]
     }
   ]
 }

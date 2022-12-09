@@ -1,4 +1,4 @@
-package api
+package manualbackup
 
 import (
 	"bytes"
@@ -15,7 +15,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-//go:embed templates/dashboard-backup.tmpl
+//go:embed dashboard-backup.tmpl
 var backupTemplate string
 
 type adminBackupSection struct {
@@ -23,7 +23,7 @@ type adminBackupSection struct {
 	template *template.Template
 }
 
-func NewAdminBackupSection(store model.BackupStore) *adminBackupSection {
+func newAdminBackupSection(store model.BackupStore) *adminBackupSection {
 	return &adminBackupSection{
 		store: store,
 	}
