@@ -31,13 +31,13 @@ func (m *indieAuthSQLiteStoreModule) Load(data json.RawMessage, config config.Gl
 	if err != nil {
 		return nil, err
 	}
-	storeInt, err := config.GetPlugin("sqlite-store")
+	storeInt, err := config.GetPlugin("store-sqlite")
 	if err != nil {
-		return nil, fmt.Errorf("%s depends on sqlite-store plugin, error loading: %v", m.Name(), err)
+		return nil, fmt.Errorf("%s depends on store-sqlite plugin, error loading: %v", m.Name(), err)
 	}
 	store, ok := storeInt.(*model.SQLiteStore)
 	if !ok {
-		return nil, fmt.Errorf("sqlite-store is not a of type model.SQLiteStore: %T", storeInt)
+		return nil, fmt.Errorf("store-sqlite is not a of type model.SQLiteStore: %T", storeInt)
 	}
 	return NewSQLiteStore(
 		store.GetDBConnection(),

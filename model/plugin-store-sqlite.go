@@ -14,7 +14,7 @@ func init() {
 }
 
 func (p *sqliteStorePlugin) Name() string {
-	return "sqlite-store"
+	return "store-sqlite"
 }
 
 func (p *sqliteStorePlugin) Load(data json.RawMessage, config config.GlobalConfig) (config.PluginInstance, error) {
@@ -22,7 +22,7 @@ func (p *sqliteStorePlugin) Load(data json.RawMessage, config config.GlobalConfi
 }
 
 func (p *SQLiteStore) Name() string {
-	return "sqlite-store"
+	return "store-sqlite"
 }
 func (p *SQLiteStore) Init(config config.GlobalConfig) error {
 	p.runMigrations()

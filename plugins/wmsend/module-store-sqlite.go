@@ -18,13 +18,13 @@ func (m *wmSendSQLiteStoreModule) Name() string {
 }
 
 func (m *wmSendSQLiteStoreModule) Load(data json.RawMessage, config config.GlobalConfig, args interface{}) (config.ModuleInstance, error) {
-	storeInt, err := config.GetPlugin("sqlite-store")
+	storeInt, err := config.GetPlugin("store-sqlite")
 	if err != nil {
 		return nil, err
 	}
 	store, ok := storeInt.(*model.SQLiteStore)
 	if !ok {
-		return nil, fmt.Errorf("sqlite-store is not a of type model.SQLiteStore: %T", storeInt)
+		return nil, fmt.Errorf("store-sqlite is not a of type model.SQLiteStore: %T", storeInt)
 	}
 	return newWmSendStore(store.GetDBConnection()), nil
 }

@@ -7,7 +7,7 @@
       }
     },
     {
-      "name": "sqlite-store"
+      "name": "store-sqlite"
     },
     {
       "name": "indieauth",

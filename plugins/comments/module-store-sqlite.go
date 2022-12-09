@@ -26,13 +26,13 @@ func (m *commentSQLiteStoreModule) Load(data json.RawMessage, config config.Glob
 	if err != nil {
 		return nil, err
 	}
-	storeInt, err := config.GetPlugin("sqlite-store")
+	storeInt, err := config.GetPlugin("store-sqlite")
 	if err != nil {
-		return nil, fmt.Errorf("%s depends on sqlite-store plugin, error loading: %v", m.Name(), err)
+		return nil, fmt.Errorf("%s depends on store-sqlite plugin, error loading: %v", m.Name(), err)
 	}
 	store, ok := storeInt.(*model.SQLiteStore)
 	if !ok {
-		return nil, fmt.Errorf("sqlite-store is not a of type model.SQLiteStore: %T", storeInt)
+		return nil, fmt.Errorf("store-sqlite is not a of type model.SQLiteStore: %T", storeInt)
 	}
 	pageMapperInt, err := config.Config.LoadModule(d.PageMapper, nil)
 	if err != nil {

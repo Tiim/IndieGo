@@ -29,13 +29,13 @@ func (p *wmReceivePlugin) Load(data json.RawMessage, config config.GlobalConfig)
 		return nil, err
 	}
 
-	storeInt, err := config.GetPlugin("sqlite-store")
+	storeInt, err := config.GetPlugin("store-sqlite")
 	if err != nil {
-		return nil, fmt.Errorf("webmention-receive plugin requires sqlite-store plugin: %v", err)
+		return nil, fmt.Errorf("webmention-receive plugin requires store-sqlite plugin: %v", err)
 	}
 	store, ok := storeInt.(*model.SQLiteStore)
 	if !ok {
-		return nil, fmt.Errorf("sqlite-store is not a of type model.SQLiteStore: %T", storeInt)
+		return nil, fmt.Errorf("store-sqlite is not a of type model.SQLiteStore: %T", storeInt)
 	}
 	wmStore := newStore(store)
 	wmChecker := newWebmentionChecker([]Checker{
