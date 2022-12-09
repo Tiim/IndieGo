@@ -1,6 +1,7 @@
 package main
 
 import (
+	"flag"
 	"log"
 	"tiim/go-comment-api/api"
 	"tiim/go-comment-api/config"
@@ -15,7 +16,10 @@ import (
 
 func main() {
 
-	configPath := "config.json"
+	var configPath string
+
+	flag.StringVar(&configPath, "config", "config.json", "path to config file")
+
 	configStr, err := config.ReadConfigString(configPath)
 	if err != nil {
 		log.Fatalf("unable to read config file: %v", err)
