@@ -1,18 +1,13 @@
 package api
 
 import (
-	"embed"
 	"fmt"
-	"io/fs"
 	"log"
 	"net/http"
 	"tiim/go-comment-api/config"
 
 	"github.com/gin-gonic/gin"
 )
-
-//go:embed assets/*
-var assets embed.FS
 
 type apiServer struct {
 	plugins map[string]config.ModuleInstance
@@ -26,12 +21,6 @@ func (cs *apiServer) Start() (*gin.Engine, error) {
 	r := gin.New()
 	r.RemoveExtraSlash = true
 	r.RedirectTrailingSlash = false
-
-	assetsFolder, err := fs.Sub(assets, "assets")
-	if err != nil {
-		return nil, fmt.Errorf("unable to get assets folder: %w", err)
-	}
-	r.StaticFS("/assets", http.FS(assetsFolder))
 
 	r.Use(ErrorMiddleware())
 	r.Use(gin.Logger())
