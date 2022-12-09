@@ -1,16 +1,18 @@
 package micropub
 
 import (
-	"encoding/json"
 	"strings"
 	"tiim/go-comment-api/config"
 )
 
-type MediastoreStorjModule struct{}
-type MediastoreStorjModuleData struct {
+type MediastoreStorjModule struct {
+	// The storj access grant.
 	AccessGrant string `json:"access_grant"`
-	BucketName  string `json:"bucket_name"`
-	Prefix      string `json:"prefix"`
+	// The name of the storj bucket.
+	BucketName string `json:"bucket_name"`
+	// Can be a custom prefix or an empty string for no prefix.
+	// Setting a prefix allows multiple uses of the same bucket.
+	Prefix string `json:"prefix"`
 
 	// The format of the url to the media file:
 	// {name} will be replaced with the name of the file,
@@ -23,23 +25,20 @@ func init() {
 	config.RegisterModule(&MediastoreStorjModule{})
 }
 
-func (p *MediastoreStorjModule) Name() string {
-	return "micropub-mediastore-storj"
+func (m *MediastoreStorjModule) IndieGoModule() config.ModuleInfo {
+	return config.ModuleInfo{
+		Name: "micropub.media-store.storj",
+		New:  func() config.Module { return new(MediastoreStorjModule) },
+	}
 }
 
-func (p *MediastoreStorjModule) Load(data json.RawMessage, config config.GlobalConfig, args interface{}) (config.ModuleInstance, error) {
-	d := MediastoreStorjModuleData{}
-	err := json.Unmarshal(data, &d)
-	if err != nil {
-		return nil, err
-	}
-
+func (m *MediastoreStorjModule) Load(config config.GlobalConfig, args interface{}) (config.ModuleInstance, error) {
 	return newStorjMediaStore(
-		d.AccessGrant,
-		d.BucketName,
-		d.Prefix,
+		m.AccessGrant,
+		m.BucketName,
+		m.Prefix,
 		func(name, contentType, prefix, bucket string) string {
-			url := d.UrlFormat
+			url := m.UrlFormat
 			url = strings.Replace(url, "{name}", name, -1)
 			url = strings.Replace(url, "{prefix}", prefix, -1)
 			url = strings.Replace(url, "{bucket}", bucket, -1)

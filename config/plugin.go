@@ -11,18 +11,20 @@ type ModuleRaw struct {
 	Args json.RawMessage `json:"args"`
 }
 
-type Plugin interface {
-	Load(data json.RawMessage, config GlobalConfig) (PluginInstance, error)
-	Name() string
+type ModuleInfo struct {
+	Name string
+	New  func() Module
 }
 
 type Module interface {
-	Load(data json.RawMessage, config GlobalConfig, args interface{}) (ModuleInstance, error)
-	Name() string
+	Load(config GlobalConfig, args interface{}) (ModuleInstance, error)
+	IndieGoModule() ModuleInfo
 }
 
+type ModuleInstance interface{}
+
 type PluginInstance interface {
-	Name() string
+	ModuleInstance
 	Init(config GlobalConfig) error
 	Start() error
 }
@@ -36,5 +38,3 @@ type GroupedApiPluginInstance interface {
 	ApiPluginInstance
 	InitGroups(r *gin.Engine) error
 }
-
-type ModuleInstance interface{}

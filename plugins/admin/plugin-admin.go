@@ -1,28 +1,24 @@
 package admin
 
 import (
-	"encoding/json"
 	"tiim/go-comment-api/config"
 )
 
-type AdminPlugin struct{}
-type AdminPluginData struct {
+type adminModule struct {
 	Password string `json:"password"`
 }
 
 func init() {
-	config.RegisterPlugin(&AdminPlugin{})
+	config.RegisterModule(&adminModule{})
 }
 
-func (p *AdminPlugin) Name() string {
-	return "admin"
-}
-
-func (p *AdminPlugin) Load(data json.RawMessage, config config.GlobalConfig) (config.PluginInstance, error) {
-	d := AdminPluginData{}
-	err := json.Unmarshal(data, &d)
-	if err != nil {
-		return nil, err
+func (p *adminModule) IndieGoModule() config.ModuleInfo {
+	return config.ModuleInfo{
+		Name: "admin",
+		New:  func() config.Module { return new(adminModule) },
 	}
-	return newAdminModule(d.Password), nil
+}
+
+func (p *adminModule) Load(config config.GlobalConfig, _ interface{}) (config.ModuleInstance, error) {
+	return newAdminModule(p.Password), nil
 }

@@ -1,6 +1,8 @@
 package comments
 
-import "fmt"
+import (
+	"strings"
+)
 
 type CommentPageToUrlMapper interface {
 	Map(page string, id string) string
@@ -11,5 +13,7 @@ type formatPageMapper struct {
 }
 
 func (f *formatPageMapper) Map(page string, id string) string {
-	return fmt.Sprintf(f.format, page, id)
+	url := strings.ReplaceAll(f.format, "{page}", page)
+	url = strings.ReplaceAll(url, "{id}", id)
+	return url
 }

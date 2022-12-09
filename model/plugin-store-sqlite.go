@@ -1,28 +1,30 @@
 package model
 
 import (
-	"encoding/json"
 	"log"
 	"tiim/go-comment-api/config"
 	"time"
 )
 
-type sqliteStorePlugin struct{}
+type sqliteStoreModule struct{}
 
 func init() {
-	config.RegisterPlugin(&sqliteStorePlugin{})
+	config.RegisterModule(&sqliteStoreModule{})
 }
 
-func (p *sqliteStorePlugin) Name() string {
-	return "store-sqlite"
+func (p *sqliteStoreModule) IndieGoModule() config.ModuleInfo {
+	return config.ModuleInfo{
+		Name: "store.sqlite",
+		New:  func() config.Module { return new(sqliteStoreModule) },
+	}
 }
 
-func (p *sqliteStorePlugin) Load(data json.RawMessage, config config.GlobalConfig) (config.PluginInstance, error) {
+func (p *sqliteStoreModule) Load(config config.GlobalConfig, _ interface{}) (config.ModuleInstance, error) {
 	return NewSQLiteStore(config.Scheduler)
 }
 
 func (p *SQLiteStore) Name() string {
-	return "store-sqlite"
+	return "store.sqlite"
 }
 func (p *SQLiteStore) Init(config config.GlobalConfig) error {
 	p.runMigrations()

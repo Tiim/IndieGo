@@ -1,7 +1,6 @@
 package comments
 
 import (
-	"encoding/json"
 	"fmt"
 	"log"
 	"tiim/go-comment-api/config"
@@ -9,28 +8,28 @@ import (
 	"tiim/go-comment-api/plugins/shared-modules/event"
 )
 
-type commentsPlugin struct{}
-
-type commentsPluginData struct {
-	StoreData    config.ModuleRaw `json:"store"`
-	EventHandler config.ModuleRaw `json:"event_handler"`
+type commentsPlugin struct {
+	// The store module to use for storing comments.
+	// This module must implement the comments.commentStore interface.
+	Store config.ModuleRaw `json:"store" config:"comments.store"`
+	// The event handler, which will be notified about new comments and
+	// deleted comments.
+	EventHandler config.ModuleRaw `json:"event_handler" config:"event.mention"`
 }
 
 func init() {
-	config.RegisterPlugin(&commentsPlugin{})
+	config.RegisterModule(&commentsPlugin{})
 }
 
-func (p *commentsPlugin) Name() string {
-	return "comments"
-}
-
-func (p *commentsPlugin) Load(data json.RawMessage, config config.GlobalConfig) (config.PluginInstance, error) {
-	var d commentsPluginData
-	err := json.Unmarshal(data, &d)
-	if err != nil {
-		return nil, err
+func (p *commentsPlugin) IndieGoModule() config.ModuleInfo {
+	return config.ModuleInfo{
+		Name: "comments",
+		New:  func() config.Module { return new(commentsPlugin) },
 	}
-	storeInt, err := config.Config.LoadModule(d.StoreData, nil)
+}
+
+func (p *commentsPlugin) Load(config config.GlobalConfig, _ interface{}) (config.ModuleInstance, error) {
+	storeInt, err := config.Config.LoadModule(p, "Store", nil)
 	if err != nil {
 		return nil, err
 	}
@@ -39,7 +38,7 @@ func (p *commentsPlugin) Load(data json.RawMessage, config config.GlobalConfig) 
 		return nil, fmt.Errorf("store module is not of type comments.commentStore: %T", storeInt)
 	}
 
-	adminInt, err := config.GetPlugin("admin")
+	adminInt, err := config.GetModule("admin")
 	if err == nil {
 		admin, ok := adminInt.(*admin.AdminModule)
 		if !ok {
@@ -50,7 +49,7 @@ func (p *commentsPlugin) Load(data json.RawMessage, config config.GlobalConfig) 
 		log.Printf("comments plugin: admin plugin not loaded, not registering admin section")
 	}
 
-	eventHandlerInt, err := config.Config.LoadModule(d.EventHandler, store)
+	eventHandlerInt, err := config.Config.LoadModule(p, "EventHandler", store)
 	if err != nil {
 		return nil, fmt.Errorf("error loading event handler: %v", err)
 	}

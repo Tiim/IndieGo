@@ -1,36 +1,37 @@
 package event
 
 import (
-	"encoding/json"
+	"fmt"
 	"tiim/go-comment-api/config"
 )
 
-type HandlerModule struct{}
-type HandlerModuleData struct {
-	Handlers []config.ModuleRaw `json:"handlers"`
+type HandlerModule struct {
+	Handlers []config.ModuleRaw `json:"handlers" config:"event.mention"`
 }
 
 func init() {
 	config.RegisterModule(&HandlerModule{})
 }
 
-func (m *HandlerModule) Name() string {
-	return "event-handler-list"
+func (m *HandlerModule) IndieGoModule() config.ModuleInfo {
+	return config.ModuleInfo{
+		Name: "event.mention.handler-list",
+		New:  func() config.Module { return new(HandlerModule) },
+	}
 }
 
-func (m *HandlerModule) Load(data json.RawMessage, config config.GlobalConfig, args interface{}) (config.ModuleInstance, error) {
-	d := HandlerModuleData{}
-	err := json.Unmarshal(data, &d)
+func (m *HandlerModule) Load(config config.GlobalConfig, args interface{}) (config.ModuleInstance, error) {
+	h, err := config.Config.LoadModuleSlice(m, "Handlers", args)
 	if err != nil {
 		return nil, err
 	}
-	handlers := make([]Handler, len(d.Handlers))
-	for i, handlerRaw := range d.Handlers {
-		handler, err := config.Config.LoadModule(handlerRaw, args)
-		if err != nil {
-			return nil, err
+	handlers := make([]Handler, len(h))
+	for i, v := range h {
+		h, ok := v.(Handler)
+		if !ok {
+			return nil, fmt.Errorf("event.mention.handler-list: handler %d is not a Handler: %T", i, v)
 		}
-		handlers[i] = handler.(Handler)
+		handlers[i] = h
 	}
 	return &handlerList{handlers: handlers}, nil
 }

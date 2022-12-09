@@ -1,37 +1,41 @@
 package indieauth
 
 import (
-	"encoding/json"
 	"fmt"
+	"strings"
 	"tiim/go-comment-api/config"
 )
 
-type indieAuthPlugin struct{}
-
-type indieAuthPluginData struct {
-	BaseUrl             string           `json:"baseUrl"`
-	ProfileCanonicalUrl string           `json:"profileCanonicalUrl"`
-	Password            string           `json:"password"`
-	JWTSecret           string           `json:"jwtSecret"`
-	StoreData           config.ModuleRaw `json:"store"`
+type indieAuthPlugin struct {
+	// The url indiego is running on. For example https://indiego.example.com
+	BaseUrl string `json:"base_url"`
+	// The canonical url of the profile page. For example https://example.com
+	ProfileCanonicalUrl string `json:"profile_canonical_url"`
+	// The password to authenticate
+	Password string `json:"password"`
+	// A random string to sign the jwt tokens. Should be at least 32 characters long
+	JWTSecret string `json:"jwt_secret"`
+	// The store module to use
+	StoreData config.ModuleRaw `json:"store" config:"indieauth.store"`
 }
 
 func init() {
-	config.RegisterPlugin(&indieAuthPlugin{})
+	config.RegisterModule(&indieAuthPlugin{})
 }
 
-func (p *indieAuthPlugin) Name() string {
-	return "indieauth"
-}
-
-func (p *indieAuthPlugin) Load(data json.RawMessage, config config.GlobalConfig) (config.PluginInstance, error) {
-
-	var d indieAuthPluginData
-	err := json.Unmarshal(data, &d)
-	if err != nil {
-		return nil, err
+func (p *indieAuthPlugin) IndieGoModule() config.ModuleInfo {
+	return config.ModuleInfo{
+		Name: "indieauth",
+		New:  func() config.Module { return new(indieAuthPlugin) },
 	}
-	storeInt, err := config.Config.LoadModule(d.StoreData, nil)
+}
+
+func (p *indieAuthPlugin) Load(config config.GlobalConfig, _ interface{}) (config.ModuleInstance, error) {
+
+	// remove trailing slash of baseUrl
+	p.BaseUrl = strings.TrimSuffix(p.BaseUrl, "/")
+
+	storeInt, err := config.Config.LoadModule(p, "StoreData", nil)
 	if err != nil {
 		return nil, err
 	}
@@ -40,5 +44,12 @@ func (p *indieAuthPlugin) Load(data json.RawMessage, config config.GlobalConfig)
 		return nil, fmt.Errorf("store module is not of type indieauth.Store: %T", storeInt)
 	}
 
-	return NewIndieAuthApiModule(d.BaseUrl, d.ProfileCanonicalUrl, d.Password, d.JWTSecret, store, *config.HttpClient), nil
+	return NewIndieAuthApiModule(
+		p.BaseUrl,
+		p.ProfileCanonicalUrl,
+		p.Password,
+		p.JWTSecret,
+		store,
+		*config.HttpClient,
+	), nil
 }

@@ -1,29 +1,26 @@
 package event
 
 import (
-	"encoding/json"
 	"tiim/go-comment-api/config"
 )
 
-type PushoverNotifyModule struct{}
-type PushoverNotifyModuleData struct {
+type pushoverNotifyModule struct {
 	ApiToken string `json:"api_token"`
 	UserKey  string `json:"user_key"`
 }
 
 func init() {
-	config.RegisterModule(&PushoverNotifyModule{})
+	config.RegisterModule(&pushoverNotifyModule{})
 }
 
-func (m *PushoverNotifyModule) Name() string {
-	return "event-pushover-notify"
-}
-
-func (m *PushoverNotifyModule) Load(data json.RawMessage, config config.GlobalConfig, args interface{}) (config.ModuleInstance, error) {
-	var d PushoverNotifyModuleData
-	err := json.Unmarshal(data, &d)
-	if err != nil {
-		return nil, err
+func (m *pushoverNotifyModule) IndieGoModule() config.ModuleInfo {
+	return config.ModuleInfo{
+		Name: "event.mention.pushover-notify",
+		New:  func() config.Module { return new(pushoverNotifyModule) },
 	}
-	return newPushoverNotify(d.ApiToken, d.UserKey, *config.HttpClient), nil
+}
+
+func (m *pushoverNotifyModule) Load(config config.GlobalConfig, args interface{}) (config.ModuleInstance, error) {
+
+	return newPushoverNotify(m.ApiToken, m.UserKey, *config.HttpClient), nil
 }

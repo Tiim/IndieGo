@@ -1,36 +1,41 @@
 package wmsend
 
 import (
-	"encoding/json"
 	"fmt"
 	"tiim/go-comment-api/config"
 	"time"
 )
 
-type WmSendPlugin struct{}
-type WmSendPluginData struct {
-	FeedUrl             string           `json:"feed_url"`
-	SendIntervalMinutes int              `json:"send_interval_minutes"`
-	StoreData           config.ModuleRaw `json:"store"`
+type wmSendPlugin struct {
+	// FeedUrl is the URL of the RSS feed. This feed gets periodically polled
+	// for new entries. When a new entry is found, webmentions get sent to
+	// all URLs found in the entry.
+	FeedUrl string `json:"feed_url"`
+	// SendIntervalMinutes is the interval in minutes at which the RSS feed
+	// gets polled for new entries.
+	// Default: 60
+	IntervalMinutes int              `json:"interval_minutes"`
+	StoreData       config.ModuleRaw `json:"store" config:"webmention.send.store"`
 }
 
 func init() {
-	config.RegisterPlugin(&WmSendPlugin{})
+	config.RegisterModule(&wmSendPlugin{})
 }
 
-func (p *WmSendPlugin) Name() string {
-	return "webmention-send"
+func (p *wmSendPlugin) IndieGoModule() config.ModuleInfo {
+	return config.ModuleInfo{
+		Name: "webmention.send",
+		New:  func() config.Module { return new(wmSendPlugin) },
+	}
 }
 
-func (p *WmSendPlugin) Load(data json.RawMessage, config config.GlobalConfig) (config.PluginInstance, error) {
+func (p *wmSendPlugin) Load(config config.GlobalConfig, _ interface{}) (config.ModuleInstance, error) {
 
-	d := WmSendPluginData{}
-	err := json.Unmarshal(data, &d)
-	if err != nil {
-		return nil, err
+	if p.IntervalMinutes == 0 {
+		p.IntervalMinutes = 60
 	}
 
-	storeInt, err := config.Config.LoadModule(d.StoreData, nil)
+	storeInt, err := config.Config.LoadModule(p, "StoreData", nil)
 	if err != nil {
 		return nil, err
 	}
@@ -41,9 +46,9 @@ func (p *WmSendPlugin) Load(data json.RawMessage, config config.GlobalConfig) (c
 
 	return &wmSend{
 		store:     store,
-		rss:       d.FeedUrl,
+		rss:       p.FeedUrl,
 		client:    config.HttpClient,
 		scheduler: config.Scheduler,
-		interval:  time.Minute * time.Duration(d.SendIntervalMinutes),
+		interval:  time.Minute * time.Duration(p.IntervalMinutes),
 	}, nil
 }

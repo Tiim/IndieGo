@@ -1,7 +1,6 @@
 package indieauth
 
 import (
-	"encoding/json"
 	"fmt"
 	"tiim/go-comment-api/config"
 	"tiim/go-comment-api/model"
@@ -10,34 +9,39 @@ import (
 
 type indieAuthSQLiteStoreModule struct{}
 type indieAuthSQLiteStoreModuleData struct {
-	AuthCodeExpirationMinutes  int `json:"authCodeExpirationMinutes"`
-	AuthTokenExpirationMinutes int `json:"authTokenExpirationMinutes"`
+	// The expiration time of auth codes in minutes.
+	// The client must register an auth token within this time.
+	// Default: 10
+	AuthCodeExpirationMinutes int `json:"auth_code_expiration_min"`
+	// The expiration time of auth tokens in minutes.
+	// The client must re authenticate after this time.
+	// Default: 60 * 24 * 30 (30 days)
+	AuthTokenExpirationMinutes int `json:"auth_token_expiration_min"`
 }
 
 func init() {
 	config.RegisterModule(&indieAuthSQLiteStoreModule{})
 }
 
-func (m *indieAuthSQLiteStoreModule) Name() string {
-	return "indieauth-store-sqlite"
+func (m *indieAuthSQLiteStoreModule) IndieGoModule() config.ModuleInfo {
+	return config.ModuleInfo{
+		Name: "indieauth.store.sqlite",
+		New:  func() config.Module { return new(indieAuthSQLiteStoreModule) },
+	}
 }
 
-func (m *indieAuthSQLiteStoreModule) Load(data json.RawMessage, config config.GlobalConfig, args interface{}) (config.ModuleInstance, error) {
+func (m *indieAuthSQLiteStoreModule) Load(config config.GlobalConfig, args interface{}) (config.ModuleInstance, error) {
 	d := indieAuthSQLiteStoreModuleData{
 		AuthCodeExpirationMinutes:  10,
 		AuthTokenExpirationMinutes: 60 * 24 * 30,
 	}
-	err := json.Unmarshal(data, &d)
+	storeInt, err := config.GetModule("store.sqlite")
 	if err != nil {
-		return nil, err
-	}
-	storeInt, err := config.GetPlugin("store-sqlite")
-	if err != nil {
-		return nil, fmt.Errorf("%s depends on store-sqlite plugin, error loading: %v", m.Name(), err)
+		return nil, fmt.Errorf("depends on store.sqlite plugin: %v", err)
 	}
 	store, ok := storeInt.(*model.SQLiteStore)
 	if !ok {
-		return nil, fmt.Errorf("store-sqlite is not a of type model.SQLiteStore: %T", storeInt)
+		return nil, fmt.Errorf("store.sqlite is not a of type model.SQLiteStore: %T", storeInt)
 	}
 	return NewSQLiteStore(
 		store.GetDBConnection(),

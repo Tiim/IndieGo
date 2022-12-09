@@ -1,12 +1,10 @@
 package micropub
 
 import (
-	"encoding/json"
 	"tiim/go-comment-api/config"
 )
 
-type githubStoreModule struct{}
-type githubStoreModuleData struct {
+type githubStoreModule struct {
 	GithubToken  string `json:"github_token"`
 	GithubUser   string `json:"github_user"`
 	GithubRepo   string `json:"github_repo"`
@@ -19,29 +17,26 @@ func init() {
 	config.RegisterModule(&githubStoreModule{})
 }
 
-func (m *githubStoreModule) Name() string {
-	return "micropub-store-github"
+func (m *githubStoreModule) IndieGoModule() config.ModuleInfo {
+	return config.ModuleInfo{
+		Name: "micropub.store.github",
+		New:  func() config.Module { return new(githubStoreModule) },
+	}
 }
 
-func (m *githubStoreModule) Load(data json.RawMessage, config config.GlobalConfig, args interface{}) (config.ModuleInstance, error) {
-	var d githubStoreModuleData
-	err := json.Unmarshal(data, &d)
-	if err != nil {
-		return nil, err
-	}
-
+func (m *githubStoreModule) Load(config config.GlobalConfig, args interface{}) (config.ModuleInstance, error) {
 	mapper := &suffixPrefixUrlMapper{
-		urlPrefix: d.UrlPrefix,
-		urlSuffix: d.UrlSuffix,
-		folder:    d.GithubFolder,
+		urlPrefix: m.UrlPrefix,
+		urlSuffix: m.UrlSuffix,
+		folder:    m.GithubFolder,
 		extension: ".md",
 	}
 
 	return newMicropubGithubStore(
-		d.GithubToken,
-		d.GithubUser,
-		d.GithubRepo,
-		d.GithubFolder,
+		m.GithubToken,
+		m.GithubUser,
+		m.GithubRepo,
+		m.GithubFolder,
 		mapper,
 		config.HttpClient,
 	), nil

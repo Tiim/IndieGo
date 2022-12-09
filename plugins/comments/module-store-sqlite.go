@@ -1,40 +1,37 @@
 package comments
 
 import (
-	"encoding/json"
 	"fmt"
 	"tiim/go-comment-api/config"
 	"tiim/go-comment-api/model"
 )
 
-type commentSQLiteStoreModule struct{}
-type commentSQLiteStoreModuelData struct {
-	PageMapper config.ModuleRaw `json:"page_mapper"`
+type commentSQLiteStoreModule struct {
+	// The page mapper module to use for mapping comment ids to urls.
+	PageMapper config.ModuleRaw `json:"page_mapper" config:"comments.page-mapper"`
 }
 
 func init() {
 	config.RegisterModule(&commentSQLiteStoreModule{})
 }
 
-func (m *commentSQLiteStoreModule) Name() string {
-	return "comments-store-sqlite"
+func (m *commentSQLiteStoreModule) IndieGoModule() config.ModuleInfo {
+	return config.ModuleInfo{
+		Name: "comments.store.sqlite",
+		New:  func() config.Module { return new(commentSQLiteStoreModule) },
+	}
 }
 
-func (m *commentSQLiteStoreModule) Load(data json.RawMessage, config config.GlobalConfig, args interface{}) (config.ModuleInstance, error) {
-	d := commentSQLiteStoreModuelData{}
-	err := json.Unmarshal(data, &d)
+func (m *commentSQLiteStoreModule) Load(config config.GlobalConfig, args interface{}) (config.ModuleInstance, error) {
+	storeInt, err := config.GetModule("store.sqlite")
 	if err != nil {
-		return nil, err
-	}
-	storeInt, err := config.GetPlugin("store-sqlite")
-	if err != nil {
-		return nil, fmt.Errorf("%s depends on store-sqlite plugin, error loading: %v", m.Name(), err)
+		return nil, fmt.Errorf("depends on store.sqlite plugin: %v", err)
 	}
 	store, ok := storeInt.(*model.SQLiteStore)
 	if !ok {
-		return nil, fmt.Errorf("store-sqlite is not a of type model.SQLiteStore: %T", storeInt)
+		return nil, fmt.Errorf("store.sqlite is not a of type model.SQLiteStore: %T", storeInt)
 	}
-	pageMapperInt, err := config.Config.LoadModule(d.PageMapper, nil)
+	pageMapperInt, err := config.Config.LoadModule(m, "PageMapper", nil)
 	if err != nil {
 		return nil, fmt.Errorf("error loading page mapper: %v", err)
 	}

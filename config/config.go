@@ -22,9 +22,8 @@ type GlobalConfig struct {
 
 type Config struct {
 	GlobalConfig
-	PluginsRaw []ModuleRaw      `json:"plugins"`
-	Plugins    []PluginInstance `json:"-"`
-	Modules    []ModuleInstance `json:"-"`
+	ModulesRaw []ModuleRaw               `json:"modules"`
+	Modules    map[string]ModuleInstance `json:"-"`
 }
 
 func ReadConfigString(path string) (string, error) {
@@ -56,31 +55,34 @@ func LoadConfig(configString string) (*Config, error) {
 
 func (c *Config) Init() error {
 	log.Println("Initializing modules")
-	for _, plugin := range c.Plugins {
-		err := plugin.Init(c.GlobalConfig)
-		if err != nil {
-			return fmt.Errorf("failed initializing plugin %s: %v", plugin.Name(), err)
+	for name, module := range c.Modules {
+		if plugin, ok := module.(PluginInstance); ok {
+			err := plugin.Init(c.GlobalConfig)
+			if err != nil {
+				return fmt.Errorf("failed initializing plugin %s: %v", name, err)
+			}
 		}
 	}
 	log.Println("Initializing modules done")
 	return nil
 }
 
-func (c *Config) StartPlugins() error {
-	for _, plugin := range c.Plugins {
-		err := plugin.Start()
-		if err != nil {
-			return fmt.Errorf("failed starting plugin %s: %s", plugin.Name(), err)
+func (c *Config) StartModules() error {
+	for name, module := range c.Modules {
+		if plugin, ok := module.(PluginInstance); ok {
+			err := plugin.Start()
+			if err != nil {
+				return fmt.Errorf("failed starting plugin %s: %s", name, err)
+			}
 		}
 	}
 	return nil
 }
 
-func (gc *GlobalConfig) GetPlugin(name string) (PluginInstance, error) {
-	for _, plugin := range gc.Config.Plugins {
-		if plugin.Name() == name {
-			return plugin, nil
-		}
+func (gc *GlobalConfig) GetModule(name string) (ModuleInstance, error) {
+	module, ok := gc.Config.Modules[name]
+	if !ok {
+		return nil, fmt.Errorf("plugin '%s' not found", name)
 	}
-	return nil, fmt.Errorf("plugin '%s' not found", name)
+	return module, nil
 }

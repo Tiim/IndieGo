@@ -1,12 +1,15 @@
 package comments
 
 import (
-	"encoding/json"
 	"tiim/go-comment-api/config"
 )
 
-type pageMapperModule struct{}
-type pageMapperModuleData struct {
+type pageMapperModule struct {
+	// The format string to use for mapping comment ids to urls.
+	// The format can contain the following placeholders:
+	// "{id}" - The comment id
+	// "{page}" - The page the comment is on
+	// Example: "https://example.com/{page}#comment-{id}"
 	Format string `json:"format"`
 }
 
@@ -14,15 +17,13 @@ func init() {
 	config.RegisterModule(&pageMapperModule{})
 }
 
-func (m *pageMapperModule) Name() string {
-	return "comments-page-mapper"
+func (p *pageMapperModule) IndieGoModule() config.ModuleInfo {
+	return config.ModuleInfo{
+		Name: "comments.page-mapper.format",
+		New:  func() config.Module { return new(pageMapperModule) },
+	}
 }
 
-func (m *pageMapperModule) Load(data json.RawMessage, config config.GlobalConfig, args interface{}) (config.ModuleInstance, error) {
-	d := pageMapperModuleData{}
-	err := json.Unmarshal(data, &d)
-	if err != nil {
-		return nil, err
-	}
-	return &formatPageMapper{format: d.Format}, nil
+func (p *pageMapperModule) Load(config config.GlobalConfig, args interface{}) (config.ModuleInstance, error) {
+	return &formatPageMapper{format: p.Format}, nil
 }

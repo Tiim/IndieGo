@@ -19,6 +19,7 @@ func main() {
 	var configPath string
 
 	flag.StringVar(&configPath, "config", "config.json", "path to config file")
+	flag.Parse()
 
 	configStr, err := config.ReadConfigString(configPath)
 	if err != nil {
@@ -34,12 +35,12 @@ func main() {
 		log.Fatalf("unable to init config: %v", err)
 	}
 
-	apiServer := api.NewApiServer(config.Plugins)
+	apiServer := api.NewApiServer(config.Modules)
 	r, err := apiServer.Start()
 	if err != nil {
 		log.Fatalf("unable to start api server: %v", err)
 	}
-	config.StartPlugins()
+	config.StartModules()
 	err = r.Run(":8080")
 	if err != nil {
 		log.Fatalf("unable to start server: %v", err)

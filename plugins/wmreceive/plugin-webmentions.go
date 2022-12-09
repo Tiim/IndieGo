@@ -1,52 +1,53 @@
 package wmrecv
 
 import (
-	"encoding/json"
 	"fmt"
 	"tiim/go-comment-api/config"
 	"tiim/go-comment-api/model"
 	"tiim/go-comment-api/plugins/shared-modules/event"
 )
 
-type wmReceivePlugin struct{}
-type wmReceivePluginData struct {
+type wmReceivePlugin struct {
+	// TargetDomains is a list of domains that are allowed to be the target of a webmention.
 	TargetDomains []string         `json:"target_domains"`
-	EventHandler  config.ModuleRaw `json:"event_handler"`
+	EventHandler  config.ModuleRaw `json:"event_handler" config:"event.mention"`
 }
 
 func init() {
-	config.RegisterPlugin(&wmReceivePlugin{})
+	config.RegisterModule(&wmReceivePlugin{})
 }
 
-func (p *wmReceivePlugin) Name() string {
-	return "webmention-receive"
+func (p *wmReceivePlugin) IndieGoModule() config.ModuleInfo {
+	return config.ModuleInfo{
+		Name: "webmention.receive",
+		New:  func() config.Module { return new(wmReceivePlugin) },
+	}
 }
 
-func (p *wmReceivePlugin) Load(data json.RawMessage, config config.GlobalConfig) (config.PluginInstance, error) {
-	var d wmReceivePluginData
-	err := json.Unmarshal(data, &d)
-	if err != nil {
-		return nil, err
+func (p *wmReceivePlugin) Load(config config.GlobalConfig, _ interface{}) (config.ModuleInstance, error) {
+
+	if len(p.TargetDomains) == 0 {
+		return nil, fmt.Errorf("at least one target domain must be specified")
 	}
 
-	storeInt, err := config.GetPlugin("store-sqlite")
+	storeInt, err := config.GetModule("store.sqlite")
 	if err != nil {
-		return nil, fmt.Errorf("webmention-receive plugin requires store-sqlite plugin: %v", err)
+		return nil, fmt.Errorf("webmention-receive plugin requires store.sqlite plugin: %v", err)
 	}
 	store, ok := storeInt.(*model.SQLiteStore)
 	if !ok {
-		return nil, fmt.Errorf("store-sqlite is not a of type model.SQLiteStore: %T", storeInt)
+		return nil, fmt.Errorf("store.sqlite is not a of type model.SQLiteStore: %T", storeInt)
 	}
 	wmStore := newStore(store)
 	wmChecker := newWebmentionChecker([]Checker{
-		newTargetChecker(d.TargetDomains...),
+		newTargetChecker(p.TargetDomains...),
 		newDomainChecker(wmStore),
 		newLinkToTargetChecker(),
 		newMicroformatEnricherChecker(),
 	})
 	wmWorker := newMentionsQueueWorker(wmStore, wmChecker)
 
-	eventHandlerInt, err := config.Config.LoadModule(d.EventHandler, nil)
+	eventHandlerInt, err := config.Config.LoadModule(p, "EventHandler", nil)
 	if err != nil {
 		return nil, fmt.Errorf("error loading event handler: %v", err)
 	}

@@ -15,10 +15,10 @@ import (
 var assets embed.FS
 
 type apiServer struct {
-	plugins []config.PluginInstance
+	plugins map[string]config.ModuleInstance
 }
 
-func NewApiServer(modules []config.PluginInstance) *apiServer {
+func NewApiServer(modules map[string]config.ModuleInstance) *apiServer {
 	return &apiServer{plugins: modules}
 }
 
@@ -37,26 +37,26 @@ func (cs *apiServer) Start() (*gin.Engine, error) {
 	r.Use(gin.Logger())
 	r.Use(gin.Recovery())
 
-	for _, module := range cs.plugins {
+	for name, module := range cs.plugins {
 		apiPlugin, ok := module.(config.GroupedApiPluginInstance)
 		if !ok {
 			continue
 		}
 		if err := apiPlugin.InitGroups(r); err != nil {
-			return nil, fmt.Errorf("initialising module %s failed: %w", module.Name(), err)
+			return nil, fmt.Errorf("initialising module %s failed: %w", name, err)
 		}
 	}
 
 	r.Use(trailingSlash(r))
 	r.Use(cors())
 
-	for _, module := range cs.plugins {
+	for name, module := range cs.plugins {
 		apiPlugin, ok := module.(config.ApiPluginInstance)
 		if !ok {
 			continue
 		}
 		if err := apiPlugin.RegisterRoutes(r); err != nil {
-			return nil, fmt.Errorf("registering routes failed for module %s: %w", module.Name(), err)
+			return nil, fmt.Errorf("registering routes failed for module %s: %w", name, err)
 		}
 	}
 

@@ -1,15 +1,13 @@
 package event
 
 import (
-	"encoding/json"
 	"tiim/go-comment-api/config"
 )
 
-type emailNotifyModule struct{}
-type emailNotifyModuleData struct {
-	From     string `json:"from"`
-	To       string `json:"to"`
-	Subject  string `json:"subject"`
+type emailNotifyModule struct {
+	From     string `json:"email_from"`
+	To       string `json:"email_to"`
+	Subject  string `json:"email_subject"`
 	Username string `json:"username"`
 	Password string `json:"password"`
 	SmtpHost string `json:"smtp_host"`
@@ -20,23 +18,21 @@ func init() {
 	config.RegisterModule(&emailNotifyModule{})
 }
 
-func (m *emailNotifyModule) Name() string {
-	return "event-email-notify"
+func (m *emailNotifyModule) IndieGoModule() config.ModuleInfo {
+	return config.ModuleInfo{
+		Name: "event.mention.email-notify",
+		New:  func() config.Module { return new(emailNotifyModule) },
+	}
 }
 
-func (m *emailNotifyModule) Load(data json.RawMessage, config config.GlobalConfig, args interface{}) (config.ModuleInstance, error) {
-	var d emailNotifyModuleData
-	err := json.Unmarshal(data, &d)
-	if err != nil {
-		return nil, err
-	}
+func (m *emailNotifyModule) Load(config config.GlobalConfig, args interface{}) (config.ModuleInstance, error) {
 	return &emailNotify{
-		from:     d.From,
-		to:       d.To,
-		subject:  d.Subject,
-		username: d.Username,
-		password: d.Password,
-		smtpHost: d.SmtpHost,
-		smtpPort: d.SmtpPort,
+		from:     m.From,
+		to:       m.To,
+		subject:  m.Subject,
+		username: m.Username,
+		password: m.Password,
+		smtpHost: m.SmtpHost,
+		smtpPort: m.SmtpPort,
 	}, nil
 }

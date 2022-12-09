@@ -1,7 +1,6 @@
 package micropub
 
 import (
-	"encoding/json"
 	"tiim/go-comment-api/config"
 )
 
@@ -11,10 +10,13 @@ func init() {
 	config.RegisterModule(&MediastoreNoopModule{})
 }
 
-func (p *MediastoreNoopModule) Name() string {
-	return "micropub-mediastore-noop"
+func (p *MediastoreNoopModule) IndieGoModule() config.ModuleInfo {
+	return config.ModuleInfo{
+		Name: "micropub.media-store.noop",
+		New:  func() config.Module { return new(MediastoreNoopModule) },
+	}
 }
 
-func (p *MediastoreNoopModule) Load(data json.RawMessage, config config.GlobalConfig, args interface{}) (config.ModuleInstance, error) {
+func (p *MediastoreNoopModule) Load(config config.GlobalConfig, args interface{}) (config.ModuleInstance, error) {
 	return nopMediaStore{}, nil
 }

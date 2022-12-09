@@ -1,7 +1,6 @@
 package wmsend
 
 import (
-	"encoding/json"
 	"fmt"
 	"tiim/go-comment-api/config"
 	"tiim/go-comment-api/model"
@@ -13,18 +12,21 @@ func init() {
 	config.RegisterModule(&wmSendSQLiteStoreModule{})
 }
 
-func (m *wmSendSQLiteStoreModule) Name() string {
-	return "webmention-send-store-sqlite"
+func (m *wmSendSQLiteStoreModule) IndieGoModule() config.ModuleInfo {
+	return config.ModuleInfo{
+		Name: "webmention.send.store.sqlite",
+		New:  func() config.Module { return new(wmSendSQLiteStoreModule) },
+	}
 }
 
-func (m *wmSendSQLiteStoreModule) Load(data json.RawMessage, config config.GlobalConfig, args interface{}) (config.ModuleInstance, error) {
-	storeInt, err := config.GetPlugin("store-sqlite")
+func (m *wmSendSQLiteStoreModule) Load(config config.GlobalConfig, args interface{}) (config.ModuleInstance, error) {
+	storeInt, err := config.GetModule("store.sqlite")
 	if err != nil {
 		return nil, err
 	}
 	store, ok := storeInt.(*model.SQLiteStore)
 	if !ok {
-		return nil, fmt.Errorf("store-sqlite is not a of type model.SQLiteStore: %T", storeInt)
+		return nil, fmt.Errorf("store.sqlite is not a of type model.SQLiteStore: %T", storeInt)
 	}
 	return newWmSendStore(store.GetDBConnection()), nil
 }
