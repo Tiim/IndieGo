@@ -1,26 +1,22 @@
-package api
+package commentprovider
 
 import (
 	"fmt"
 	"log"
 	"net/http"
 	"sort"
+	"tiim/go-comment-api/config"
 	"tiim/go-comment-api/model"
 	"time"
 
 	"github.com/gin-gonic/gin"
 )
 
-type CommentProvider interface {
-	GetGenericCommentsForPage(page string, since time.Time) ([]model.GenericComment, error)
-	GetAllGenericComments(since time.Time) ([]model.GenericComment, error)
-}
-
 type genericCommentApiModule struct {
 	CommentProviders []CommentProvider
 }
 
-func NewCommentModule(CommentProviders []CommentProvider) *genericCommentApiModule {
+func newCommentProviderModule(CommentProviders []CommentProvider) *genericCommentApiModule {
 	return &genericCommentApiModule{CommentProviders: CommentProviders}
 }
 
@@ -28,7 +24,11 @@ func (cm *genericCommentApiModule) Name() string {
 	return "Comment"
 }
 
-func (cm *genericCommentApiModule) Init(r *gin.Engine) error {
+func (cm *genericCommentApiModule) Init(c config.GlobalConfig) error {
+	return nil
+}
+
+func (cm *genericCommentApiModule) Start() error {
 	return nil
 }
 

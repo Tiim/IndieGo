@@ -23,8 +23,8 @@ func RegisterModule(a Module) {
 }
 
 func (c *Config) LoadPlugins() error {
-	c.Modules = make(map[string]ModuleInstance)
-	for i, moduleRaw := range c.ModulesRaw {
+	c.Modules = make(map[string][]ModuleInstance)
+	for i, moduleRaw := range c.PluginsRaw {
 		name := moduleRaw.Name
 		p, ok := modules[name]
 		log.Printf("Loading plugin: '%s'\n", name)
@@ -45,7 +45,10 @@ func (c *Config) LoadPlugins() error {
 		if err != nil {
 			return fmt.Errorf("failed to load plugin '%s' (%d): %w", name, i, err)
 		}
-		c.Modules[name] = module
+		if c.Modules[name] == nil {
+			c.Modules[name] = make([]ModuleInstance, 0)
+		}
+		c.Modules[name] = append(c.Modules[name], module)
 	}
 	log.Printf("Successfully loaded %d modules\n", len(c.Modules))
 	return nil
@@ -85,10 +88,6 @@ func (c *Config) loadModule(structPtr any, fieldName string, args interface{}) (
 	}
 
 	nameSpace := field.Tag.Get("config")
-
-	if c.Modules == nil {
-		c.Modules = make(map[string]ModuleInstance)
-	}
 	switch t := val.Interface().(type) {
 	case ModuleRaw:
 
@@ -104,7 +103,10 @@ func (c *Config) loadModule(structPtr any, fieldName string, args interface{}) (
 		if err != nil {
 			return nil, fmt.Errorf("failed to load module %s (field %s): %w", fieldName, fieldName, err)
 		}
-		c.Modules[t.Name] = moduleInstance
+		if c.Modules[t.Name] == nil {
+			c.Modules[t.Name] = make([]ModuleInstance, 0)
+		}
+		c.Modules[t.Name] = append(c.Modules[t.Name], moduleInstance)
 		return moduleInstance, nil
 	case []ModuleRaw:
 		modules := make([]ModuleInstance, len(t))
@@ -120,7 +122,10 @@ func (c *Config) loadModule(structPtr any, fieldName string, args interface{}) (
 			if err != nil {
 				return nil, fmt.Errorf("failed to load module %s (field %s, index %d): %w", fieldName, fieldName, i, err)
 			}
-			c.Modules[moduleData.Name] = moduleInstance
+			if c.Modules[moduleData.Name] == nil {
+				c.Modules[moduleData.Name] = make([]ModuleInstance, 0)
+			}
+			c.Modules[moduleData.Name] = append(c.Modules[moduleData.Name], moduleInstance)
 			modules[i] = moduleInstance
 		}
 		return modules, nil
@@ -135,7 +140,7 @@ func (c *Config) loadSingleModule(moduleData ModuleRaw, nameSpace, fieldName str
 
 	actualNamespace := GetNamespaceFromName(name)
 
-	if actualNamespace != nameSpace {
+	if !strings.HasPrefix(actualNamespace, nameSpace) {
 		return nil, fmt.Errorf("field %s has namespace '%s' but module %s has namespace '%s'", fieldName, nameSpace, name, actualNamespace)
 	}
 

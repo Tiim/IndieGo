@@ -7,6 +7,7 @@ import (
 	"tiim/go-comment-api/config"
 
 	_ "tiim/go-comment-api/plugins/admin"
+	_ "tiim/go-comment-api/plugins/comment-provider"
 	_ "tiim/go-comment-api/plugins/comments"
 	_ "tiim/go-comment-api/plugins/indieauth"
 	_ "tiim/go-comment-api/plugins/manual-backup"

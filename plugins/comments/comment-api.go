@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"strings"
 	"tiim/go-comment-api/config"
 
 	"github.com/gin-gonic/gin"
@@ -59,6 +60,9 @@ func (cm *commentApiModule) handlePostComment(c *gin.Context) {
 		c.AbortWithError(http.StatusBadRequest, fmt.Errorf("content, page, name or email is too long"))
 		return
 	}
+
+	comment.Page = strings.TrimPrefix(comment.Page, "/")
+
 	err := cm.store.NewComment(&comment)
 	if err != nil {
 		log.Println("Error inserting comment: ", err)

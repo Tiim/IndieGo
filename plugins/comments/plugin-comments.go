@@ -5,6 +5,7 @@ import (
 	"log"
 	"tiim/go-comment-api/config"
 	"tiim/go-comment-api/plugins/admin"
+	commentprovider "tiim/go-comment-api/plugins/comment-provider"
 	"tiim/go-comment-api/plugins/shared-modules/event"
 )
 
@@ -58,6 +59,9 @@ func (p *commentsPlugin) Load(config config.GlobalConfig, _ interface{}) (config
 		return nil, fmt.Errorf("comments-event-handler is not a of type event.Handler: %T", eventHandlerInt)
 	}
 	store.SetEventHandler(eventHandler)
+
+	var commentProvider commentprovider.CommentProvider = store
+	config.Config.AddInterface("comment-provider.provider", commentProvider)
 
 	return NewCommentModule(store), nil
 }

@@ -12,7 +12,7 @@ type comment struct {
 	Name              string `json:"name"`
 	Email             string `json:"email"`
 	Notify            bool   `json:"notify"`
-	UnsubscribeSecret string `json:"unsubscribe_secret"`
+	UnsubscribeSecret string `json:"-"`
 }
 
 func (c *comment) ToGenericComment() model.GenericComment {

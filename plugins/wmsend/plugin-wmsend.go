@@ -3,6 +3,7 @@ package wmsend
 import (
 	"fmt"
 	"tiim/go-comment-api/config"
+	"tiim/go-comment-api/plugins/shared-modules/trigger"
 	"time"
 )
 
@@ -16,6 +17,7 @@ type wmSendPlugin struct {
 	// Default: 60
 	IntervalMinutes int              `json:"interval_minutes"`
 	StoreData       config.ModuleRaw `json:"store" config:"webmention.send.store"`
+	Trigger         config.ModuleRaw `json:"trigger" config:"trigger"`
 }
 
 func init() {
@@ -39,16 +41,27 @@ func (p *wmSendPlugin) Load(config config.GlobalConfig, _ interface{}) (config.M
 	if err != nil {
 		return nil, err
 	}
-	store, ok := storeInt.(WmSendStore)
-	if !ok {
-		return nil, fmt.Errorf("store module is not of type wmsend.WmSendStore: %T", storeInt)
-	}
+	store := storeInt.(WmSendStore)
 
-	return &wmSend{
+	wmModule := &wmSend{
 		store:     store,
 		rss:       p.FeedUrl,
 		client:    config.HttpClient,
 		scheduler: config.Scheduler,
 		interval:  time.Minute * time.Duration(p.IntervalMinutes),
-	}, nil
+	}
+
+	var trig trigger.Trigger
+	if p.Trigger.Name != "" {
+		triggerInt, err := config.Config.LoadModule(p, "Trigger", nil)
+		if err != nil {
+			return nil, fmt.Errorf("error loading trigger: %v", err)
+		}
+		trig = triggerInt.(trigger.Trigger)
+		trig.AddCallback(func() {
+			wmModule.SendNow()
+		})
+	}
+
+	return wmModule, nil
 }

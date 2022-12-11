@@ -6,6 +6,7 @@ import (
 	"tiim/go-comment-api/config"
 	"tiim/go-comment-api/model"
 	"tiim/go-comment-api/plugins/admin"
+	commentprovider "tiim/go-comment-api/plugins/comment-provider"
 	"tiim/go-comment-api/plugins/shared-modules/event"
 )
 
@@ -69,6 +70,9 @@ func (p *wmReceivePlugin) Load(config config.GlobalConfig, _ interface{}) (confi
 	} else {
 		log.Printf("webmention.receive plugin: admin plugin not loaded, not registering admin section")
 	}
+
+	var commentProvider commentprovider.CommentProvider = wmStore
+	config.Config.AddInterface("comment-provider.provider", commentProvider)
 
 	return newApi(wmStore, wmWorker, config.Scheduler), nil
 }

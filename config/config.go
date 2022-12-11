@@ -22,8 +22,9 @@ type GlobalConfig struct {
 
 type Config struct {
 	GlobalConfig
-	ModulesRaw []ModuleRaw               `json:"modules"`
-	Modules    map[string]ModuleInstance `json:"-"`
+	PluginsRaw []ModuleRaw `json:"plugins"`
+
+	Modules map[string][]ModuleInstance `json:"-"`
 }
 
 func ReadConfigString(path string) (string, error) {
@@ -55,11 +56,13 @@ func LoadConfig(configString string) (*Config, error) {
 
 func (c *Config) Init() error {
 	log.Println("Initializing modules")
-	for name, module := range c.Modules {
-		if plugin, ok := module.(PluginInstance); ok {
-			err := plugin.Init(c.GlobalConfig)
-			if err != nil {
-				return fmt.Errorf("failed initializing plugin %s: %v", name, err)
+	for name, modules := range c.Modules {
+		for _, module := range modules {
+			if plugin, ok := module.(PluginInstance); ok {
+				err := plugin.Init(c.GlobalConfig)
+				if err != nil {
+					return fmt.Errorf("failed initializing plugin %s: %v", name, err)
+				}
 			}
 		}
 	}
@@ -68,11 +71,13 @@ func (c *Config) Init() error {
 }
 
 func (c *Config) StartModules() error {
-	for name, module := range c.Modules {
-		if plugin, ok := module.(PluginInstance); ok {
-			err := plugin.Start()
-			if err != nil {
-				return fmt.Errorf("failed starting plugin %s: %s", name, err)
+	for name, modules := range c.Modules {
+		for _, module := range modules {
+			if plugin, ok := module.(PluginInstance); ok {
+				err := plugin.Start()
+				if err != nil {
+					return fmt.Errorf("failed starting plugin %s: %s", name, err)
+				}
 			}
 		}
 	}
@@ -82,12 +87,22 @@ func (c *Config) StartModules() error {
 func (gc *GlobalConfig) GetModule(name string) (ModuleInstance, error) {
 	module, ok := gc.Config.Modules[name]
 	if ok {
-		return module, nil
+		if len(module) > 0 {
+			return module[0], nil
+		}
 	}
 	for mname, module := range gc.Config.Modules {
-		if GetNamespaceFromName(mname) == name {
-			return module, nil
+		if GetNamespaceFromName(mname) == name && len(module) > 0 {
+			return module[0], nil
 		}
 	}
 	return nil, fmt.Errorf("plugin '%s' not found", name)
+}
+
+func (c *Config) AddInterface(name string, iface any) {
+	addInterface(name, iface)
+}
+
+func (c *Config) GetInterfaces(name string) []interface{} {
+	return getInterfaces(name)
 }

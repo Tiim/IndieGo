@@ -10,14 +10,15 @@ import (
 )
 
 type apiServer struct {
-	plugins map[string]config.ModuleInstance
+	plugins map[string][]config.ModuleInstance
 }
 
-func NewApiServer(modules map[string]config.ModuleInstance) *apiServer {
+func NewApiServer(modules map[string][]config.ModuleInstance) *apiServer {
 	return &apiServer{plugins: modules}
 }
 
 func (cs *apiServer) Start() (*gin.Engine, error) {
+	gin.SetMode(gin.ReleaseMode)
 	r := gin.New()
 	r.RemoveExtraSlash = true
 	r.RedirectTrailingSlash = false
@@ -26,27 +27,36 @@ func (cs *apiServer) Start() (*gin.Engine, error) {
 	r.Use(gin.Logger())
 	r.Use(gin.Recovery())
 
-	for name, module := range cs.plugins {
-		apiPlugin, ok := module.(config.GroupedApiPluginInstance)
-		if !ok {
-			continue
-		}
-		if err := apiPlugin.InitGroups(r); err != nil {
-			return nil, fmt.Errorf("initialising module %s failed: %w", name, err)
+	for name, modules := range cs.plugins {
+		for _, module := range modules {
+			apiPlugin, ok := module.(config.GroupedApiPluginInstance)
+			if !ok {
+				continue
+			}
+			if err := apiPlugin.InitGroups(r); err != nil {
+				return nil, fmt.Errorf("initialising module %s failed: %w", name, err)
+			}
 		}
 	}
 
 	r.Use(trailingSlash(r))
 	r.Use(cors())
 
-	for name, module := range cs.plugins {
-		apiPlugin, ok := module.(config.ApiPluginInstance)
-		if !ok {
-			continue
+	for name, modules := range cs.plugins {
+		for _, module := range modules {
+			apiPlugin, ok := module.(config.ApiPluginInstance)
+			if !ok {
+				continue
+			}
+			if err := apiPlugin.RegisterRoutes(r); err != nil {
+				return nil, fmt.Errorf("registering routes failed for module %s: %w", name, err)
+			}
 		}
-		if err := apiPlugin.RegisterRoutes(r); err != nil {
-			return nil, fmt.Errorf("registering routes failed for module %s: %w", name, err)
-		}
+	}
+
+	routes := r.Routes()
+	for _, route := range routes {
+		log.Printf("Registered route: %-6s %s", route.Method, route.Path)
 	}
 
 	return r, nil
