@@ -10,6 +10,8 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/sergi/go-diff/diffmatchpatch"
+
 	"willnorris.com/go/microformats"
 )
 
@@ -41,8 +43,9 @@ func deepEqual(a, b interface{}, t *testing.T, debugMf *microformats.Data, fileN
 		// convert got and want to JSON for easier comparison
 		aJSON, _ := json.MarshalIndent(a, "", "  ")
 		bJSON, _ := json.MarshalIndent(b, "", "  ")
-		debugJSON, _ := json.MarshalIndent(debugMf, "", "  ")
-		t.Errorf("File: %s\n got %v\nwant %v\ngot:%s\nwant:%s\ndebug: %s", fileName, a, b, aJSON, bJSON, debugJSON)
+		dmp := diffmatchpatch.New()
+		diff := dmp.DiffMain(string(aJSON), string(bJSON), false)
+		t.Errorf("File: %s\n got %v\nwant %v\nDIFF:\n%s\n", fileName, a, b, dmp.DiffPrettyText(diff))
 		return false
 	}
 	return true

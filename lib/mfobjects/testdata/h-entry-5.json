@@ -1,25 +1,15 @@
 {
-  "Name": "Receiver Test #1",
-  "Summary": "",
-  "Content": "Test content.",
-  "Published": "2022-11-09T12:54:45Z",
-  "Updated": null,
+  "Content": "The first snow of this winter! Even though its way too cold for my taste, I hope we get some more snow again this year. And maybe even white holidays for once.",
+  "Published": "2022-12-09T10:50:00Z",
   "Author": {
-    "Name": "Webmention Rocks!"
+    "Name": "Tim Bachmann"
   },
-  "Category": [],
-  "Url": "",
-  "InReplyTo": {
-    "Name": "",
-    "Published": null,
-    "Author": null,
-    "Url": "https://tiim.ch/blog/2022-07-12-first-go-project-commenting-api",
-    "Publication": "",
-    "Accessed": null,
-    "Content": "",
-    "Summary": ""
-  },
-  "RSVP": "",
-  "LikeOf": null,
-  "RepostOf": null
+  "Category": ["photo", "winter"],
+  "Url": "/mf2/2022/12/ota4mt",
+  "Photos": [
+    {
+      "Url": "https://media.tiim.ch/47537749-f79a-4603-92a8-42c71d6b96ec.jpg",
+      "Alt": ""
+    }
+  ]
 }

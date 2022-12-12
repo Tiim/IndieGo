@@ -2,6 +2,8 @@ package api
 
 // request_logger.go
 import (
+	"strings"
+
 	"github.com/gin-gonic/gin"
 )
 
@@ -24,8 +26,8 @@ func cors() gin.HandlerFunc {
 func trailingSlash(e *gin.Engine) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		path := c.Request.URL.Path
-		if path != "/" && path[len(path)-1] == '/' {
-			c.Request.URL.Path = path[:len(path)-1]
+		if path != "/" && strings.HasSuffix(path, "/") {
+			c.Request.URL.Path = strings.TrimSuffix(path, "/")
 			e.HandleContext(c)
 			c.Abort()
 		} else {
