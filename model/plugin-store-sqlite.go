@@ -16,6 +16,8 @@ func (p *sqliteStoreModule) IndieGoModule() config.ModuleInfo {
 	return config.ModuleInfo{
 		Name: "store.sqlite",
 		New:  func() config.Module { return new(sqliteStoreModule) },
+		DocString: `Root SQLite store module. Most sqlite store modules require this module to be loaded first. 
+		This module provides the database connection and migrations.`,
 	}
 }
 
