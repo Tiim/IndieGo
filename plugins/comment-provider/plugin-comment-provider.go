@@ -17,6 +17,11 @@ func (p *CommentProviderPlugin) IndieGoModule() config.ModuleInfo {
 	return config.ModuleInfo{
 		Name: "comment-provider",
 		New:  func() config.Module { return new(CommentProviderPlugin) },
+		Docs: config.ConfigDocs{
+			DocString: `Comment provider plugin. This plugin serves comments from the /comment endpoint. 
+				The comments are provided by previously loaded plugins that register a comment-provider.provider interface.`,
+			Fields: map[string]string{},
+		},
 	}
 }
 

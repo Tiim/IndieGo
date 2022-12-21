@@ -29,6 +29,19 @@ func (m *MediastoreStorjModule) IndieGoModule() config.ModuleInfo {
 	return config.ModuleInfo{
 		Name: "micropub.media-store.storj",
 		New:  func() config.Module { return new(MediastoreStorjModule) },
+		Docs: config.ConfigDocs{
+			DocString: `Storj media store module. This media store stores media on storj.io.`,
+			Fields: map[string]string{
+				"AccessGrant": "The storj access grant.",
+				"BucketName":  "The name of the storj bucket.",
+				"Prefix":      "Can be a custom prefix or an empty string for no prefix. Setting a prefix allows multiple uses of the same bucket.",
+				"UrlFormat": `The format of the url to the media file: 
+					{name} will be replaced with the name of the file, 
+					{prefix} will be replaced with the prefix, 
+					{bucket} will be replaced with the bucket name.
+					Example: https://{bucket}.example.com/{prefix}/{name}`,
+			},
+		},
 	}
 }
 

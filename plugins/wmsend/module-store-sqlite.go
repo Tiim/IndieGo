@@ -16,6 +16,9 @@ func (m *wmSendSQLiteStoreModule) IndieGoModule() config.ModuleInfo {
 	return config.ModuleInfo{
 		Name: "webmention.send.store.sqlite",
 		New:  func() config.Module { return new(wmSendSQLiteStoreModule) },
+		Docs: config.ConfigDocs{
+			DocString: `SQLite store module for webmention send. Must be loaded after the store.sqlite module.`,
+		},
 	}
 }
 

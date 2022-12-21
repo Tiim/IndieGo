@@ -19,6 +19,12 @@ func (m *commentSQLiteStoreModule) IndieGoModule() config.ModuleInfo {
 	return config.ModuleInfo{
 		Name: "comments.store.sqlite",
 		New:  func() config.Module { return new(commentSQLiteStoreModule) },
+		Docs: config.ConfigDocs{
+			DocString: `SQLite store module. This module is responsible for storing comments in a SQLite database.`,
+			Fields: map[string]string{
+				"PageMapper": "The page mapper module to use for mapping comment ids to urls.",
+			},
+		},
 	}
 }
 

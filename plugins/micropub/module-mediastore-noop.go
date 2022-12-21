@@ -14,6 +14,9 @@ func (p *MediastoreNoopModule) IndieGoModule() config.ModuleInfo {
 	return config.ModuleInfo{
 		Name: "micropub.media-store.noop",
 		New:  func() config.Module { return new(MediastoreNoopModule) },
+		Docs: config.ConfigDocs{
+			DocString: `Noop media store module. This media store discards all media. Useful for testing or when you don't want any media to be stored.`,
+		},
 	}
 }
 

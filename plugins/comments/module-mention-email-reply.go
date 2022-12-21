@@ -31,6 +31,18 @@ func (p *commentNotifyReplyModule) IndieGoModule() config.ModuleInfo {
 	return config.ModuleInfo{
 		Name: "event.mention.email-reply",
 		New:  func() config.Module { return new(commentNotifyReplyModule) },
+		Docs: config.ConfigDocs{
+			DocString: `Email reply notification module. This module sends an email to a commenter when a new reply to their comment chain is submitted.`,
+			Fields: map[string]string{
+				"EmailFrom":    "The email address to use as the sender.",
+				"EmailSubject": "The subject to use for the email.",
+				"Username":     "The username for the smtp server.",
+				"Password":     "The password for the smtp server.",
+				"SmtpHost":     "The hostname of the smtp server.",
+				"SmtpPort":     "The port of the smtp server.",
+				"BaseUrl":      "The base url of the website. Used to generate the link to the comment.",
+			},
+		},
 	}
 }
 

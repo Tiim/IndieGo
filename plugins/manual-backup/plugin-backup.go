@@ -17,6 +17,9 @@ func (p *ManualBackupPlugin) IndieGoModule() config.ModuleInfo {
 	return config.ModuleInfo{
 		Name: "manual-backup",
 		New:  func() config.Module { return new(ManualBackupPlugin) },
+		Docs: config.ConfigDocs{
+			DocString: `Manual backup module. This module enables the manual backup feature section in the admin dashboard. Must be loaded after the admin module and after a store module that implements model.BackupStore.`,
+		},
 	}
 }
 

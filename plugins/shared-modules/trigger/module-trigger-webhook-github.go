@@ -15,6 +15,13 @@ func (p *GithubWebhookPlugin) IndieGoModule() config.ModuleInfo {
 	return config.ModuleInfo{
 		Name: "trigger.webhook.github",
 		New:  func() config.Module { return new(GithubWebhookPlugin) },
+		Docs: config.ConfigDocs{
+			DocString: `Github webhook trigger. This trigger is used to receive webhooks from Github.`,
+			Fields: map[string]string{
+				"Name":          "The name of the trigger. This is used to for the endpoint url. Resulting endpoint: webhooks/{name}",
+				"WebhookSecret": "The secret used to verify the webhook, as specified on github. Webhook that don't have a valid signature will be ignored.",
+			},
+		},
 	}
 }
 

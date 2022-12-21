@@ -22,6 +22,18 @@ func (m *emailNotifyModule) IndieGoModule() config.ModuleInfo {
 	return config.ModuleInfo{
 		Name: "event.mention.email-notify",
 		New:  func() config.Module { return new(emailNotifyModule) },
+		Docs: config.ConfigDocs{
+			DocString: `Email notification module. This module sends an email when a new comment is submitted.`,
+			Fields: map[string]string{
+				"From":     "Email address to send from.",
+				"To":       "Email address to send to.",
+				"Subject":  "Email subject.",
+				"Username": "Username for SMTP server.",
+				"Password": "Password for SMTP server.",
+				"SmtpHost": "SMTP host.",
+				"SmtpPort": "SMTP port.",
+			},
+		},
 	}
 }
 

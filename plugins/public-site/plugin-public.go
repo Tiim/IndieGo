@@ -14,6 +14,12 @@ func (p *publicSitePlugin) IndieGoModule() config.ModuleInfo {
 	return config.ModuleInfo{
 		Name: "public-site",
 		New:  func() config.Module { return new(publicSitePlugin) },
+		Docs: config.ConfigDocs{
+			DocString: `Public site module. This module enables the public info site.`,
+			Fields: map[string]string{
+				"DebugApertureId": "Used for debugging only. Sets the rel=microsub link to the url of the aperture.p3k.io endpoint with the given id.",
+			},
+		},
 	}
 }
 

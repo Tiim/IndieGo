@@ -17,6 +17,14 @@ func (m *HandlerModule) IndieGoModule() config.ModuleInfo {
 	return config.ModuleInfo{
 		Name: "event.mention.handler-list",
 		New:  func() config.Module { return new(HandlerModule) },
+		Docs: config.ConfigDocs{
+			DocString: `Handler list module. 
+				This module is a list of handlers that are called when a new comment is submitted. 
+				Use this module if you want to run multiple handlers.`,
+			Fields: map[string]string{
+				"Handlers": "List of handlers.",
+			},
+		},
 	}
 }
 

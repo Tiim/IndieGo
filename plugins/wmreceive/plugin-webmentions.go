@@ -24,6 +24,13 @@ func (p *wmReceivePlugin) IndieGoModule() config.ModuleInfo {
 	return config.ModuleInfo{
 		Name: "webmention.receive",
 		New:  func() config.Module { return new(wmReceivePlugin) },
+		Docs: config.ConfigDocs{
+			DocString: `Webmention receive plugin. This plugin receives webmentions and performs all neccesairy checks according to the specification.`,
+			Fields: map[string]string{
+				"TargetDomains": "An allow list of domains for the target of a webmention.",
+				"EventHandler":  "The event handler to use for notifying about new webmentions.",
+			},
+		},
 	}
 }
 

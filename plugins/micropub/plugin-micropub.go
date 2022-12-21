@@ -20,6 +20,13 @@ func (p *micropubPlugin) IndieGoModule() config.ModuleInfo {
 	return config.ModuleInfo{
 		Name: "micropub",
 		New:  func() config.Module { return new(micropubPlugin) },
+		Docs: config.ConfigDocs{
+			DocString: `Micropub module. This module enables the micropub endpoint.`,
+			Fields: map[string]string{
+				"StoreData":      "The store module to use for storing micropub data.",
+				"MediaStoreData": "The media store module to use for storing media.",
+			},
+		},
 	}
 }
 

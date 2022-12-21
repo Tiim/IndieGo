@@ -85,7 +85,7 @@ func generateModuleDocs(module Module) (string, string) {
 	namespace := info.Name
 
 	docs := "<p>"
-	docs += info.DocString
+	docs += info.Docs.DocString
 	docs += "</p>\n"
 
 	exampleJson := "<pre><code>"
@@ -128,6 +128,7 @@ func generateModuleDocs(module Module) (string, string) {
 			}
 			exampleJson += fmt.Sprintf("\t\t\"%s\": %s%s%s,\n", name, prefixJson, jsond, suffixJson)
 		}
+		fieldDesc += fmt.Sprintf("<p>%s</p>", info.Docs.Fields[field.Name])
 		fieldDesc += "</li>\n"
 	}
 	fieldDesc += "</ul>\n"

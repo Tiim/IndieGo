@@ -27,6 +27,16 @@ func (p *indieAuthPlugin) IndieGoModule() config.ModuleInfo {
 	return config.ModuleInfo{
 		Name: "indieauth",
 		New:  func() config.Module { return new(indieAuthPlugin) },
+		Docs: config.ConfigDocs{
+			DocString: `IndieAuth module. This module enables the IndieAuth authentication.`,
+			Fields: map[string]string{
+				"BaseUrl":             "The url indiego is running on. For example https://indiego.example.com",
+				"ProfileCanonicalUrl": "The canonical url of the profile page. For example https://example.com",
+				"Password":            "The password to authenticate",
+				"JWTSecret":           "A random string to sign the jwt tokens. Should be at least 32 characters long",
+				"StoreData":           "The store module to use",
+			},
+		},
 	}
 }
 

@@ -10,8 +10,6 @@ import (
 )
 
 type commentsPlugin struct {
-	// The store module to use for storing comments.
-	// This module must implement the comments.commentStore interface.
 	Store config.ModuleRaw `json:"store" config:"comments.store"`
 	// The event handler, which will be notified about new comments and
 	// deleted comments.
@@ -26,6 +24,13 @@ func (p *commentsPlugin) IndieGoModule() config.ModuleInfo {
 	return config.ModuleInfo{
 		Name: "comments",
 		New:  func() config.Module { return new(commentsPlugin) },
+		Docs: config.ConfigDocs{
+			DocString: `Comments plugin. This plugin enables the native comment system.`,
+			Fields: map[string]string{
+				"Store":        "The store module to use for storing comments.",
+				"EventHandler": "The event handler to use for notifying about new comments.",
+			},
+		},
 	}
 }
 

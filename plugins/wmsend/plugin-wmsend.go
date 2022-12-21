@@ -28,6 +28,15 @@ func (p *wmSendPlugin) IndieGoModule() config.ModuleInfo {
 	return config.ModuleInfo{
 		Name: "webmention.send",
 		New:  func() config.Module { return new(wmSendPlugin) },
+		Docs: config.ConfigDocs{
+			DocString: `Webmention send module. This module periodically polls an RSS feed for new entries and sends webmentions to all URLs found in new entries.`,
+			Fields: map[string]string{
+				"FeedUrl":         "The URL of the RSS feed. This feed gets periodically polled for new entries. When a new entry is found, webmentions get sent to all URLs found in the entry.",
+				"IntervalMinutes": "The interval in minutes at which the RSS feed gets polled for new entries. Default: 60",
+				"StoreData":       "The store module to use for storing the last sent entry.",
+				"Trigger":         "The trigger module to use for triggering the sending of webmentions. If this is not set, the sending is only done periodically.",
+			},
+		},
 	}
 }
 

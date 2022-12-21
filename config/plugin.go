@@ -12,9 +12,9 @@ type ModuleRaw struct {
 }
 
 type ModuleInfo struct {
-	Name      string
-	New       func() Module
-	DocString string
+	Name string
+	New  func() Module
+	Docs ConfigDocs
 }
 
 type Module interface {

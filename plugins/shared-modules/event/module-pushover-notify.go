@@ -17,6 +17,13 @@ func (m *pushoverNotifyModule) IndieGoModule() config.ModuleInfo {
 	return config.ModuleInfo{
 		Name: "event.mention.pushover-notify",
 		New:  func() config.Module { return new(pushoverNotifyModule) },
+		Docs: config.ConfigDocs{
+			DocString: `Pushover notification module. This module sends a Pushover notification when a new comment is submitted.`,
+			Fields: map[string]string{
+				"ApiToken": "Pushover API token. You can find it on the settings page of the app on your pushover account.",
+				"UserKey":  "Pushover user key. The personal key for the pushover account you want to send the notification to.",
+			},
+		},
 	}
 }
 

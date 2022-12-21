@@ -19,6 +19,9 @@ func RegisterModule(a Module) {
 	if _, ok := modules[info.Name]; ok {
 		panic(fmt.Sprintf("plugin %s already registered", info.Name))
 	}
+	if err := validateConfigDocs(a, info.Docs); err != nil {
+		panic(err)
+	}
 	modules[info.Name] = a
 }
 

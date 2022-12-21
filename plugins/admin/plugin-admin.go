@@ -16,6 +16,12 @@ func (p *adminModule) IndieGoModule() config.ModuleInfo {
 	return config.ModuleInfo{
 		Name: "admin",
 		New:  func() config.Module { return new(adminModule) },
+		Docs: config.ConfigDocs{
+			DocString: `Admin module. This module enables the admin dashboard.`,
+			Fields: map[string]string{
+				"Password": "Password for the admin dashboard.",
+			},
+		},
 	}
 }
 
