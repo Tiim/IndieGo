@@ -8,12 +8,15 @@ import (
 	"log"
 	"os"
 
+	"github.com/go-co-op/gocron"
 	"github.com/pressly/goose/v3"
 	_ "modernc.org/sqlite"
 )
 
 type SQLiteStore struct {
-	db *sql.DB
+	db        *sql.DB
+	scheduler *gocron.Scheduler
+	logger    *log.Logger
 }
 
 //go:embed sqlite-migrations/*.sql
@@ -21,6 +24,7 @@ var migrationsFs embed.FS
 
 func (c *SQLiteStore) runMigrations() error {
 	goose.SetBaseFS(migrationsFs)
+	goose.SetLogger(c.logger)
 	err := goose.SetDialect("sqlite3")
 	if err != nil {
 		return fmt.Errorf("error setting goose dialect for migration: %w", err)
@@ -80,7 +84,7 @@ func (ss *SQLiteStore) GetDBConnection() *sql.DB {
 	return ss.db
 }
 
-func NewSQLiteStore() (*SQLiteStore, error) {
+func NewSQLiteStore(scheduler *gocron.Scheduler, logger *log.Logger) (*SQLiteStore, error) {
 	path := "./db/comments.sqlite"
 	pragma := "_pragma=busy_timeout(10000)&_pragma=journal_mode(WAL)&_pragma=foreign_keys(1)&_pragma=synchronous(NORMAL)&_pragma=journal_size_limit(100000000)"
 	db, err := sql.Open("sqlite", fmt.Sprintf("%s?%s", path, pragma))
@@ -88,11 +92,7 @@ func NewSQLiteStore() (*SQLiteStore, error) {
 		return nil, fmt.Errorf("error opening comments database: %w", err)
 	}
 
-	store := &SQLiteStore{db}
-
-	if err := store.runMigrations(); err != nil {
-		return nil, fmt.Errorf("error running migrations: %w", err)
-	}
+	store := &SQLiteStore{db, scheduler, logger}
 
 	return store, nil
 }

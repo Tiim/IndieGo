@@ -1,0 +1,28 @@
+{
+  "Name": "",
+  "Summary": "Liked\nIndieWebifying my Website Part 1 - Microformats and\nWebmentions\nPost details\nThis site now supports sending and receiving webmentions and\nsurfacing structured data using microformats2.\nhttps://i.imgur.com/FpgIBxI.jpg",
+  "Content": "",
+  "Published": "2022-11-13T07:35:00Z",
+  "Updated": null,
+  "Author": {
+    "Name": "Jamie Tanna"
+  },
+  "Category": [],
+  "Url": "https://webmention.rocks/mf2/2022/11/rm8as/",
+  "Photos": [],
+  "InReplyTo": null,
+  "RSVP": "",
+  "LikeOf": {
+    "Name": "IndieWebifying my Website Part 1 - Microformats and\nWebmentions",
+    "Published": null,
+    "Author": null,
+    "Url": "https://tiim.ch/blog/2022-12-indiewebifying-my-website-part-1",
+    "Publication": "",
+    "Accessed": null,
+    "Content": "",
+    "Summary": "This site now supports sending and receiving webmentions and\nsurfacing structured data using microformats2."
+  },
+  "RepostOf": null,
+  "Photos": [],
+  "Syndication": []
+}

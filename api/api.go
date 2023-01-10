@@ -1,58 +1,68 @@
 package api
 
 import (
-	"embed"
 	"fmt"
-	"io/fs"
 	"log"
 	"net/http"
+	"os"
+	"tiim/go-comment-api/config"
 
 	"github.com/gin-gonic/gin"
 )
 
-//go:embed assets/*
-var assets embed.FS
+var logger = log.New(os.Stdout, "[api] ", log.Flags())
 
 type apiServer struct {
-	modules []ApiModule
+	plugins map[string][]config.ModuleInstance
 }
 
-func NewCommentServer(modules []ApiModule) *apiServer {
-	return &apiServer{modules: modules}
+func NewApiServer(modules map[string][]config.ModuleInstance) *apiServer {
+	return &apiServer{plugins: modules}
 }
 
-func (cs *apiServer) Start() error {
+func (cs *apiServer) Start() (*gin.Engine, error) {
+	gin.SetMode(gin.ReleaseMode)
 	r := gin.New()
 	r.RemoveExtraSlash = true
 	r.RedirectTrailingSlash = false
-
-	assetsFolder, err := fs.Sub(assets, "assets")
-	if err != nil {
-		return fmt.Errorf("unable to get assets folder: %w", err)
-	}
-	r.StaticFS("/assets", http.FS(assetsFolder))
 
 	r.Use(ErrorMiddleware())
 	r.Use(gin.Logger())
 	r.Use(gin.Recovery())
 
-	for _, module := range cs.modules {
-		if err := module.Init(r); err != nil {
-			return fmt.Errorf("initialising module %s failed: %w", module.Name(), err)
+	for name, modules := range cs.plugins {
+		for _, module := range modules {
+			apiPlugin, ok := module.(config.GroupedApiPluginInstance)
+			if !ok {
+				continue
+			}
+			if err := apiPlugin.InitGroups(r); err != nil {
+				return nil, fmt.Errorf("initialising module %s failed: %w", name, err)
+			}
 		}
 	}
 
 	r.Use(trailingSlash(r))
 	r.Use(cors())
 
-	for _, module := range cs.modules {
-		if err := module.RegisterRoutes(r); err != nil {
-			return fmt.Errorf("registering routes failed for module %s: %w", module.Name(), err)
+	for name, modules := range cs.plugins {
+		for _, module := range modules {
+			apiPlugin, ok := module.(config.ApiPluginInstance)
+			if !ok {
+				continue
+			}
+			if err := apiPlugin.RegisterRoutes(r); err != nil {
+				return nil, fmt.Errorf("registering routes failed for module %s: %w", name, err)
+			}
 		}
 	}
 
-	r.Run(":8080")
-	return nil
+	routes := r.Routes()
+	for _, route := range routes {
+		logger.Printf("Registered route: %-6s %s", route.Method, route.Path)
+	}
+
+	return r, nil
 }
 
 func ErrorMiddleware() gin.HandlerFunc {
@@ -60,7 +70,7 @@ func ErrorMiddleware() gin.HandlerFunc {
 		c.Next()
 
 		if len(c.Errors) > 0 {
-			log.Printf("Error: %v", c.Errors)
+			logger.Printf("Error: %v", c.Errors)
 			status := c.Writer.Status()
 			if status == 0 || status < 400 {
 				status = http.StatusInternalServerError

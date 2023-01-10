@@ -27,7 +27,7 @@ ADD . /code/
 
 # https://awstip.com/containerize-go-sqlite-with-docker-6d7fbecd14f0
 RUN --mount=type=cache,target=/root/.cache/go-build \
-    CGO_ENABLED=0 go build -o comment-api -a .
+    CGO_ENABLED=0 go build -o indiego -a .
 
 RUN mkdir -p /code/db
 
@@ -41,9 +41,10 @@ COPY --from=builder /etc/passwd /etc/passwd
 COPY --from=builder /etc/group /etc/group
 
 WORKDIR /app
-COPY --from=builder /code/comment-api /app/comment-api
-COPY .env.prod .env
+COPY --from=builder /code/indiego /app/indiego
+
+COPY config.json /app/config/config.json
 
 EXPOSE 8080
 
-CMD ["/app/comment-api"]
+CMD ["/app/indiego", "-config", "/app/config/config.json"]

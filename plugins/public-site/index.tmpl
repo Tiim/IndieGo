@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>IndieGo</title>
+    <link rel="stylesheet" href="/assets/style.css"/>
+    <link rel="icon" type="image/png" href="/assets/favicon.png" />
+    <link rel="indieauth-metadata" href="/indieauth/metadata" />
+    <link rel="authorization_endpoint" href="/indieauth/authorize" />
+    <link rel="token_endpoint" href="/indieauth/token" />
+    <link rel="micropub" href="/micropub"/>
+    {{if .Debug.ApertureId}}
+      <link rel="microsub" href="https://aperture.p3k.io/microsub/{{.Debug.ApertureId}}">
+    {{end}}
+  </head>
+  <body>
+    <h1>IndieGo</h1>
+    <p>This is the root of the IndieGo server. There is nothing much to see here.</p>
+    <p>Learn more about this project on <a href="https://github.com/Tiim/IndieGo">Tiim/IndieGo</a>.</p>
+    <h2>Admin</h2>
+    <p>
+      <a href="/admin">Admin</a>
+    </p>
+  </body>
+</html>

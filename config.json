@@ -1,0 +1,147 @@
+{
+  "plugins": [
+    {
+      "name": "admin",
+      "args": {
+        "password": "${ADMIN_PASSWORD}"
+      }
+    },
+    {
+      "name": "public-site"
+    },
+    {
+      "name": "store.sqlite"
+    },
+    {
+      "name": "manual-backup"
+    },
+    {
+      "name": "indieauth",
+      "args": {
+        "base_url": "${BASE_URL}",
+        "profile_canonical_url": "${BASE_URL}",
+        "password": "${ADMIN_PASSWORD}",
+        "jwt_secret": "${JWT_SECRET}",
+        "store": {
+          "name": "indieauth.store.sqlite"
+        }
+      }
+    },
+    {
+      "name": "comments",
+      "args": {
+        "store": {
+          "name": "comments.store.sqlite",
+          "args": {
+            "page_mapper": {
+              "name": "comments.page-mapper.format",
+              "args": {
+                "format": "${BASE_URL}/{page}#{id}"
+              }
+            }
+          }
+        },
+        "event_handler": {
+          "name": "event.mention.handler-list",
+          "args": {
+            "handlers": [
+              {
+                "name": "event.mention.pushover-notify",
+                "args": {
+                  "api_token": "${PUSHOVER_API_TOKEN}",
+                  "user_key": "${PUSHOVER_USER_KEY}}"
+                }
+              },
+              {
+                "name": "event.mention.email-notify",
+                "args": {
+                  "email_from": "${EMAIL_NOTIFY_FROM}",
+                  "email_to": "${EMAIL_NOTIFY_TO}",
+                  "email_subject": "[${BASE_URL}] New comment",
+                  "username": "${EMAIL_USERNAME}",
+                  "password": "${EMAIL_PASSWORD}",
+                  "smtp_host": "${EMAIL_SMTP_HOST}",
+                  "smtp_port": "${EMAIL_SMTP_PORT}"
+                }
+              },
+              {
+                "name": "event.mention.email-reply",
+                "args": {
+                  "email_from": "${EMAIL_REPLY_FROM}",
+                  "email_subject": "New Reply to your Comment on [${BASE_URL}]",
+                  "username": "${EMAIL_USERNAME}",
+                  "password": "${EMAIL_PASSWORD}",
+                  "smtp_host": "${EMAIL_SMTP_HOST}",
+                  "smtp_port": "${EMAIL_SMTP_PORT}",
+                  "base_url": "${BASE_URL}"
+                }
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "name": "webmention.send",
+      "args": {
+        "feed_url": "${FEED_URL}",
+        "interval_minutes": 60,
+        "store": {
+          "name": "webmention.send.store.sqlite"
+        }
+      }
+    },
+    {
+      "name": "webmention.receive",
+      "args": {
+        "target_domains": [
+          "localhost",
+          "${DOMAIN}"
+        ],
+        "event_handler": {
+          "name": "event.mention.handler-list",
+          "args": {
+            "handlers": [
+              {
+                "name": "event.mention.pushover-notify",
+                "args": {
+                  "api_token": "${PUSHOVER_API_TOKEN}",
+                  "user_key": "${PUSHOVER_USER_KEY}}"
+                }
+              },
+              {
+                "name": "event.mention.email-notify",
+                "args": {
+                  "email_from": "${EMAIL_NOTIFY_FROM}",
+                  "email_to": "${EMAIL_NOTIFY_TO}",
+                  "email_subject": "[${BASE_URL}] New comment",
+                  "username": "${EMAIL_USERNAME}",
+                  "password": "${EMAIL_PASSWORD}",
+                  "smtp_host": "${EMAIL_SMTP_HOST}",
+                  "smtp_port": "${EMAIL_SMTP_PORT}"
+                }
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "name": "micropub",
+      "args": {
+        "store": {
+          "name": "micropub.store.github",
+          "args": {}
+        },
+        "media_store": {
+          "name": "micropub.media-store.noop",
+          "args": {
+          }
+        }
+      }
+    },
+    {
+      "name": "comment-provider"
+    }
+  ]
+}

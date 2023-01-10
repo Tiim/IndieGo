@@ -16,9 +16,13 @@ You can try out this project on my [Blogpost about this project](https://tiim.ch
 
 ## Installation
 
-### Using docker compose
+### Using docker
 
 The easiest way to run the go-comment-api is via docker compose. There is a [sample docker-compose.yml](/docker-compose.yml) that I use to host the comments for my website. To see how I deploy it on my webserver see [deploy.sh](/deploy.sh).
+
+
+- TODO: document how to use the [default config](config.json) with env variables.
+- TODO: document how to use a custom config file.
 
 ### Compile it to a static binary
 You need a recent go version installed. Run the following command to compile:
@@ -28,10 +32,12 @@ go mod download
 CGO_ENABLED=0 go build -o comment-api -a .
 ```
 
-This binary contains all needed data and templates. Run it with 
+This binary is self contained and only needs a config file to run. Run it with 
 ```sh
-./comment-api
+./comment-api -config config.json
 ```
+
+For an example config file see [config.json](config.json).
 
 ## Development
 
@@ -61,7 +67,7 @@ npx ngrok http 8080
 For testing IndieAuth:
 
 ```
-INDIE_CANONICAL_URL=https://<ngok-url> go run .
+NGROK_URL=https://<ngok-url> go run . -config config-local.json
 ```
 
 #### Testing indieauth websub / indie reader with aperture
@@ -84,11 +90,4 @@ INDIE_CANONICAL_URL=https://<ngok-url> go run .
 cd test-data/
 python3 -m http.server
 curl -i -d source=http://localhost:8000/html/webmention-rocks.html -d target=https://tiim.ch/blog/2022-07-12-first-go-project-commenting-api http://localhost:8080/wm/webmentions
-```
-
-#### Testing sending webmentions
-
-```sh
-cd test-data/
-python3 -m http.server
 ```
