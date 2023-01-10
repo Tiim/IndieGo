@@ -2,6 +2,7 @@ package indieauth
 
 import (
 	"fmt"
+	"log"
 	"strings"
 	"tiim/go-comment-api/config"
 )
@@ -40,7 +41,7 @@ func (p *indieAuthPlugin) IndieGoModule() config.ModuleInfo {
 	}
 }
 
-func (p *indieAuthPlugin) Load(config config.GlobalConfig, _ interface{}) (config.ModuleInstance, error) {
+func (p *indieAuthPlugin) Load(config config.GlobalConfig, _ interface{}, logger *log.Logger) (config.ModuleInstance, error) {
 
 	// remove trailing slash of baseUrl
 	p.BaseUrl = strings.TrimSuffix(p.BaseUrl, "/")
@@ -61,5 +62,6 @@ func (p *indieAuthPlugin) Load(config config.GlobalConfig, _ interface{}) (confi
 		p.JWTSecret,
 		store,
 		*config.HttpClient,
+		logger,
 	), nil
 }

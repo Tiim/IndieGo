@@ -34,7 +34,7 @@ func (p *commentsPlugin) IndieGoModule() config.ModuleInfo {
 	}
 }
 
-func (p *commentsPlugin) Load(config config.GlobalConfig, _ interface{}) (config.ModuleInstance, error) {
+func (p *commentsPlugin) Load(config config.GlobalConfig, _ interface{}, logger *log.Logger) (config.ModuleInstance, error) {
 	storeInt, err := config.Config.LoadModule(p, "Store", nil)
 	if err != nil {
 		return nil, err
@@ -50,7 +50,7 @@ func (p *commentsPlugin) Load(config config.GlobalConfig, _ interface{}) (config
 		if !ok {
 			return nil, fmt.Errorf("admin is not a of type admin.AdminModule: %T", adminInt)
 		}
-		admin.RegisterSection(newAdminCommentSection(store))
+		admin.RegisterSection(newAdminCommentSection(store, logger))
 	} else {
 		log.Printf("comments plugin: admin plugin not loaded, not registering admin section")
 	}
@@ -68,5 +68,5 @@ func (p *commentsPlugin) Load(config config.GlobalConfig, _ interface{}) (config
 	var commentProvider commentprovider.CommentProvider = store
 	config.Config.AddInterface("comment-provider.provider", commentProvider)
 
-	return NewCommentModule(store), nil
+	return NewCommentModule(store, logger), nil
 }

@@ -2,6 +2,7 @@ package wmrecv
 
 import (
 	"fmt"
+	"log"
 	"net/http"
 	"strings"
 	"tiim/go-comment-api/config"
@@ -14,10 +15,11 @@ type webmentionsModule struct {
 	store     webmentionsStore
 	worker    *mentionsQueueWorker
 	scheduler *gocron.Scheduler
+	logger    *log.Logger
 }
 
-func newApi(store webmentionsStore, worker *mentionsQueueWorker, scheduler *gocron.Scheduler) *webmentionsModule {
-	im := webmentionsModule{store: store, worker: worker, scheduler: scheduler}
+func newApi(store webmentionsStore, worker *mentionsQueueWorker, scheduler *gocron.Scheduler, logger *log.Logger) *webmentionsModule {
+	im := webmentionsModule{store: store, worker: worker, scheduler: scheduler, logger: logger}
 	return &im
 }
 

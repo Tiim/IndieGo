@@ -18,10 +18,11 @@ type webhookModule struct {
 	name      string
 	callback  []Callback
 	validator WebhookValidator
+	logger    *log.Logger
 }
 
-func newWebhookModule(name string) *webhookModule {
-	return &webhookModule{name: name, validator: DefaultWebhookValidator}
+func newWebhookModule(name string, logger *log.Logger) *webhookModule {
+	return &webhookModule{name: name, validator: DefaultWebhookValidator, logger: logger}
 }
 
 func (w *webhookModule) AddCallback(callback Callback) {
@@ -43,7 +44,7 @@ func (w *webhookModule) Init(config.GlobalConfig) error {
 func (w *webhookModule) RegisterRoutes(r *gin.Engine) error {
 	r.POST("/webhook/"+w.name, func(c *gin.Context) {
 		if err := w.validator(c); err != nil {
-			log.Printf("Webhook %s: invalid request: %v", w.name, err)
+			w.logger.Printf("Webhook %s: invalid request: %v", w.name, err)
 			c.AbortWithStatus(http.StatusUnauthorized)
 		}
 
@@ -62,16 +63,16 @@ type WebhookValidator func(*gin.Context) error
 
 var DefaultWebhookValidator WebhookValidator = func(c *gin.Context) error { return nil }
 
-func newGithubValidator(key string) WebhookValidator {
+func newGithubValidator(key string, logger *log.Logger) WebhookValidator {
 	return func(c *gin.Context) error {
-		if !isValidSignature(c.Request, key) {
+		if !isValidSignature(c.Request, key, logger) {
 			return errors.New("invalid signature")
 		}
 		return nil
 	}
 }
 
-func isValidSignature(r *http.Request, key string) bool {
+func isValidSignature(r *http.Request, key string, logger *log.Logger) bool {
 	// Assuming a non-empty header
 	gotHash := strings.SplitN(r.Header.Get("X-Hub-Signature"), "=", 2)
 	if gotHash[0] != "sha1" {
@@ -81,13 +82,13 @@ func isValidSignature(r *http.Request, key string) bool {
 
 	b, err := ioutil.ReadAll(r.Body)
 	if err != nil {
-		log.Printf("Cannot read the request body: %s\n", err)
+		logger.Printf("Cannot read the request body: %s\n", err)
 		return false
 	}
 
 	hash := hmac.New(sha1.New, []byte(key))
 	if _, err := hash.Write(b); err != nil {
-		log.Printf("Cannot compute the HMAC for request: %s\n", err)
+		logger.Printf("Cannot compute the HMAC for request: %s\n", err)
 		return false
 	}
 

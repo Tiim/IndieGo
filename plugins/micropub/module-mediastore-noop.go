@@ -1,6 +1,7 @@
 package micropub
 
 import (
+	"log"
 	"tiim/go-comment-api/config"
 )
 
@@ -20,6 +21,6 @@ func (p *MediastoreNoopModule) IndieGoModule() config.ModuleInfo {
 	}
 }
 
-func (p *MediastoreNoopModule) Load(config config.GlobalConfig, args interface{}) (config.ModuleInstance, error) {
-	return nopMediaStore{}, nil
+func (p *MediastoreNoopModule) Load(config config.GlobalConfig, args interface{}, logger *log.Logger) (config.ModuleInstance, error) {
+	return nopMediaStore{logger: logger}, nil
 }

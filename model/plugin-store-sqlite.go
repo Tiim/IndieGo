@@ -24,8 +24,8 @@ func (p *sqliteStoreModule) IndieGoModule() config.ModuleInfo {
 	}
 }
 
-func (p *sqliteStoreModule) Load(config config.GlobalConfig, _ interface{}) (config.ModuleInstance, error) {
-	return NewSQLiteStore(config.Scheduler)
+func (p *sqliteStoreModule) Load(config config.GlobalConfig, _ interface{}, logger *log.Logger) (config.ModuleInstance, error) {
+	return NewSQLiteStore(config.Scheduler, logger)
 }
 
 func (p *SQLiteStore) Name() string {
@@ -40,7 +40,7 @@ func (p *SQLiteStore) Start() error {
 	p.scheduler.Every(12 * time.Hour).Do(func() {
 		err := p.CleanUp()
 		if err != nil {
-			log.Printf("unable to clean up sqlite database: %v", err)
+			p.logger.Printf("unable to clean up sqlite database: %v", err)
 		}
 	})
 	return nil

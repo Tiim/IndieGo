@@ -1,6 +1,7 @@
 package event
 
 import (
+	"log"
 	"tiim/go-comment-api/config"
 )
 
@@ -27,7 +28,7 @@ func (m *pushoverNotifyModule) IndieGoModule() config.ModuleInfo {
 	}
 }
 
-func (m *pushoverNotifyModule) Load(config config.GlobalConfig, args interface{}) (config.ModuleInstance, error) {
+func (m *pushoverNotifyModule) Load(config config.GlobalConfig, args interface{}, logger *log.Logger) (config.ModuleInstance, error) {
 
-	return newPushoverNotify(m.ApiToken, m.UserKey, *config.HttpClient), nil
+	return newPushoverNotify(m.ApiToken, m.UserKey, *config.HttpClient, logger), nil
 }

@@ -2,6 +2,7 @@ package config
 
 import (
 	"encoding/json"
+	"log"
 
 	"github.com/gin-gonic/gin"
 )
@@ -18,7 +19,7 @@ type ModuleInfo struct {
 }
 
 type Module interface {
-	Load(config GlobalConfig, args interface{}) (ModuleInstance, error)
+	Load(config GlobalConfig, args interface{}, logger *log.Logger) (ModuleInstance, error)
 	IndieGoModule() ModuleInfo
 }
 

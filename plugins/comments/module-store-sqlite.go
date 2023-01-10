@@ -2,6 +2,7 @@ package comments
 
 import (
 	"fmt"
+	"log"
 	"tiim/go-comment-api/config"
 	"tiim/go-comment-api/model"
 )
@@ -28,7 +29,7 @@ func (m *commentSQLiteStoreModule) IndieGoModule() config.ModuleInfo {
 	}
 }
 
-func (m *commentSQLiteStoreModule) Load(config config.GlobalConfig, args interface{}) (config.ModuleInstance, error) {
+func (m *commentSQLiteStoreModule) Load(config config.GlobalConfig, args interface{}, logger *log.Logger) (config.ModuleInstance, error) {
 	storeInt, err := config.GetModule("store.sqlite")
 	if err != nil {
 		return nil, fmt.Errorf("depends on store.sqlite plugin: %v", err)
@@ -45,6 +46,6 @@ func (m *commentSQLiteStoreModule) Load(config config.GlobalConfig, args interfa
 	if !ok {
 		return nil, fmt.Errorf("comments-page-mapper is not a of type comments.CommentPageToUrlMapper: %T", pageMapperInt)
 	}
-	sqliteStore := &commentSQLiteStore{db: store.GetDBConnection(), pageToUrlMapper: pageMapper}
+	sqliteStore := &commentSQLiteStore{db: store.GetDBConnection(), pageToUrlMapper: pageMapper, logger: logger}
 	return sqliteStore, nil
 }

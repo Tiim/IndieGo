@@ -1,6 +1,9 @@
 package publicsite
 
-import "tiim/go-comment-api/config"
+import (
+	"log"
+	"tiim/go-comment-api/config"
+)
 
 type publicSitePlugin struct {
 	DebugApertureId string `json:"debug_aperture_id"`
@@ -23,9 +26,9 @@ func (p *publicSitePlugin) IndieGoModule() config.ModuleInfo {
 	}
 }
 
-func (p *publicSitePlugin) Load(c config.GlobalConfig, _ interface{}) (config.ModuleInstance, error) {
+func (p *publicSitePlugin) Load(c config.GlobalConfig, _ interface{}, logger *log.Logger) (config.ModuleInstance, error) {
 	var plugin config.ApiPluginInstance
-	plugin = newPublicModule(p.DebugApertureId)
+	plugin = newPublicModule(p.DebugApertureId, logger)
 
 	return plugin, nil
 }

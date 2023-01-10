@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
+	"log"
 	"math/rand"
 	"net/http"
 	"net/url"
@@ -29,9 +30,10 @@ type micropubGithubStore struct {
 	urlConverter UrlConverter
 	client       *http.Client
 	rand         *rand.Rand
+	logger       *log.Logger
 }
 
-func newMicropubGithubStore(token, user, repo, folder string, urlConverter UrlConverter, client *http.Client) *micropubGithubStore {
+func newMicropubGithubStore(token, user, repo, folder string, urlConverter UrlConverter, client *http.Client, logger *log.Logger) *micropubGithubStore {
 	return &micropubGithubStore{
 		token:        token,
 		user:         user,
@@ -40,6 +42,7 @@ func newMicropubGithubStore(token, user, repo, folder string, urlConverter UrlCo
 		urlConverter: urlConverter,
 		client:       client,
 		rand:         rand.New(rand.NewSource(time.Now().UnixNano())),
+		logger:       logger,
 	}
 }
 

@@ -2,6 +2,7 @@ package event
 
 import (
 	"fmt"
+	"log"
 	"net/http"
 	"net/url"
 	"tiim/go-comment-api/model"
@@ -11,13 +12,15 @@ type pushoverNotify struct {
 	apiToken string
 	userKey  string
 	client   http.Client
+	logger   *log.Logger
 }
 
-func newPushoverNotify(apiToken, userKey string, client http.Client) *pushoverNotify {
+func newPushoverNotify(apiToken, userKey string, client http.Client, logger *log.Logger) *pushoverNotify {
 	return &pushoverNotify{
 		apiToken: apiToken,
 		userKey:  userKey,
 		client:   client,
+		logger:   logger,
 	}
 }
 

@@ -1,6 +1,7 @@
 package comments
 
 import (
+	"log"
 	"tiim/go-comment-api/config"
 )
 
@@ -25,6 +26,6 @@ func (p *pageMapperModule) IndieGoModule() config.ModuleInfo {
 	}
 }
 
-func (p *pageMapperModule) Load(config config.GlobalConfig, args interface{}) (config.ModuleInstance, error) {
-	return &formatPageMapper{format: p.Format}, nil
+func (p *pageMapperModule) Load(config config.GlobalConfig, args interface{}, logger *log.Logger) (config.ModuleInstance, error) {
+	return &formatPageMapper{format: p.Format, logger: logger}, nil
 }

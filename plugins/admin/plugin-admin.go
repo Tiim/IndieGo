@@ -1,6 +1,7 @@
 package admin
 
 import (
+	"log"
 	"tiim/go-comment-api/config"
 )
 
@@ -25,6 +26,6 @@ func (p *adminModule) IndieGoModule() config.ModuleInfo {
 	}
 }
 
-func (p *adminModule) Load(config config.GlobalConfig, _ interface{}) (config.ModuleInstance, error) {
-	return newAdminModule(p.Password), nil
+func (p *adminModule) Load(config config.GlobalConfig, _ interface{}, logger *log.Logger) (config.ModuleInstance, error) {
+	return newAdminModule(p.Password, logger), nil
 }

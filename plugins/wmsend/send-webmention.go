@@ -19,6 +19,7 @@ type wmSend struct {
 	client    *http.Client
 	scheduler *gocron.Scheduler
 	interval  time.Duration
+	logger    *log.Logger
 }
 
 type FeedItem struct {
@@ -56,14 +57,14 @@ func (w *wmSend) SendNow() {
 	go func() {
 		err := w.doFetchAndSend()
 		if err != nil {
-			log.Printf("unable to send webmentions: %v", err)
+			w.logger.Printf("unable to send webmentions: %v", err)
 		}
 	}()
 }
 
 func (w *wmSend) doFetchAndSend() error {
 
-	log.Println("Sending webmentions...")
+	w.logger.Println("Sending webmentions...")
 
 	feed, err := w.getFeedItems()
 	if err != nil {
@@ -72,13 +73,13 @@ func (w *wmSend) doFetchAndSend() error {
 	for _, item := range feed {
 		updated, err := w.store.IsItemUpdated(item)
 		if err != nil {
-			log.Printf("unable to check if item is updated: %v", err)
+			w.logger.Printf("unable to check if item is updated: %v", err)
 			continue
 		}
 		if updated {
 			err := w.sendWebmentions(item)
 			if err != nil {
-				log.Printf("unable to send webmentions: %v", err)
+				w.logger.Printf("unable to send webmentions: %v", err)
 				continue
 			}
 		}
@@ -146,9 +147,9 @@ func (w *wmSend) sendWebmentions(item FeedItem) error {
 	for link := range linksSet {
 		endpoint, err := wmClient.DiscoverEndpoint(link)
 		if err != nil {
-			log.Printf("unable to discover endpoint for url %s: %v", link, err)
+			w.logger.Printf("unable to discover endpoint for url %s: %v", link, err)
 		} else {
-			log.Printf("sending webmention from %s to %s", item.link, link)
+			w.logger.Printf("sending webmention from %s to %s", item.link, link)
 			wmClient.SendWebmention(endpoint, item.link, link)
 		}
 	}

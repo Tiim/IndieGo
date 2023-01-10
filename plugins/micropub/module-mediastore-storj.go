@@ -1,6 +1,7 @@
 package micropub
 
 import (
+	"log"
 	"strings"
 	"tiim/go-comment-api/config"
 )
@@ -45,7 +46,7 @@ func (m *MediastoreStorjModule) IndieGoModule() config.ModuleInfo {
 	}
 }
 
-func (m *MediastoreStorjModule) Load(config config.GlobalConfig, args interface{}) (config.ModuleInstance, error) {
+func (m *MediastoreStorjModule) Load(config config.GlobalConfig, args interface{}, logger *log.Logger) (config.ModuleInstance, error) {
 	return newStorjMediaStore(
 		m.AccessGrant,
 		m.BucketName,
@@ -57,5 +58,6 @@ func (m *MediastoreStorjModule) Load(config config.GlobalConfig, args interface{
 			url = strings.Replace(url, "{bucket}", bucket, -1)
 			return url
 		},
+		logger,
 	), nil
 }

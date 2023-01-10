@@ -3,6 +3,7 @@ package wmsend
 import (
 	"database/sql"
 	"fmt"
+	"log"
 	"time"
 )
 
@@ -13,11 +14,12 @@ type WmSendStore interface {
 }
 
 type wmSendSqliteStore struct {
-	db *sql.DB
+	db     *sql.DB
+	logger *log.Logger
 }
 
-func newWmSendStore(db *sql.DB) *wmSendSqliteStore {
-	return &wmSendSqliteStore{db: db}
+func newWmSendStore(db *sql.DB, logger *log.Logger) *wmSendSqliteStore {
+	return &wmSendSqliteStore{db, logger}
 }
 
 func (s *wmSendSqliteStore) IsItemUpdated(f FeedItem) (bool, error) {

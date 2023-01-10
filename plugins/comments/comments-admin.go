@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"html/template"
+	"log"
 	"net/http"
 	"time"
 
@@ -15,9 +16,10 @@ import (
 type adminCommentsSection struct {
 	store    commentStore
 	template *template.Template
+	logger   *log.Logger
 }
 
-func newAdminCommentSection(store commentStore) *adminCommentsSection {
+func newAdminCommentSection(store commentStore, logger *log.Logger) *adminCommentsSection {
 	return &adminCommentsSection{
 		store: store,
 	}

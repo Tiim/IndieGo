@@ -21,11 +21,13 @@ var backupTemplate string
 type adminBackupSection struct {
 	store    model.BackupStore
 	template *template.Template
+	logger   *log.Logger
 }
 
-func newAdminBackupSection(store model.BackupStore) *adminBackupSection {
+func newAdminBackupSection(store model.BackupStore, logger *log.Logger) *adminBackupSection {
 	return &adminBackupSection{
-		store: store,
+		store:  store,
+		logger: logger,
 	}
 }
 
@@ -56,13 +58,13 @@ func (ui *adminBackupSection) RegisterRoutes(group *gin.RouterGroup) error {
 func (ui *adminBackupSection) backup(c *gin.Context) {
 	reader, err := ui.store.Backup()
 	if err != nil {
-		log.Printf("Error backing up: %v", err)
+		ui.logger.Printf("Error backing up: %v", err)
 		c.AbortWithError(http.StatusInternalServerError, fmt.Errorf("unable to backup: %w", err))
 		return
 	}
 	bytes, err := ioutil.ReadAll(reader)
 	if err != nil {
-		log.Printf("Error reading backup: %v", err)
+		ui.logger.Printf("Error reading backup: %v", err)
 		c.AbortWithError(http.StatusInternalServerError, fmt.Errorf("unable to read backup: %w", err))
 		return
 	}

@@ -2,6 +2,7 @@ package comments
 
 import (
 	"fmt"
+	"log"
 	"tiim/go-comment-api/config"
 )
 
@@ -46,7 +47,7 @@ func (p *commentNotifyReplyModule) IndieGoModule() config.ModuleInfo {
 	}
 }
 
-func (p *commentNotifyReplyModule) Load(config config.GlobalConfig, args interface{}) (config.ModuleInstance, error) {
+func (p *commentNotifyReplyModule) Load(config config.GlobalConfig, args interface{}, logger *log.Logger) (config.ModuleInstance, error) {
 	commentStore, ok := args.(commentStore)
 	if !ok {
 		return nil, fmt.Errorf("can only be used as a child of a comments.store module")
@@ -61,5 +62,6 @@ func (p *commentNotifyReplyModule) Load(config config.GlobalConfig, args interfa
 		p.SmtpHost,
 		p.SmtpPort,
 		p.BaseUrl,
+		logger,
 	), nil
 }

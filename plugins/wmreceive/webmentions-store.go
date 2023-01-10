@@ -4,7 +4,6 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
-	"log"
 	"tiim/go-comment-api/model"
 	"tiim/go-comment-api/plugins/shared-modules/event"
 	"time"
@@ -110,7 +109,6 @@ func (s *webmentionsSQLiteStore) DeleteWebmention(id string) error {
 	if err != nil {
 		return fmt.Errorf("could not handle delete event: %w", err)
 	} else if !ok {
-		log.Printf("Delete rejected by event handler")
 		return nil
 	}
 
@@ -245,7 +243,6 @@ func (s *webmentionsSQLiteStore) MarkSuccess(w *QueuedWebmention) error {
 		if err != nil {
 			return fmt.Errorf("error handling event: %w", err)
 		} else if !ok {
-			log.Println("Webmention rejected by event handler")
 			return nil
 		}
 	}

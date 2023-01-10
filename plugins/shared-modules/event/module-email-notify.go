@@ -1,6 +1,7 @@
 package event
 
 import (
+	"log"
 	"tiim/go-comment-api/config"
 )
 
@@ -37,7 +38,7 @@ func (m *emailNotifyModule) IndieGoModule() config.ModuleInfo {
 	}
 }
 
-func (m *emailNotifyModule) Load(config config.GlobalConfig, args interface{}) (config.ModuleInstance, error) {
+func (m *emailNotifyModule) Load(config config.GlobalConfig, args interface{}, logger *log.Logger) (config.ModuleInstance, error) {
 	return &emailNotify{
 		from:     m.From,
 		to:       m.To,
@@ -46,5 +47,6 @@ func (m *emailNotifyModule) Load(config config.GlobalConfig, args interface{}) (
 		password: m.Password,
 		smtpHost: m.SmtpHost,
 		smtpPort: m.SmtpPort,
+		logger:   logger,
 	}, nil
 }

@@ -4,6 +4,7 @@ import (
 	"crypto/rand"
 	"database/sql"
 	"encoding/base64"
+	"log"
 	"time"
 )
 
@@ -38,10 +39,11 @@ type sQLiteStore struct {
 	db                 *sql.DB
 	authCodeValidTime  time.Duration
 	authTokenValidTime time.Duration
+	logger             *log.Logger
 }
 
-func NewSQLiteStore(db *sql.DB, authCodeValidTime, authTokenValidTime time.Duration) *sQLiteStore {
-	return &sQLiteStore{db: db, authCodeValidTime: authCodeValidTime, authTokenValidTime: authTokenValidTime}
+func NewSQLiteStore(db *sql.DB, authCodeValidTime, authTokenValidTime time.Duration, logger *log.Logger) *sQLiteStore {
+	return &sQLiteStore{db: db, authCodeValidTime: authCodeValidTime, authTokenValidTime: authTokenValidTime, logger: logger}
 }
 
 func newAuthCode(redirectUri, clientId, scope, state, codeChallenge, codeChallengeMethod, me string) (*AuthCode, error) {

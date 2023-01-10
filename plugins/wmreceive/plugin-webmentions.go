@@ -34,7 +34,7 @@ func (p *wmReceivePlugin) IndieGoModule() config.ModuleInfo {
 	}
 }
 
-func (p *wmReceivePlugin) Load(config config.GlobalConfig, _ interface{}) (config.ModuleInstance, error) {
+func (p *wmReceivePlugin) Load(config config.GlobalConfig, _ interface{}, logger *log.Logger) (config.ModuleInstance, error) {
 
 	if len(p.TargetDomains) == 0 {
 		return nil, fmt.Errorf("at least one target domain must be specified")
@@ -55,7 +55,7 @@ func (p *wmReceivePlugin) Load(config config.GlobalConfig, _ interface{}) (confi
 		newLinkToTargetChecker(),
 		newMicroformatEnricherChecker(),
 	})
-	wmWorker := newMentionsQueueWorker(wmStore, wmChecker)
+	wmWorker := newMentionsQueueWorker(wmStore, wmChecker, logger)
 
 	eventHandlerInt, err := config.Config.LoadModule(p, "EventHandler", nil)
 	if err != nil {
@@ -81,5 +81,5 @@ func (p *wmReceivePlugin) Load(config config.GlobalConfig, _ interface{}) (confi
 	var commentProvider commentprovider.CommentProvider = wmStore
 	config.Config.AddInterface("comment-provider.provider", commentProvider)
 
-	return newApi(wmStore, wmWorker, config.Scheduler), nil
+	return newApi(wmStore, wmWorker, config.Scheduler, logger), nil
 }

@@ -32,16 +32,17 @@ type AdminModule struct {
 	group    *gin.RouterGroup
 	sections []AdminSection
 	template *template.Template
+	logger   *log.Logger
 }
 
-func newAdminModule(password string) *AdminModule {
+func newAdminModule(password string, logger *log.Logger) *AdminModule {
 	if password == "" || len(password) < 8 {
 		log.Fatal("admin password must be at least 8 characters long")
 	}
 
 	template := template.Must(template.New("dashboard").Parse(dashboardTemplate))
 
-	uir := AdminModule{password: password, sections: []AdminSection{}, template: template}
+	uir := AdminModule{password: password, sections: []AdminSection{}, template: template, logger: logger}
 	return &uir
 }
 

@@ -1,6 +1,7 @@
 package comments
 
 import (
+	"log"
 	"strings"
 )
 
@@ -10,6 +11,7 @@ type CommentPageToUrlMapper interface {
 
 type formatPageMapper struct {
 	format string
+	logger *log.Logger
 }
 
 func (f *formatPageMapper) Map(page string, id string) string {

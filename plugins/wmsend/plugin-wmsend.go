@@ -2,6 +2,7 @@ package wmsend
 
 import (
 	"fmt"
+	"log"
 	"tiim/go-comment-api/config"
 	"tiim/go-comment-api/plugins/shared-modules/trigger"
 	"time"
@@ -40,7 +41,7 @@ func (p *wmSendPlugin) IndieGoModule() config.ModuleInfo {
 	}
 }
 
-func (p *wmSendPlugin) Load(config config.GlobalConfig, _ interface{}) (config.ModuleInstance, error) {
+func (p *wmSendPlugin) Load(config config.GlobalConfig, _ interface{}, logger *log.Logger) (config.ModuleInstance, error) {
 
 	if p.IntervalMinutes == 0 {
 		p.IntervalMinutes = 60
@@ -58,6 +59,7 @@ func (p *wmSendPlugin) Load(config config.GlobalConfig, _ interface{}) (config.M
 		client:    config.HttpClient,
 		scheduler: config.Scheduler,
 		interval:  time.Minute * time.Duration(p.IntervalMinutes),
+		logger:    logger,
 	}
 
 	var trig trigger.Trigger

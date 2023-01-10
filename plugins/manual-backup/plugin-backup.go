@@ -2,6 +2,7 @@ package manualbackup
 
 import (
 	"fmt"
+	"log"
 	"tiim/go-comment-api/config"
 	"tiim/go-comment-api/model"
 	"tiim/go-comment-api/plugins/admin"
@@ -23,7 +24,7 @@ func (p *ManualBackupPlugin) IndieGoModule() config.ModuleInfo {
 	}
 }
 
-func (p *ManualBackupPlugin) Load(config config.GlobalConfig, _ interface{}) (config.ModuleInstance, error) {
+func (p *ManualBackupPlugin) Load(config config.GlobalConfig, _ interface{}, logger *log.Logger) (config.ModuleInstance, error) {
 	adminInt, err := config.GetModule("admin")
 	if err != nil {
 		return nil, fmt.Errorf("admin plugin not loaded, can not register admin section: %w", err)
@@ -40,7 +41,7 @@ func (p *ManualBackupPlugin) Load(config config.GlobalConfig, _ interface{}) (co
 	if !ok {
 		return nil, fmt.Errorf("store is not a of type model.BackupStore: %T", storeInt)
 	}
-	admin.RegisterSection(newAdminBackupSection(store))
+	admin.RegisterSection(newAdminBackupSection(store, logger))
 
 	return new(interface{}), nil
 }

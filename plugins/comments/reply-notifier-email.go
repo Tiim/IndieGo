@@ -21,10 +21,11 @@ type replyEmail struct {
 	smtpPort string
 	baseUrl  string
 	template *template.Template
+	logger   *log.Logger
 }
 
 func newReplyEmail(store commentStore, from, subject, username, password,
-	smtpHost, smtpPort, baseUrl string) *replyEmail {
+	smtpHost, smtpPort, baseUrl string, logger *log.Logger) *replyEmail {
 
 	html := `
 	<html>
@@ -59,6 +60,7 @@ func newReplyEmail(store commentStore, from, subject, username, password,
 		smtpPort: smtpPort,
 		baseUrl:  baseUrl,
 		template: template,
+		logger:   logger,
 	}
 }
 
@@ -71,15 +73,15 @@ func (n *replyEmail) doSendEmail(c model.GenericComment) {
 	commentChain, err := n.collectReplyChain(c)
 
 	if err != nil {
-		log.Println("error collecting reply chain for email notifications", err)
+		n.logger.Println("error collecting reply chain for email notifications", err)
 	}
 
 	for _, cChain := range commentChain {
 		if !cChain.Notify || cChain.Email == "" {
-			log.Println("not sending email for comment", cChain.Id, "because notify is false or email is empty")
+			n.logger.Println("not sending email for comment", cChain.Id, "because notify is false or email is empty")
 			continue
 		}
-		log.Printf("sending reply notification email from %s to %s\n", n.from, cChain.Email)
+		n.logger.Printf("sending reply notification email from %s to %s\n", n.from, cChain.Email)
 
 		var buf bytes.Buffer
 		err := n.template.Execute(&buf, struct {
@@ -93,7 +95,7 @@ func (n *replyEmail) doSendEmail(c model.GenericComment) {
 		})
 
 		if err != nil {
-			log.Println("error sending reply notification email:", err)
+			n.logger.Println("error sending reply notification email:", err)
 			continue
 		}
 
@@ -107,9 +109,9 @@ func (n *replyEmail) doSendEmail(c model.GenericComment) {
 		err = e.Send(n.smtpHost+":"+n.smtpPort, smtp.PlainAuth("", n.username, n.password, n.smtpHost))
 
 		if err != nil {
-			log.Println("error sending notification email:", err)
+			n.logger.Println("error sending notification email:", err)
 		} else {
-			log.Println("reply notification email sent")
+			n.logger.Println("reply notification email sent")
 		}
 	}
 }

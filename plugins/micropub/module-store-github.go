@@ -1,6 +1,7 @@
 package micropub
 
 import (
+	"log"
 	"tiim/go-comment-api/config"
 )
 
@@ -35,7 +36,7 @@ func (m *githubStoreModule) IndieGoModule() config.ModuleInfo {
 	}
 }
 
-func (m *githubStoreModule) Load(config config.GlobalConfig, args interface{}) (config.ModuleInstance, error) {
+func (m *githubStoreModule) Load(config config.GlobalConfig, args interface{}, logger *log.Logger) (config.ModuleInstance, error) {
 	mapper := &suffixPrefixUrlMapper{
 		urlPrefix: m.UrlPrefix,
 		urlSuffix: m.UrlSuffix,
@@ -50,5 +51,6 @@ func (m *githubStoreModule) Load(config config.GlobalConfig, args interface{}) (
 		m.GithubFolder,
 		mapper,
 		config.HttpClient,
+		logger,
 	), nil
 }

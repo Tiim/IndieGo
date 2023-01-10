@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"html/template"
 	"io/fs"
+	"log"
 	"net/http"
 	"tiim/go-comment-api/config"
 
@@ -20,11 +21,12 @@ var assets embed.FS
 type publicModule struct {
 	template        *template.Template
 	debugApertureId string
+	logger          *log.Logger
 }
 
-func newPublicModule(debugApertureId string) *publicModule {
+func newPublicModule(debugApertureId string, logger *log.Logger) *publicModule {
 	template := template.Must(template.New("index").Parse(indexTemplate))
-	im := publicModule{template: template, debugApertureId: debugApertureId}
+	im := publicModule{template: template, debugApertureId: debugApertureId, logger: logger}
 	return &im
 }
 

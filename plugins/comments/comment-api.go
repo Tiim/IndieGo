@@ -11,11 +11,12 @@ import (
 )
 
 type commentApiModule struct {
-	store commentStore
+	store  commentStore
+	logger *log.Logger
 }
 
-func NewCommentModule(store commentStore) *commentApiModule {
-	im := commentApiModule{store: store}
+func NewCommentModule(store commentStore, logger *log.Logger) *commentApiModule {
+	im := commentApiModule{store: store, logger: logger}
 	return &im
 }
 
@@ -44,19 +45,19 @@ func (cm *commentApiModule) handlePostComment(c *gin.Context) {
 	var comment comment
 
 	if err := c.BindJSON(&comment); err != nil {
-		log.Println("Error binding comment: ", err)
+		cm.logger.Println("Error binding comment: ", err)
 		c.AbortWithError(http.StatusBadRequest, fmt.Errorf("deserialising json failed: %w", err))
 		return
 	}
 
 	if comment.Content == "" || comment.Page == "" {
-		log.Println("Content or Page is empty")
+		cm.logger.Println("Content or Page is empty")
 		c.AbortWithError(http.StatusBadRequest, fmt.Errorf("content or page is empty"))
 		return
 	}
 
 	if len(comment.Content) > 1024 || len(comment.Page) > 50 || len(comment.Name) > 70 || len(comment.Email) > 60 || len(comment.ReplyTo) > 40 {
-		log.Println("Content, Page, Name or Email is too long")
+		cm.logger.Println("Content, Page, Name or Email is too long")
 		c.AbortWithError(http.StatusBadRequest, fmt.Errorf("content, page, name or email is too long"))
 		return
 	}
@@ -65,7 +66,7 @@ func (cm *commentApiModule) handlePostComment(c *gin.Context) {
 
 	err := cm.store.NewComment(&comment)
 	if err != nil {
-		log.Println("Error inserting comment: ", err)
+		cm.logger.Println("Error inserting comment: ", err)
 		c.AbortWithError(http.StatusInternalServerError, err)
 		return
 	}

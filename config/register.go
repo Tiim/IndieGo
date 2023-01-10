@@ -44,7 +44,9 @@ func (c *Config) LoadPlugins() error {
 			}
 		}
 
-		module, err := moduleInstance.Load(c.GlobalConfig, nil)
+		logger := log.New(log.Writer(), fmt.Sprintf("[plugin %s]: ", name), log.Flags())
+
+		module, err := moduleInstance.Load(c.GlobalConfig, nil, logger)
 		if err != nil {
 			return fmt.Errorf("failed to load plugin '%s' (%d): %w", name, i, err)
 		}
@@ -102,7 +104,10 @@ func (c *Config) loadModule(structPtr any, fieldName string, args interface{}) (
 		if err != nil {
 			return nil, fmt.Errorf("failed to load module %s (field %s): %w", fieldName, fieldName, err)
 		}
-		moduleInstance, err := module.Load(c.GlobalConfig, args)
+
+		logger := log.New(log.Writer(), fmt.Sprintf("[module %s]: ", t.Name), log.Flags())
+
+		moduleInstance, err := module.Load(c.GlobalConfig, args, logger)
 		if err != nil {
 			return nil, fmt.Errorf("failed to load module %s (field %s): %w", fieldName, fieldName, err)
 		}
@@ -121,7 +126,10 @@ func (c *Config) loadModule(structPtr any, fieldName string, args interface{}) (
 			if err != nil {
 				return nil, fmt.Errorf("failed to load module %s (field %s, index %d): %w", fieldName, fieldName, i, err)
 			}
-			moduleInstance, err := module.Load(c.GlobalConfig, args)
+
+			logger := log.New(log.Writer(), fmt.Sprintf("[module %s]: ", moduleData.Name), log.Flags())
+
+			moduleInstance, err := module.Load(c.GlobalConfig, args, logger)
 			if err != nil {
 				return nil, fmt.Errorf("failed to load module %s (field %s, index %d): %w", fieldName, fieldName, i, err)
 			}

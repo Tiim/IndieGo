@@ -17,6 +17,7 @@ type emailNotify struct {
 	password string
 	smtpHost string
 	smtpPort string
+	logger   *log.Logger
 }
 
 func (n *emailNotify) OnNewComment(c *model.GenericComment) (bool, error) {
@@ -26,7 +27,7 @@ func (n *emailNotify) OnNewComment(c *model.GenericComment) (bool, error) {
 
 func (n *emailNotify) doSendEmail(c *model.GenericComment) {
 
-	log.Printf("sending notification email from %s to %s", n.from, n.to)
+	n.logger.Printf("sending notification email from %s to %s", n.from, n.to)
 
 	e := email.NewEmail()
 	e.From = n.from
@@ -34,13 +35,13 @@ func (n *emailNotify) doSendEmail(c *model.GenericComment) {
 	e.Subject = n.subject
 	e.Text = []byte(fmt.Sprintf("New %s\nid:\t%s\nfrom:\t%s <%s>\npage:\t%s\n\n%s", c.Type, c.Id, c.Name, c.FromEmail, c.Page, c.Content))
 
-	log.Printf("sending mail: %s:%s user:%s", n.smtpHost, n.smtpPort, n.username)
+	n.logger.Printf("sending mail: %s:%s user:%s", n.smtpHost, n.smtpPort, n.username)
 	err := e.Send(n.smtpHost+":"+n.smtpPort, smtp.PlainAuth("", n.username, n.password, n.smtpHost))
 
 	if err != nil {
-		log.Println("error sending notification email:", err)
+		n.logger.Println("error sending notification email:", err)
 	} else {
-		log.Println("notification email sent")
+		n.logger.Println("notification email sent")
 	}
 }
 

@@ -3,6 +3,7 @@ package indieauth
 import (
 	"fmt"
 	"html/template"
+	"log"
 	"net/http"
 	"net/url"
 	"strings"
@@ -27,9 +28,10 @@ type IndieAuthApiModule struct {
 	password            string
 	jwtSecret           string
 	authorizeTemplate   *template.Template
+	logger              *log.Logger
 }
 
-func NewIndieAuthApiModule(baseUrl, profileCanonicalUrl, password, jwtSecret string, store Store, client http.Client) *IndieAuthApiModule {
+func NewIndieAuthApiModule(baseUrl, profileCanonicalUrl, password, jwtSecret string, store Store, client http.Client, logger *log.Logger) *IndieAuthApiModule {
 	authorizeTemplate := template.Must(template.New("authorize").Parse(authorizeTemplate))
 	return &IndieAuthApiModule{
 		profileCanonicalUrl: profileCanonicalUrl,
@@ -39,6 +41,7 @@ func NewIndieAuthApiModule(baseUrl, profileCanonicalUrl, password, jwtSecret str
 		store:               store,
 		password:            password,
 		jwtSecret:           jwtSecret,
+		logger:              logger,
 	}
 }
 

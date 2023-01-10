@@ -2,6 +2,7 @@ package wmsend
 
 import (
 	"fmt"
+	"log"
 	"tiim/go-comment-api/config"
 	"tiim/go-comment-api/model"
 )
@@ -22,7 +23,7 @@ func (m *wmSendSQLiteStoreModule) IndieGoModule() config.ModuleInfo {
 	}
 }
 
-func (m *wmSendSQLiteStoreModule) Load(config config.GlobalConfig, args interface{}) (config.ModuleInstance, error) {
+func (m *wmSendSQLiteStoreModule) Load(config config.GlobalConfig, args interface{}, logger *log.Logger) (config.ModuleInstance, error) {
 	storeInt, err := config.GetModule("store.sqlite")
 	if err != nil {
 		return nil, err
@@ -31,5 +32,5 @@ func (m *wmSendSQLiteStoreModule) Load(config config.GlobalConfig, args interfac
 	if !ok {
 		return nil, fmt.Errorf("store.sqlite is not a of type model.SQLiteStore: %T", storeInt)
 	}
-	return newWmSendStore(store.GetDBConnection()), nil
+	return newWmSendStore(store.GetDBConnection(), logger), nil
 }

@@ -2,6 +2,7 @@ package indieauth
 
 import (
 	"fmt"
+	"log"
 	"tiim/go-comment-api/config"
 	"tiim/go-comment-api/model"
 	"time"
@@ -41,7 +42,7 @@ func (m *indieAuthSQLiteStoreModule) IndieGoModule() config.ModuleInfo {
 	}
 }
 
-func (m *indieAuthSQLiteStoreModule) Load(config config.GlobalConfig, args interface{}) (config.ModuleInstance, error) {
+func (m *indieAuthSQLiteStoreModule) Load(config config.GlobalConfig, args interface{}, logger *log.Logger) (config.ModuleInstance, error) {
 	storeInt, err := config.GetModule("store.sqlite")
 	if err != nil {
 		return nil, fmt.Errorf("depends on store.sqlite plugin: %v", err)
@@ -54,5 +55,6 @@ func (m *indieAuthSQLiteStoreModule) Load(config config.GlobalConfig, args inter
 		store.GetDBConnection(),
 		time.Duration(m.AuthCodeExpirationMinutes)*time.Minute,
 		time.Duration(m.AuthTokenExpirationMinutes)*time.Minute,
+		logger,
 	), nil
 }

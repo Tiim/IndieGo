@@ -25,7 +25,7 @@ func (p *CommentProviderPlugin) IndieGoModule() config.ModuleInfo {
 	}
 }
 
-func (p *CommentProviderPlugin) Load(c config.GlobalConfig, _ interface{}) (config.ModuleInstance, error) {
+func (p *CommentProviderPlugin) Load(c config.GlobalConfig, _ interface{}, logger *log.Logger) (config.ModuleInstance, error) {
 	providerInter := c.Config.GetInterfaces("comment-provider.provider")
 	providers := make([]CommentProvider, len(providerInter))
 	for i, iface := range providerInter {
@@ -36,8 +36,8 @@ func (p *CommentProviderPlugin) Load(c config.GlobalConfig, _ interface{}) (conf
 		providers[i] = p
 	}
 
-	log.Printf("Loaded %d comment providers", len(providers))
+	logger.Printf("Loaded %d comment providers", len(providers))
 
-	var providerModule config.ApiPluginInstance = newCommentProviderModule(providers)
+	var providerModule config.ApiPluginInstance = newCommentProviderModule(providers, logger)
 	return providerModule, nil
 }

@@ -2,6 +2,7 @@ package event
 
 import (
 	"fmt"
+	"log"
 	"tiim/go-comment-api/config"
 )
 
@@ -28,7 +29,7 @@ func (m *HandlerModule) IndieGoModule() config.ModuleInfo {
 	}
 }
 
-func (m *HandlerModule) Load(config config.GlobalConfig, args interface{}) (config.ModuleInstance, error) {
+func (m *HandlerModule) Load(config config.GlobalConfig, args interface{}, logger *log.Logger) (config.ModuleInstance, error) {
 	h, err := config.Config.LoadModuleSlice(m, "Handlers", args)
 	if err != nil {
 		return nil, err
@@ -41,5 +42,5 @@ func (m *HandlerModule) Load(config config.GlobalConfig, args interface{}) (conf
 		}
 		handlers[i] = h
 	}
-	return &handlerList{handlers: handlers}, nil
+	return &handlerList{handlers: handlers, logger: logger}, nil
 }

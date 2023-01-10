@@ -27,6 +27,7 @@ type commentSQLiteStore struct {
 	db              *sql.DB
 	eventHandler    event.Handler
 	pageToUrlMapper CommentPageToUrlMapper
+	logger          *log.Logger
 }
 
 func (cs *commentSQLiteStore) SetEventHandler(h event.Handler) {
@@ -60,7 +61,7 @@ func (cs *commentSQLiteStore) NewComment(c *comment) error {
 	if err != nil {
 		return fmt.Errorf("error handling event: %w", err)
 	} else if !ok {
-		log.Println("Comment rejected by event handler")
+		cs.logger.Println("Comment rejected by event handler")
 		return nil
 	}
 
@@ -79,7 +80,6 @@ func (cs *commentSQLiteStore) GetAllComments(since time.Time) ([]comment, error)
 	for rows.Next() {
 		comment, err := cs.readRow(rows)
 		if err != nil {
-			log.Printf("error reading all comments: %v", err)
 			return nil, fmt.Errorf("error reading all comments: %w", err)
 		}
 		comments = append(comments, *comment)
@@ -115,7 +115,7 @@ func (cs *commentSQLiteStore) DeleteComment(id string) error {
 	if err != nil {
 		return fmt.Errorf("error handling event: %w", err)
 	} else if !ok {
-		log.Println("Comment rejected by event handler")
+		cs.logger.Println("Comment rejected by event handler")
 		return nil
 	}
 
@@ -141,7 +141,6 @@ func (cs *commentSQLiteStore) GetComment(id string, tx *sql.Tx) (*comment, error
 	for rows.Next() {
 		comment, err = cs.readRow(rows)
 		if err != nil {
-			log.Printf("error reading comment: %v", err)
 			return nil, fmt.Errorf("error reading comment: %w", err)
 		}
 	}
@@ -169,7 +168,6 @@ func (cs *commentSQLiteStore) Unsubscribe(secret string) (*comment, error) {
 	for rows.Next() {
 		comment, err = cs.readRow(rows)
 		if err != nil {
-			log.Printf("error reading row while unsubscribing: %v", err)
 			return nil, fmt.Errorf("error reading row while unsubscribing: %w", err)
 		}
 	}
@@ -196,7 +194,6 @@ func (cs *commentSQLiteStore) UnsubscribeAll(email string) ([]comment, error) {
 	for rows.Next() {
 		comment, err := cs.readRow(rows)
 		if err != nil {
-			log.Printf("error reading row while unsubscribing: %s", err)
 			return nil, fmt.Errorf("error reading row while unsubscribing: %w", err)
 		} else {
 			comments = append(comments, *comment)
@@ -220,7 +217,6 @@ func (cs *commentSQLiteStore) GetGenericCommentsForPage(page string, since time.
 	for rows.Next() {
 		comment, err := cs.readRow(rows)
 		if err != nil {
-			log.Printf("error reading all comments: %v", err)
 			return nil, fmt.Errorf("error reading all comments: %w", err)
 		}
 		comments = append(comments, comment.ToGenericComment())

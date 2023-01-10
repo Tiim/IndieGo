@@ -42,7 +42,7 @@ func LoadConfig(configString string) (*Config, error) {
 	config := &Config{}
 	err := json.Unmarshal([]byte(configString), config)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("unable to unmarshal top level json: %w", err)
 	}
 	config.GlobalConfig.Config = config
 
@@ -51,7 +51,11 @@ func LoadConfig(configString string) (*Config, error) {
 
 	err = config.LoadPlugins()
 
-	return config, err
+	if err != nil {
+		return nil, fmt.Errorf("unable to load plugins: %w", err)
+	}
+
+	return config, nil
 }
 
 func (c *Config) Init() error {

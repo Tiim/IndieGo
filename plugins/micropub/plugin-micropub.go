@@ -30,7 +30,7 @@ func (p *micropubPlugin) IndieGoModule() config.ModuleInfo {
 	}
 }
 
-func (p *micropubPlugin) Load(config config.GlobalConfig, _ interface{}) (config.ModuleInstance, error) {
+func (p *micropubPlugin) Load(config config.GlobalConfig, _ interface{}, logger *log.Logger) (config.ModuleInstance, error) {
 
 	storeInt, err := config.Config.LoadModule(p, "StoreData", nil)
 	if err != nil {
@@ -60,5 +60,5 @@ func (p *micropubPlugin) Load(config config.GlobalConfig, _ interface{}) (config
 		return nil, fmt.Errorf("indieauth plugin is not of type indieauth.IndieAuthApiModule: %T", indieAuthPlugin)
 	}
 
-	return newMicropubApiModule(store, mstore, indieAuth.VerifyToken), nil
+	return newMicropubApiModule(store, mstore, indieAuth.VerifyToken, logger), nil
 }

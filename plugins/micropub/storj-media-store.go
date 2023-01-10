@@ -21,9 +21,10 @@ type storjMediaStore struct {
 	prefix string
 
 	formatUrl FormatUrl
+	logger    *log.Logger
 }
 
-func newStorjMediaStore(accessGrant, bucketName, prefix string, formatUrl FormatUrl) storjMediaStore {
+func newStorjMediaStore(accessGrant, bucketName, prefix string, formatUrl FormatUrl, logger *log.Logger) storjMediaStore {
 	if prefix != "" && prefix[len(prefix)-1] != '/' {
 		prefix += "/"
 	}
@@ -33,6 +34,7 @@ func newStorjMediaStore(accessGrant, bucketName, prefix string, formatUrl Format
 		bucketName:  bucketName,
 		prefix:      prefix,
 		formatUrl:   formatUrl,
+		logger:      logger,
 	}
 }
 
@@ -90,7 +92,7 @@ func (s storjMediaStore) uploadKey(mimeType string) (string, string) {
 	case "image/gif":
 		extension = "gif"
 	default:
-		log.Println("Unknown mime type for micropub upload: ", mimeType)
+		s.logger.Println("Unknown mime type for micropub upload: ", mimeType)
 	}
 	id := uuid.New()
 	name := id.String() + "." + extension

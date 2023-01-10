@@ -16,6 +16,7 @@ import (
 type SQLiteStore struct {
 	db        *sql.DB
 	scheduler *gocron.Scheduler
+	logger    *log.Logger
 }
 
 //go:embed sqlite-migrations/*.sql
@@ -82,7 +83,7 @@ func (ss *SQLiteStore) GetDBConnection() *sql.DB {
 	return ss.db
 }
 
-func NewSQLiteStore(scheduler *gocron.Scheduler) (*SQLiteStore, error) {
+func NewSQLiteStore(scheduler *gocron.Scheduler, logger *log.Logger) (*SQLiteStore, error) {
 	path := "./db/comments.sqlite"
 	pragma := "_pragma=busy_timeout(10000)&_pragma=journal_mode(WAL)&_pragma=foreign_keys(1)&_pragma=synchronous(NORMAL)&_pragma=journal_size_limit(100000000)"
 	db, err := sql.Open("sqlite", fmt.Sprintf("%s?%s", path, pragma))
@@ -90,7 +91,7 @@ func NewSQLiteStore(scheduler *gocron.Scheduler) (*SQLiteStore, error) {
 		return nil, fmt.Errorf("error opening comments database: %w", err)
 	}
 
-	store := &SQLiteStore{db, scheduler}
+	store := &SQLiteStore{db, scheduler, logger}
 
 	return store, nil
 }

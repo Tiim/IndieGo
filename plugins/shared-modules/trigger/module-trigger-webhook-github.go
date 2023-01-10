@@ -1,6 +1,9 @@
 package trigger
 
-import "tiim/go-comment-api/config"
+import (
+	"log"
+	"tiim/go-comment-api/config"
+)
 
 type GithubWebhookPlugin struct {
 	Name          string `json:"name"`
@@ -25,9 +28,9 @@ func (p *GithubWebhookPlugin) IndieGoModule() config.ModuleInfo {
 	}
 }
 
-func (p *GithubWebhookPlugin) Load(c config.GlobalConfig, _ interface{}) (config.ModuleInstance, error) {
-	validator := newGithubValidator(p.WebhookSecret)
-	webhook := newWebhookModule(p.Name)
+func (p *GithubWebhookPlugin) Load(c config.GlobalConfig, _ interface{}, logger *log.Logger) (config.ModuleInstance, error) {
+	validator := newGithubValidator(p.WebhookSecret, logger)
+	webhook := newWebhookModule(p.Name, logger)
 	webhook.SetValidator(validator)
 
 	var trigger Trigger = webhook

@@ -60,7 +60,7 @@ func (m *micropubApiModule) actionCreate(c *gin.Context, data MicropubPostRaw) {
 			c.AbortWithError(500, err)
 			return
 		}
-		addUrlToPost(&post, url, file.Name, file.ContentType)
+		addUrlToPost(&post, url, file.Name, file.ContentType, m.logger)
 	}
 	location, err := m.store.Create(post)
 	if err != nil {

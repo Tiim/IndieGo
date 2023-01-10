@@ -16,10 +16,11 @@ type micropubApiModule struct {
 	store       micropubStore
 	mediaStore  mediaStore
 	verifyToken indieauth.TokenVerifier
+	logger      *log.Logger
 }
 
-func newMicropubApiModule(store micropubStore, mediaStore mediaStore, verifyToken indieauth.TokenVerifier) *micropubApiModule {
-	return &micropubApiModule{store: store, mediaStore: mediaStore, verifyToken: verifyToken}
+func newMicropubApiModule(store micropubStore, mediaStore mediaStore, verifyToken indieauth.TokenVerifier, logger *log.Logger) *micropubApiModule {
+	return &micropubApiModule{store: store, mediaStore: mediaStore, verifyToken: verifyToken, logger: logger}
 }
 
 func (m *micropubApiModule) Name() string {
@@ -165,14 +166,14 @@ func getFiles(files map[string][]*multipart.FileHeader) ([]MicropubFile, error) 
 	return mpfiles, nil
 }
 
-func addUrlToPost(mp *MicropubPost, url, name, contentType string) {
+func addUrlToPost(mp *MicropubPost, url, name, contentType string, logger *log.Logger) {
 	switch contentType {
 	case "image/jpeg", "image/png", "image/gif":
 		mp.Entry.Photos = append(mp.Entry.Photos, mfobjects.MF2Photo{
 			Url: url,
 		})
 	default:
-		log.Println("Unknown content type to add to MicropubPost: ", contentType)
+		logger.Println("Unknown content type to add to MicropubPost: ", contentType)
 	}
 }
 

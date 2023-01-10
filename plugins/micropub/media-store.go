@@ -10,10 +10,12 @@ type mediaStore interface {
 	SaveMediaFiles(ctx context.Context, file MicropubFile) (string, error)
 }
 
-type nopMediaStore struct{}
+type nopMediaStore struct {
+	logger *log.Logger
+}
 
 func (n nopMediaStore) SaveMediaFiles(ctx context.Context, file MicropubFile) (string, error) {
 	defer file.Reader.Close()
-	log.Println("Skipping file: ", file.Name)
+	n.logger.Println("Skipping file: ", file.Name)
 	return "", nil
 }

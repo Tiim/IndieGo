@@ -14,10 +14,11 @@ import (
 
 type genericCommentApiModule struct {
 	CommentProviders []CommentProvider
+	logger           *log.Logger
 }
 
-func newCommentProviderModule(CommentProviders []CommentProvider) *genericCommentApiModule {
-	return &genericCommentApiModule{CommentProviders: CommentProviders}
+func newCommentProviderModule(CommentProviders []CommentProvider, logger *log.Logger) *genericCommentApiModule {
+	return &genericCommentApiModule{CommentProviders: CommentProviders, logger: logger}
 }
 
 func (cm *genericCommentApiModule) Name() string {
@@ -47,7 +48,7 @@ func (cm *genericCommentApiModule) handleGetAllComments(c *gin.Context) {
 		var err error
 		since, err = time.Parse(time.RFC3339, sinceStr)
 		if err != nil {
-			log.Println("Error parsing since: ", err)
+			cm.logger.Println("Error parsing since: ", err)
 			c.AbortWithError(http.StatusBadRequest, fmt.Errorf("invalid since query parameter: %w", err))
 			return
 		}
@@ -58,7 +59,7 @@ func (cm *genericCommentApiModule) handleGetAllComments(c *gin.Context) {
 	for _, commentProvider := range cm.CommentProviders {
 		comments, err := commentProvider.GetAllGenericComments(since)
 		if err != nil {
-			log.Println("Error getting comments: ", err)
+			cm.logger.Println("Error getting comments: ", err)
 			c.AbortWithError(http.StatusInternalServerError, err)
 			return
 		}
@@ -83,7 +84,7 @@ func (cm *genericCommentApiModule) handleGetComments(c *gin.Context) {
 		var err error
 		since, err = time.Parse(time.RFC3339, sinceStr)
 		if err != nil {
-			log.Println("Error parsing since: ", err)
+			cm.logger.Println("Error parsing since: ", err)
 			c.AbortWithError(http.StatusBadRequest, fmt.Errorf("invalid since query parameter: %w", err))
 			return
 		}
@@ -94,7 +95,7 @@ func (cm *genericCommentApiModule) handleGetComments(c *gin.Context) {
 	for _, commentProvider := range cm.CommentProviders {
 		comments, err := commentProvider.GetGenericCommentsForPage(page, since)
 		if err != nil {
-			log.Println("Error getting comments: ", err)
+			cm.logger.Println("Error getting comments: ", err)
 			c.AbortWithError(http.StatusInternalServerError, err)
 			return
 		}
