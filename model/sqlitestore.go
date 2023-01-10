@@ -24,6 +24,7 @@ var migrationsFs embed.FS
 
 func (c *SQLiteStore) runMigrations() error {
 	goose.SetBaseFS(migrationsFs)
+	goose.SetLogger(c.logger)
 	err := goose.SetDialect("sqlite3")
 	if err != nil {
 		return fmt.Errorf("error setting goose dialect for migration: %w", err)

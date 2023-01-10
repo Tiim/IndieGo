@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
-	"log"
 	"net/http"
 	"os"
 	"time"
@@ -59,7 +58,7 @@ func LoadConfig(configString string) (*Config, error) {
 }
 
 func (c *Config) Init() error {
-	log.Println("Initializing modules")
+	logger.Println("Initializing modules")
 	for name, modules := range c.Modules {
 		for _, module := range modules {
 			if plugin, ok := module.(PluginInstance); ok {
@@ -70,7 +69,7 @@ func (c *Config) Init() error {
 			}
 		}
 	}
-	log.Println("Initializing modules done")
+	logger.Println("Initializing modules done")
 	return nil
 }
 

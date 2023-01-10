@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"os"
 	"reflect"
 	"strings"
 )
@@ -12,10 +13,11 @@ import (
 // customize their behavior, e.g. a database connection,
 // a cache, notification service etc.
 var modules = make(map[string]Module)
+var logger = log.New(os.Stdout, "[config] ", log.LstdFlags)
 
 func RegisterModule(a Module) {
 	info := a.IndieGoModule()
-	log.Printf("Registering plugin %s", info.Name)
+	logger.Printf("Registering plugin %s", info.Name)
 	if _, ok := modules[info.Name]; ok {
 		panic(fmt.Sprintf("plugin %s already registered", info.Name))
 	}
@@ -30,7 +32,7 @@ func (c *Config) LoadPlugins() error {
 	for i, moduleRaw := range c.PluginsRaw {
 		name := moduleRaw.Name
 		p, ok := modules[name]
-		log.Printf("Loading plugin: '%s'\n", name)
+		logger.Printf("Loading plugin: '%s'\n", name)
 		if !ok {
 			return fmt.Errorf("plugin '%s' not found", name)
 		}
@@ -55,7 +57,7 @@ func (c *Config) LoadPlugins() error {
 		}
 		c.Modules[name] = append(c.Modules[name], module)
 	}
-	log.Printf("Successfully loaded %d modules\n", len(c.Modules))
+	logger.Printf("Successfully loaded %d modules\n", len(c.Modules))
 	return nil
 }
 
@@ -155,7 +157,7 @@ func (c *Config) loadSingleModule(moduleData ModuleRaw, nameSpace, fieldName str
 		return nil, fmt.Errorf("field %s has namespace '%s' but module %s has namespace '%s'", fieldName, nameSpace, name, actualNamespace)
 	}
 
-	log.Printf("Loading module: '%s'\n", name)
+	logger.Printf("Loading module: '%s'\n", name)
 	m, ok := modules[name]
 	if !ok {
 		return nil, fmt.Errorf("module %s not found", name)

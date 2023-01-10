@@ -4,10 +4,13 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"os"
 	"tiim/go-comment-api/config"
 
 	"github.com/gin-gonic/gin"
 )
+
+var logger = log.New(os.Stdout, "[api] ", log.Flags())
 
 type apiServer struct {
 	plugins map[string][]config.ModuleInstance
@@ -56,7 +59,7 @@ func (cs *apiServer) Start() (*gin.Engine, error) {
 
 	routes := r.Routes()
 	for _, route := range routes {
-		log.Printf("Registered route: %-6s %s", route.Method, route.Path)
+		logger.Printf("Registered route: %-6s %s", route.Method, route.Path)
 	}
 
 	return r, nil
@@ -67,7 +70,7 @@ func ErrorMiddleware() gin.HandlerFunc {
 		c.Next()
 
 		if len(c.Errors) > 0 {
-			log.Printf("Error: %v", c.Errors)
+			logger.Printf("Error: %v", c.Errors)
 			status := c.Writer.Status()
 			if status == 0 || status < 400 {
 				status = http.StatusInternalServerError
