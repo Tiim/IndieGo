@@ -81,23 +81,24 @@ func generateDocs() {
 // os.TempDir(): The directory is neither guaranteed to exist nor have accessible permissions.
 // https://blog.cubieserver.de/2020/go-debugging-why-parsemultipartform-returns-error-no-such-file-or-directory/
 func ensureTempDir() {
+	logger := log.New(os.Stdout, "[init] ", log.Flags())
 	tempDir := os.TempDir()
 	if err := os.MkdirAll(tempDir, 1777); err != nil {
-		log.Fatalf("Failed to create temporary directory %s: %s", tempDir, err)
+		logger.Fatalf("Failed to create temporary directory %s: %s", tempDir, err)
 	}
 	tempFile, err := ioutil.TempFile("", "genericInit_")
 	if err != nil {
-		log.Fatalf("Failed to create tempFile: %s", err)
+		logger.Fatalf("Failed to create tempFile: %s", err)
 	}
 	_, err = fmt.Fprintf(tempFile, "Hello, World!")
 	if err != nil {
-		log.Fatalf("Failed to write to tempFile: %s", err)
+		logger.Fatalf("Failed to write to tempFile: %s", err)
 	}
 	if err := tempFile.Close(); err != nil {
-		log.Fatalf("Failed to close tempFile: %s", err)
+		logger.Fatalf("Failed to close tempFile: %s", err)
 	}
 	if err := os.Remove(tempFile.Name()); err != nil {
-		log.Fatalf("Failed to delete tempFile: %s", err)
+		logger.Fatalf("Failed to delete tempFile: %s", err)
 	}
-	log.Printf("Using temporary directory %s", tempDir)
+	logger.Printf("Using temporary directory %s", tempDir)
 }
