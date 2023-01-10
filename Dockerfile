@@ -42,9 +42,9 @@ COPY --from=builder /etc/group /etc/group
 
 WORKDIR /app
 COPY --from=builder /code/indiego /app/indiego
-COPY .env.prod .env
-COPY config-prod.json config.json
+
+COPY config.json /app/config/config.json
 
 EXPOSE 8080
 
-CMD ["/app/indiego"]
+CMD ["/app/indiego", "-config", "/app/config/config.json"]
