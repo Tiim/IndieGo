@@ -8,6 +8,8 @@ import (
 	"tiim/go-comment-api/config"
 
 	"github.com/gin-gonic/gin"
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
 var logger = log.New(os.Stdout, "[api] ", log.Flags())
@@ -26,7 +28,14 @@ func (cs *apiServer) Start() (*gin.Engine, error) {
 	r.RemoveExtraSlash = true
 	r.RedirectTrailingSlash = false
 
-	r.Use(ErrorMiddleware())
+	// prometheus registry
+	registry := prometheus.NewRegistry()
+
+	r.Use(errorMiddleware())
+
+	r.GET("/metrics", metricsHandler(registry))
+	r.Use(metricsMiddleware(registry))
+
 	r.Use(gin.Logger())
 	r.Use(gin.Recovery())
 
@@ -65,17 +74,9 @@ func (cs *apiServer) Start() (*gin.Engine, error) {
 	return r, nil
 }
 
-func ErrorMiddleware() gin.HandlerFunc {
+func metricsHandler(reg *prometheus.Registry) gin.HandlerFunc {
+	handler := promhttp.HandlerFor(reg, promhttp.HandlerOpts{})
 	return func(c *gin.Context) {
-		c.Next()
-
-		if len(c.Errors) > 0 {
-			logger.Printf("Error: %v", c.Errors)
-			status := c.Writer.Status()
-			if status == 0 || status < 400 {
-				status = http.StatusInternalServerError
-			}
-			c.JSON(status, gin.H{"status": status, "error": c.Errors})
-		}
+		handler.ServeHTTP(c.Writer, c.Request)
 	}
 }
