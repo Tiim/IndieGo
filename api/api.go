@@ -3,7 +3,6 @@ package api
 import (
 	"fmt"
 	"log"
-	"net/http"
 	"os"
 	"tiim/go-comment-api/config"
 
