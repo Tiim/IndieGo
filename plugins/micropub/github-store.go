@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"log"
 	"math/rand"
 	"net/http"
@@ -60,6 +59,8 @@ func (m *micropubGithubStore) Create(post MicropubPost) (string, error) {
 		return "", err
 	}
 
+	m.logger.Printf("creating post in github: %s", url)
+
 	req := http.Request{
 		Method: http.MethodPut,
 		URL:    url,
@@ -74,7 +75,7 @@ func (m *micropubGithubStore) Create(post MicropubPost) (string, error) {
 	}
 	defer res.Body.Close()
 	if res.StatusCode != 201 {
-		body, _ := ioutil.ReadAll(res.Body)
+		body, _ := io.ReadAll(res.Body)
 		return "", fmt.Errorf("unexpected status code %d: %s", res.StatusCode, string(body))
 	}
 	return m.urlConverter.FilePathToUrl(filePath), err
@@ -99,7 +100,7 @@ func (m *micropubGithubStore) Modify(u string, deleteProps interface{}, addProps
 		return err
 	}
 	defer res.Body.Close()
-	result, err := ioutil.ReadAll(res.Body)
+	result, err := io.ReadAll(res.Body)
 	if err != nil {
 		return err
 	}
@@ -136,7 +137,7 @@ func (m *micropubGithubStore) Modify(u string, deleteProps interface{}, addProps
 	}
 	defer res.Body.Close()
 	if res.StatusCode != 200 {
-		result, _ := ioutil.ReadAll(res.Body)
+		result, _ := io.ReadAll(res.Body)
 		return fmt.Errorf("error updating post: %s", result)
 	}
 	return nil
@@ -161,7 +162,7 @@ func (m *micropubGithubStore) Delete(u string) error {
 		return err
 	}
 	defer res.Body.Close()
-	result, err := ioutil.ReadAll(res.Body)
+	result, err := io.ReadAll(res.Body)
 	if err != nil {
 		return err
 	}
@@ -193,7 +194,7 @@ func (m *micropubGithubStore) Delete(u string) error {
 	}
 	defer res.Body.Close()
 	if res.StatusCode != 200 {
-		result, _ := ioutil.ReadAll(res.Body)
+		result, _ := io.ReadAll(res.Body)
 		return fmt.Errorf("error deleting post: %s", result)
 	}
 	return nil
@@ -222,7 +223,7 @@ func (m *micropubGithubStore) Get(u string) (*microformats.Microformat, error) {
 		return nil, err
 	}
 	defer res.Body.Close()
-	result, err := ioutil.ReadAll(res.Body)
+	result, err := io.ReadAll(res.Body)
 	if err != nil {
 		return nil, err
 	}
@@ -244,5 +245,8 @@ func (m *micropubGithubStore) nextFile() string {
 	// create randowm 6 char string
 	name := strings.ToLower(base64.StdEncoding.EncodeToString([]byte(fmt.Sprintf("%d", m.rand.Int()))))[:6]
 	now := time.Now().Format("2006/01")
-	return fmt.Sprintf("%s/%s/%s", m.folder, now, name)
+	if !strings.HasSuffix(m.folder, "/") && m.folder != "" {
+		m.folder += "/"
+	}
+	return fmt.Sprintf("%s%s/%s", m.folder, now, name)
 }
