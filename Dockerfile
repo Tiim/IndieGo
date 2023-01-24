@@ -27,16 +27,12 @@ ADD . /code/
 
 # https://awstip.com/containerize-go-sqlite-with-docker-6d7fbecd14f0
 RUN --mount=type=cache,target=/root/.cache/go-build \
-    CGO_ENABLED=0 go build -o indiego -a .
+    go build -o indiego -a .
 
 RUN mkdir -p /code/db
 
-FROM scratch
+FROM alpine
 
-# https://stackoverflow.com/a/52979541
-COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
-
-COPY --from=builder /usr/share/zoneinfo /usr/share/zoneinfo
 COPY --from=builder /etc/passwd /etc/passwd
 COPY --from=builder /etc/group /etc/group
 
@@ -47,4 +43,4 @@ COPY config.json /app/config/config.json
 
 EXPOSE 8080
 
-CMD ["/app/indiego", "-config", "/app/config/config.json"]
+ENTRYPOINT ["/app/indiego", "-config", "/app/config/config.json"]
