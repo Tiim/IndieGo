@@ -91,6 +91,10 @@ func (s storjMediaStore) uploadKey(mimeType string) (string, string) {
 		extension = "png"
 	case "image/gif":
 		extension = "gif"
+	case "image/webp":
+		extension = "webp"
+	case "image/avif":
+		extension = "avif"
 	default:
 		s.logger.Println("Unknown mime type for micropub upload: ", mimeType)
 	}
