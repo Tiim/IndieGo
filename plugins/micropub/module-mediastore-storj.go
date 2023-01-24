@@ -1,6 +1,7 @@
 package micropub
 
 import (
+	"fmt"
 	"log"
 	"strings"
 	"tiim/go-comment-api/config"
@@ -10,7 +11,7 @@ type MediastoreStorjModule struct {
 	// The storj access grant.
 	AccessGrant string `json:"access_grant"`
 	// The name of the storj bucket.
-	BucketName string `json:"bucket_name"`
+	BucketName string `json:"bucket"`
 	// Can be a custom prefix or an empty string for no prefix.
 	// Setting a prefix allows multiple uses of the same bucket.
 	Prefix string `json:"prefix"`
@@ -47,6 +48,15 @@ func (m *MediastoreStorjModule) IndieGoModule() config.ModuleInfo {
 }
 
 func (m *MediastoreStorjModule) Load(config config.GlobalConfig, args interface{}, logger *log.Logger) (config.ModuleInstance, error) {
+
+	if m.BucketName == "" {
+		return nil, fmt.Errorf("bucket name is required")
+	}
+
+	if m.AccessGrant == "" {
+		return nil, fmt.Errorf("access grant is required")
+	}
+
 	return newStorjMediaStore(
 		m.AccessGrant,
 		m.BucketName,

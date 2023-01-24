@@ -1,6 +1,7 @@
 package micropub
 
 import (
+	"fmt"
 	"log"
 	"tiim/go-comment-api/config"
 )
@@ -37,6 +38,19 @@ func (m *githubStoreModule) IndieGoModule() config.ModuleInfo {
 }
 
 func (m *githubStoreModule) Load(config config.GlobalConfig, args interface{}, logger *log.Logger) (config.ModuleInstance, error) {
+
+	if m.GithubToken == "" {
+		return nil, fmt.Errorf("github token is required")
+	}
+
+	if m.GithubUser == "" {
+		return nil, fmt.Errorf("github user is required")
+	}
+
+	if m.GithubRepo == "" {
+		return nil, fmt.Errorf("github repo is required")
+	}
+
 	mapper := &suffixPrefixUrlMapper{
 		urlPrefix: m.UrlPrefix,
 		urlSuffix: m.UrlSuffix,
