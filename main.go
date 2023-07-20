@@ -9,6 +9,7 @@ import (
 	"tiim/go-comment-api/api"
 	"tiim/go-comment-api/config"
 
+	_ "tiim/go-comment-api/plugins/activitypub"
 	_ "tiim/go-comment-api/plugins/admin"
 	_ "tiim/go-comment-api/plugins/comment-provider"
 	_ "tiim/go-comment-api/plugins/comments"
