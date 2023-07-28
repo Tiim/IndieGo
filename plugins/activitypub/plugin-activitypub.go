@@ -21,7 +21,8 @@ func (p *activityPubPlugin) IndieGoModule() config.ModuleInfo {
 	}
 }
 
-func (p *activityPubPlugin) Load(config config.GlobalConfig, _ interface{}, logger *log.Logger) (config.ModuleInstance, error) {
+func (p *activityPubPlugin) Load(c config.GlobalConfig, _ interface{}, logger *log.Logger) (config.ModuleInstance, error) {
 
-	return newActivityPubModule(), nil
+	var apModule config.ApiPluginInstance = newActivityPubModule()
+    return apModule, nil
 }
