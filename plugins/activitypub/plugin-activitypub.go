@@ -40,6 +40,11 @@ func (p *activityPubPlugin) Load(c config.GlobalConfig, _ interface{}, logger *l
 
 	p.ApPrefix = strings.TrimSuffix(p.ApPrefix, "/")
 	var apModule config.ApiPluginInstance = &activityPubModule{
+        store: apStore {
+            baseUrl: p.ApPrefix,
+            actorProfileUrl: p.ActorProfileUrl,
+            actorName: p.ActorName,
+        },
 		apPrefix:        p.ApPrefix,
 		actorProfileUrl: p.ActorProfileUrl,
 		actorName:       p.ActorName,

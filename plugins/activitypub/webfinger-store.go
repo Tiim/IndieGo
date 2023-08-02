@@ -20,11 +20,9 @@ func (d *webfingerActorStore) Load(iri activitypub.IRI) (activitypub.Item, error
 		return nil, err
 	}
 	if url.Path == "/" && url.Hostname() == d.host {
-		fmt.Println("Service actor")
 		return d.buildServiceActor()
 	} else {
-		fmt.Printf("path %s, host: %s ref %s\n", url.Path, url.Hostname(), d.host)
-		fmt.Println("User actor")
+        //TODO: extract actor name, use apStore.getActorFromName function to get the actor.
 		return d.buildPersonActor()
 	}
 
@@ -44,7 +42,7 @@ func (d *webfingerActorStore) buildServiceActor() (activitypub.Item, error) {
 	return actor, nil
 }
 
-func (d *webfingerActorStore) buildPersonActor() (activitypub.Item, error) {
+func (d *webfingerActorStore) buildPersonActor() (*activitypub.Actor, error) {
 	actor := activitypub.ActorNew(
 		activitypub.IRI(d.baseUrl+"/ap/users/"+d.actorName),
 		activitypub.PersonType,

@@ -12,6 +12,7 @@ import (
 )
 
 type activityPubModule struct {
+	store           apStore
 	apPrefix        string
 	actorProfileUrl string
 	actorName       string
@@ -37,7 +38,26 @@ func (m *activityPubModule) InitGroups(r *gin.Engine) error {
 
 func (m *activityPubModule) RegisterRoutes(r *gin.Engine) error {
 	r.GET(".well-known/webfinger", m.handleWebfinger)
+	r.GET("ap/users/:user", m.handleApUser)
 	return nil
+}
+
+func (m *activityPubModule) handleApUser(c *gin.Context) {
+
+	user := c.Param("user")
+
+    actor, err := m.store.getActorFromName(user)
+    if err != nil {
+        c.AbortWithError(404, err)
+        return
+    }
+
+	res, err := activitypub.MarshalJSON(actor)
+	if err != nil {
+		c.AbortWithError(500, err)
+		return
+	}
+	c.Data(200, "application/ls+json", res)
 }
 
 func (m *activityPubModule) handleWebfinger(c *gin.Context) {
